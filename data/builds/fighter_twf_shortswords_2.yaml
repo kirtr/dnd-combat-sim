@@ -1,0 +1,26 @@
+# Fighter (TWF Shortswords) - Level 2 Build
+# Two-Weapon Fighting with shortswords
+
+name: Fighter (TWF Shortswords)
+class: fighter
+level: 2
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- shortsword
+- javelin
+armor: chain_mail
+shield: false
+fighting_style: two_weapon_fighting
+tactic: aggressive
+powers:
+- second_wind
+- action_surge

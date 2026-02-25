@@ -1,0 +1,26 @@
+# Fighter (Defense Greatsword) - Level 2 Build
+# Same as GWF build but with Defense fighting style (+1 AC)
+
+name: Fighter (Defense Greatsword)
+class: fighter
+level: 2
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- greatsword
+- javelin
+armor: chain_mail
+shield: false
+fighting_style: defense
+tactic: aggressive
+powers:
+- second_wind
+- action_surge
