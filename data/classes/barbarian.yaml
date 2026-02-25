@@ -1,0 +1,33 @@
+name: Barbarian
+hit_die: d12
+hp_base: 12
+armor_proficiencies:
+- light
+- medium
+- shield
+weapon_proficiencies:
+- simple
+- martial
+saving_throws:
+- strength
+- constitution
+weapon_mastery_slots: 2
+features:
+  1:
+  - rage
+  - unarmored_defense_barbarian
+  - weapon_mastery_barbarian
+  2:
+  - danger_sense
+  - reckless_attack
+phb_ref: pp. 50-52
+notes:
+  rage_2024: '2 uses at levels 1-2 (table p.51). Bonus action to enter. Duration:
+    until end of combat or 10 rounds. +2 rage damage at levels 1-8. Resistance to
+    B/P/S. Advantage on STR checks/saves. Cannot wear heavy armor while raging.'
+  unarmored_defense: AC = 10 + DEX mod + CON mod when not wearing armor. Can use shield.
+  reckless_attack_2024: 'First attack of turn: choose to attack recklessly. Advantage
+    on STR-based melee attacks until start of next turn. Attacks against you have
+    advantage.'
+  danger_sense_2024: Advantage on DEX saves unless Incapacitated.
+  weapon_mastery: 2 slots, melee Simple or Martial only. Can change on long rest.

@@ -1,0 +1,34 @@
+name: Defensive
+description: Use defensive abilities, dodge when low HP
+
+rules:
+  - condition: {has_power: rage, not_active: raging, resource_available: rage}
+    action: {use: rage}
+
+  # Dodge when below 30% HP
+  - condition: {hp_below: 30, action_available: true}
+    action: {dodge: true}
+
+  # Patient Defense when below 40% HP
+  - condition: {has_power: patient_defense, hp_below: 40, bonus_action_available: true, resource_available: focus_points}
+    action: {use: patient_defense}
+
+  # Second Wind ASAP
+  - condition: {has_power: second_wind, hp_below: 80, bonus_action_available: true, resource_available: second_wind}
+    action: {use: second_wind}
+
+  # Ranged if not in melee
+  - condition: {not_in_melee: true, has_ranged_weapon: true, action_available: true}
+    action: {attack: ranged}
+
+  # Melee attack if in range and not dodging
+  - condition: {in_melee: true, action_available: true}
+    action: {attack: melee}
+
+  # Close if no ranged option
+  - condition: {not_in_melee: true, action_available: true}
+    action: {move: toward_enemy, then: attack}
+
+  # Cunning Action: Disengage to avoid hits
+  - condition: {has_power: cunning_action, bonus_action_available: true, in_melee: true}
+    action: {use: cunning_action, option: disengage}

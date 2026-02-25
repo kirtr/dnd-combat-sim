@@ -1,0 +1,42 @@
+name: Aggressive
+description: Close and attack, use offensive abilities first
+
+# Priority list: first matching rule fires
+rules:
+  # Pre-combat / first turn
+  - condition: {has_power: rage, not_active: raging, resource_available: rage}
+    action: {use: rage}
+
+  - condition: {has_power: reckless_attack, is_melee_range: true}
+    action: {use: reckless_attack}
+
+  # Ranged attack if not in melee and have ranged weapon
+  - condition: {not_in_melee: true, has_ranged_weapon: true, action_available: true}
+    action: {attack: ranged}
+
+  # Close to melee range
+  - condition: {not_in_melee: true, action_available: true}
+    action: {move: toward_enemy, then: attack}
+
+  # Melee attack
+  - condition: {in_melee: true, action_available: true}
+    action: {attack: melee}
+
+  # Action Surge if available and action already used
+  - condition: {has_power: action_surge, action_used: true, resource_available: action_surge}
+    action: {use: action_surge, then: attack}
+
+  # Bonus actions
+  - condition: {has_power: flurry_of_blows, bonus_action_available: true, resource_available: focus_points}
+    action: {use: flurry_of_blows}
+
+  - condition: {has_power: martial_arts, bonus_action_available: true}
+    action: {use: martial_arts_bonus}
+
+  # Second Wind when below 50% HP
+  - condition: {has_power: second_wind, hp_below: 50, bonus_action_available: true, resource_available: second_wind}
+    action: {use: second_wind}
+
+  # Cunning Action: Hide for sneak attack advantage next turn
+  - condition: {has_power: cunning_action, bonus_action_available: true}
+    action: {use: cunning_action, option: hide}

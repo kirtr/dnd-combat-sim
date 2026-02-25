@@ -1,0 +1,38 @@
+name: Monk
+hit_die: d8
+hp_base: 8
+armor_proficiencies: []
+weapon_proficiencies:
+- simple
+- martial_light
+saving_throws:
+- strength
+- dexterity
+weapon_mastery_slots: 2
+features:
+  1:
+  - martial_arts
+  - unarmored_defense_monk
+  2:
+  - flurry_of_blows
+  - patient_defense
+  - step_of_the_wind
+  - unarmored_movement
+  - uncanny_metabolism
+phb_ref: pp. 100-102
+notes:
+  martial_arts_2024: 'Use DEX for monk weapons (simple melee + martial light) and
+    unarmed strikes. Martial Arts die = 1d6 at levels 1-4. Bonus action: one unarmed
+    strike after attacking with monk weapon/unarmed.'
+  unarmored_defense: AC = 10 + DEX mod + WIS mod when not wearing armor, no shield.
+  focus_points_2024: Renamed from Ki. Points = monk level. Regain all on short/long
+    rest.
+  flurry_of_blows: '1 Focus Point, bonus action: 2 unarmed strikes (replaces martial
+    arts BA strike).'
+  patient_defense: 'Free: Disengage as BA. Or 1 Focus Point: both Disengage AND Dodge
+    as BA.'
+  step_of_the_wind: 'Free: Dash as BA. Or 1 Focus Point: Dash + Disengage as BA, doubled
+    jump.'
+  unarmored_movement: +10 ft speed at level 2 when not wearing armor or shield.
+  uncanny_metabolism: 'On Initiative roll: regain all Focus Points, heal monk level
+    + martial arts die. 1/long rest.'

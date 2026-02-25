@@ -1,0 +1,123 @@
+# Class Features (Levels 1-2)
+
+# --- Fighter ---
+second_wind:
+  name: Second Wind
+  class: fighter
+  action_type: bonus_action
+  description: Regain 1d10 + fighter level HP
+  healing: "1d10+{level}"
+  resource: second_wind
+  uses: 1
+  recharge: short_rest
+
+action_surge:
+  name: Action Surge
+  class: fighter
+  action_type: free
+  description: Take one additional action this turn
+  resource: action_surge
+  uses: 1
+  recharge: short_rest
+
+weapon_mastery_fighter:
+  name: Weapon Mastery (Fighter)
+  class: fighter
+  slots: 3
+  passive: true
+
+# --- Barbarian ---
+rage:
+  name: Rage
+  class: barbarian
+  action_type: bonus_action
+  description: Enter rage — +2 melee damage, resistance to B/P/S, advantage on STR
+  duration: 10  # rounds
+  damage_bonus: 2
+  resistances: [bludgeoning, piercing, slashing]
+  resource: rage
+  uses: 2
+  recharge: long_rest
+
+unarmored_defense_barbarian:
+  name: Unarmored Defense (Barbarian)
+  class: barbarian
+  passive: true
+  ac_formula: "10 + dex_mod + con_mod"
+
+reckless_attack:
+  name: Reckless Attack
+  class: barbarian
+  action_type: free
+  description: Gain advantage on melee STR attacks this turn; attacks against you have advantage
+  trigger: first_attack_of_turn
+
+danger_sense:
+  name: Danger Sense
+  class: barbarian
+  passive: true
+  description: Advantage on DEX saves you can see
+
+# --- Monk ---
+martial_arts:
+  name: Martial Arts
+  class: monk
+  passive: true
+  description: Use DEX for monk weapons/unarmed, d6 unarmed damage, bonus action unarmed strike
+  unarmed_die: "1d6"
+  bonus_unarmed_strike: true
+
+unarmored_defense_monk:
+  name: Unarmored Defense (Monk)
+  class: monk
+  passive: true
+  ac_formula: "10 + dex_mod + wis_mod"
+
+unarmored_movement:
+  name: Unarmored Movement
+  class: monk
+  passive: true
+  speed_bonus: 10
+
+flurry_of_blows:
+  name: Flurry of Blows
+  class: monk
+  action_type: bonus_action
+  description: Spend 1 Focus Point — make 2 unarmed strikes as bonus action
+  resource: focus_points
+  cost: 1
+  unarmed_strikes: 2
+
+patient_defense:
+  name: Patient Defense
+  class: monk
+  action_type: bonus_action
+  description: Spend 1 Focus Point — Dodge as bonus action
+  resource: focus_points
+  cost: 1
+  effect: dodging
+
+step_of_the_wind:
+  name: Step of the Wind
+  class: monk
+  action_type: bonus_action
+  description: Spend 1 Focus Point — Dash or Disengage as bonus action
+  resource: focus_points
+  cost: 1
+
+# --- Rogue ---
+sneak_attack:
+  name: Sneak Attack
+  class: rogue
+  passive: true
+  description: "Extra 1d6 damage with finesse/ranged when you have advantage or ally adjacent"
+  extra_damage: "1d6"
+  requires_advantage_or_ally: true
+  once_per_turn: true
+
+cunning_action:
+  name: Cunning Action
+  class: rogue
+  action_type: bonus_action
+  description: Dash, Disengage, or Hide as bonus action
+  options: [dash, disengage, hide]

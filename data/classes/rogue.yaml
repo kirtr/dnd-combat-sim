@@ -1,0 +1,29 @@
+name: Rogue
+hit_die: d8
+hp_base: 8
+armor_proficiencies:
+- light
+weapon_proficiencies:
+- simple
+- martial_finesse
+- martial_light
+saving_throws:
+- dexterity
+- intelligence
+weapon_mastery_slots: 2
+features:
+  1:
+  - expertise
+  - sneak_attack
+  - thieves_cant
+  - weapon_mastery_rogue
+  2:
+  - cunning_action
+phb_ref: pp. 128-129
+notes:
+  sneak_attack_2024: 1d6 at levels 1-2. Once per turn. Requires finesse or ranged
+    weapon. Need advantage OR ally within 5ft of target (ally not incapacitated, you
+    not at disadvantage).
+  cunning_action_2024: 'Bonus action: Dash, Disengage, or Hide.'
+  weapon_mastery: 2 slots at level 1.
+  steady_aim_2024: 'Level 3: BA to gain advantage on next attack, speed = 0 for turn.'

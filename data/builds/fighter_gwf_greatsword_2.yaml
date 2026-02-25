@@ -1,0 +1,14 @@
+name: Fighter (GWF Greatsword)
+class: fighter
+level: 2
+species: orc
+background: soldier
+ability_scores: {str: 17, dex: 10, con: 15, int: 8, wis: 12, cha: 8}
+# Soldier bg: +2 STR, +1 CON already applied above
+weapons: [greatsword]
+armor: chain_mail
+shield: false
+fighting_style: great_weapon_fighting
+origin_feat: savage_attacker
+tactic: aggressive
+powers: [second_wind, action_surge]

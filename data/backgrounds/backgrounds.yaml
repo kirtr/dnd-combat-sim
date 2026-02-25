@@ -1,0 +1,106 @@
+# Backgrounds - 2024 PHB Chapter 4 (pp. 177-185)
+# Each background provides: 3 ability score points (+2/+1 or +1/+1/+1),
+# an Origin Feat, 2 skill proficiencies, and 1 tool proficiency.
+
+soldier:
+  name: Soldier
+  ability_scores: Strength, Dexterity, Constitution
+  origin_feat: savage_attacker
+  skills:
+  - athletics
+  - intimidation
+  phb_ref: p. 184
+guard:
+  name: Guard
+  ability_scores: Strength, Intelligence, Wisdom
+  origin_feat: alert
+  skills:
+  - athletics
+  - perception
+  phb_ref: p. 180
+sailor:
+  name: Sailor
+  ability_scores: Strength, Dexterity, Wisdom
+  origin_feat: tavern_brawler
+  skills:
+  - acrobatics
+  - perception
+  phb_ref: p. 183
+criminal:
+  name: Criminal
+  ability_scores: Dexterity, Constitution, Intelligence
+  origin_feat: alert
+  skills:
+  - sleight_of_hand
+  - stealth
+  phb_ref: p. 178
+farmer:
+  name: Farmer
+  ability_scores: Strength, Constitution, Wisdom
+  origin_feat: tough
+  skills:
+  - animal_handling
+  - nature
+  phb_ref: p. 179
+entertainer:
+  name: Entertainer
+  ability_scores: Strength, Dexterity, Charisma
+  origin_feat: musician
+  skills:
+  - acrobatics
+  - performance
+  phb_ref: p. 179
+wayfarer:
+  name: Wayfarer
+  ability_scores: Dexterity, Wisdom, Charisma
+  origin_feat: lucky
+  skills:
+  - insight
+  - stealth
+  phb_ref: p. 184
+hermit:
+  name: Hermit
+  ability_scores: Constitution, Wisdom, Charisma
+  origin_feat: healer
+  skills:
+  - medicine
+  - religion
+  phb_ref: p. 181
+_origin_feats:
+  savage_attacker:
+    name: Savage Attacker
+    description: Once per turn when you hit with a weapon, roll damage dice twice
+      and use either roll. PHB p.200.
+    once_per_turn: true
+  alert:
+    name: Alert
+    description: Add proficiency bonus to Initiative rolls. Can swap Initiative with
+      willing ally. PHB p.199.
+    initiative_bonus: proficiency_bonus
+  tavern_brawler:
+    name: Tavern Brawler
+    description: Unarmed Strike deals 1d4+STR bludgeoning. Reroll 1s on unarmed damage.
+      Push 5ft on hit. Bonus action grapple after unarmed hit. PHB p.201.
+    enhanced_unarmed: true
+    unarmed_die: 1d4
+  tough:
+    name: Tough
+    description: Max HP increases by 2 per level. PHB p.201.
+    hp_bonus_per_level: 2
+  lucky:
+    name: Lucky
+    description: Prof bonus Luck Points per long rest. Spend to roll extra d20 on
+      attack/save/check. PHB p.200.
+    resource: luck_points
+    uses: proficiency_bonus
+    recharge: long_rest
+  healer:
+    name: Healer
+    description: 'Battle Medic: stabilize + 1d6+prof HP. Healing Rerolls: reroll 1s
+      on healing dice. PHB p.200.'
+    combat_effect: minor
+  musician:
+    name: Musician
+    description: 'Inspiring Song: short rest grants temp HP = prof bonus * party size.
+      PHB p.200.'
+    combat_effect: minor

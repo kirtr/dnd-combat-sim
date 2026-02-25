@@ -1,0 +1,40 @@
+# Common actions available to all characters
+
+attack:
+  name: Attack
+  action_type: action
+  description: Make one weapon attack (or more with Extra Attack)
+
+dodge:
+  name: Dodge
+  action_type: action
+  description: Attacks against you have disadvantage until your next turn
+  effect: dodging
+
+dash:
+  name: Dash
+  action_type: action
+  description: Double your movement for this turn
+
+help:
+  name: Help
+  action_type: action
+  description: Give an ally advantage on their next attack or ability check
+
+grapple:
+  name: Grapple
+  action_type: action
+  description: Athletics vs Athletics/Acrobatics to grapple a creature
+  replaces_attack: true
+
+shove:
+  name: Shove
+  action_type: action
+  description: Athletics vs Athletics/Acrobatics to push 5ft or knock prone
+  replaces_attack: true
+
+opportunity_attack:
+  name: Opportunity Attack
+  action_type: reaction
+  trigger: enemy_leaves_reach
+  description: Make one melee attack against creature leaving your reach

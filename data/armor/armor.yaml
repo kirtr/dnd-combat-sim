@@ -1,0 +1,105 @@
+# Armor — 2024 PHB p. 218
+# Source: Player's Handbook 2024, Chapter 6: Equipment
+
+# --- Light Armor (1 minute to don/doff) ---
+
+padded:
+  name: Padded Armor
+  type: light
+  base_ac: 11
+  dex_cap: null  # no cap
+  stealth_disadvantage: true
+
+leather:
+  name: Leather Armor
+  type: light
+  base_ac: 11
+  dex_cap: null
+
+studded_leather:
+  name: Studded Leather Armor
+  type: light
+  base_ac: 12
+  dex_cap: null
+
+# --- Medium Armor (5 min to don, 1 min to doff) ---
+
+hide:
+  name: Hide Armor
+  type: medium
+  base_ac: 12
+  dex_cap: 2
+
+chain_shirt:
+  name: Chain Shirt
+  type: medium
+  base_ac: 13
+  dex_cap: 2
+
+scale_mail:
+  name: Scale Mail
+  type: medium
+  base_ac: 14
+  dex_cap: 2
+  stealth_disadvantage: true
+
+breastplate:
+  name: Breastplate
+  type: medium
+  base_ac: 14
+  dex_cap: 2
+
+half_plate:
+  name: Half Plate Armor
+  type: medium
+  base_ac: 15
+  dex_cap: 2
+  stealth_disadvantage: true
+
+# --- Heavy Armor (10 min to don, 5 min to doff) ---
+
+ring_mail:
+  name: Ring Mail
+  type: heavy
+  base_ac: 14
+  dex_cap: 0
+  stealth_disadvantage: true
+
+chain_mail:
+  name: Chain Mail
+  type: heavy
+  base_ac: 16
+  dex_cap: 0
+  stealth_disadvantage: true
+  strength_required: 13
+
+splint:
+  name: Splint Armor
+  type: heavy
+  base_ac: 17
+  dex_cap: 0
+  stealth_disadvantage: true
+  strength_required: 15
+
+plate:
+  name: Plate Armor
+  type: heavy
+  base_ac: 18
+  dex_cap: 0
+  stealth_disadvantage: true
+  strength_required: 15
+
+# --- Shield ---
+
+shield:
+  name: Shield
+  type: shield
+  ac_bonus: 2
+
+# --- Unarmored ---
+
+unarmored:
+  name: Unarmored
+  type: none
+  base_ac: 10
+  dex_cap: null

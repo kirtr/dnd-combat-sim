@@ -1,0 +1,345 @@
+# Weapons — 2024 PHB pp. 214-215
+# Source: Player's Handbook 2024, Chapter 6: Equipment
+
+# --- Simple Melee Weapons ---
+
+club:
+  name: Club
+  damage: "1d4"
+  damage_type: bludgeoning
+  properties: [light]
+  mastery: slow
+  category: simple
+  range: 5
+
+dagger:
+  name: Dagger
+  damage: "1d4"
+  damage_type: piercing
+  properties: [finesse, light, thrown]
+  mastery: nick
+  category: simple
+  range: 5
+  thrown_range: [20, 60]
+
+greatclub:
+  name: Greatclub
+  damage: "1d8"
+  damage_type: bludgeoning
+  properties: [two_handed]
+  mastery: push
+  category: simple
+  range: 5
+
+handaxe:
+  name: Handaxe
+  damage: "1d6"
+  damage_type: slashing
+  properties: [light, thrown]
+  mastery: vex
+  category: simple
+  range: 5
+  thrown_range: [20, 60]
+
+javelin:
+  name: Javelin
+  damage: "1d6"
+  damage_type: piercing
+  properties: [thrown]
+  mastery: slow
+  category: simple
+  range: 5
+  thrown_range: [30, 120]
+
+light_hammer:
+  name: Light Hammer
+  damage: "1d4"
+  damage_type: bludgeoning
+  properties: [light, thrown]
+  mastery: nick
+  category: simple
+  range: 5
+  thrown_range: [20, 60]
+
+mace:
+  name: Mace
+  damage: "1d6"
+  damage_type: bludgeoning
+  properties: []
+  mastery: sap
+  category: simple
+  range: 5
+
+quarterstaff:
+  name: Quarterstaff
+  damage: "1d6"
+  damage_type: bludgeoning
+  properties: [versatile]
+  versatile_damage: "1d8"
+  mastery: topple
+  category: simple
+  range: 5
+
+sickle:
+  name: Sickle
+  damage: "1d4"
+  damage_type: slashing
+  properties: [light]
+  mastery: nick
+  category: simple
+  range: 5
+
+spear:
+  name: Spear
+  damage: "1d6"
+  damage_type: piercing
+  properties: [thrown, versatile]
+  versatile_damage: "1d8"
+  mastery: sap
+  category: simple
+  range: 5
+  thrown_range: [20, 60]
+
+# --- Simple Ranged Weapons ---
+
+dart:
+  name: Dart
+  damage: "1d4"
+  damage_type: piercing
+  properties: [finesse, thrown]
+  mastery: vex
+  category: simple
+  range: 5
+  thrown_range: [20, 60]
+
+light_crossbow:
+  name: Light Crossbow
+  damage: "1d8"
+  damage_type: piercing
+  properties: [ammunition, loading, two_handed]
+  mastery: slow
+  category: simple
+  range: 80
+  long_range: 320
+
+shortbow:
+  name: Shortbow
+  damage: "1d6"
+  damage_type: piercing
+  properties: [ammunition, two_handed]
+  mastery: vex
+  category: simple
+  range: 80
+  long_range: 320
+
+sling:
+  name: Sling
+  damage: "1d4"
+  damage_type: bludgeoning
+  properties: [ammunition]
+  mastery: slow
+  category: simple
+  range: 30
+  long_range: 120
+
+# --- Martial Melee Weapons ---
+
+battleaxe:
+  name: Battleaxe
+  damage: "1d8"
+  damage_type: slashing
+  properties: [versatile]
+  versatile_damage: "1d10"
+  mastery: topple
+  category: martial
+  range: 5
+
+flail:
+  name: Flail
+  damage: "1d8"
+  damage_type: bludgeoning
+  properties: []
+  mastery: sap
+  category: martial
+  range: 5
+
+glaive:
+  name: Glaive
+  damage: "1d10"
+  damage_type: slashing
+  properties: [heavy, reach, two_handed]
+  mastery: graze
+  category: martial
+  range: 5  # reach adds 5 to attack reach
+
+greataxe:
+  name: Greataxe
+  damage: "1d12"
+  damage_type: slashing
+  properties: [heavy, two_handed]
+  mastery: cleave
+  category: martial
+  range: 5
+
+greatsword:
+  name: Greatsword
+  damage: "2d6"
+  damage_type: slashing
+  properties: [heavy, two_handed]
+  mastery: graze
+  category: martial
+  range: 5
+
+halberd:
+  name: Halberd
+  damage: "1d10"
+  damage_type: slashing
+  properties: [heavy, reach, two_handed]
+  mastery: cleave
+  category: martial
+  range: 5
+
+lance:
+  name: Lance
+  damage: "1d10"
+  damage_type: piercing
+  properties: [heavy, reach, two_handed]
+  mastery: topple
+  category: martial
+  range: 5
+
+longsword:
+  name: Longsword
+  damage: "1d8"
+  damage_type: slashing
+  properties: [versatile]
+  versatile_damage: "1d10"
+  mastery: sap
+  category: martial
+  range: 5
+
+maul:
+  name: Maul
+  damage: "2d6"
+  damage_type: bludgeoning
+  properties: [heavy, two_handed]
+  mastery: topple
+  category: martial
+  range: 5
+
+morningstar:
+  name: Morningstar
+  damage: "1d8"
+  damage_type: piercing
+  properties: []
+  mastery: sap
+  category: martial
+  range: 5
+
+pike:
+  name: Pike
+  damage: "1d10"
+  damage_type: piercing
+  properties: [heavy, reach, two_handed]
+  mastery: push
+  category: martial
+  range: 5
+
+rapier:
+  name: Rapier
+  damage: "1d8"
+  damage_type: piercing
+  properties: [finesse]
+  mastery: vex
+  category: martial
+  range: 5
+
+scimitar:
+  name: Scimitar
+  damage: "1d6"
+  damage_type: slashing
+  properties: [finesse, light]
+  mastery: nick
+  category: martial
+  range: 5
+
+shortsword:
+  name: Shortsword
+  damage: "1d6"
+  damage_type: piercing
+  properties: [finesse, light]
+  mastery: vex
+  category: martial
+  range: 5
+
+trident:
+  name: Trident
+  damage: "1d8"
+  damage_type: piercing
+  properties: [thrown, versatile]
+  versatile_damage: "1d10"
+  mastery: topple
+  category: martial
+  range: 5
+  thrown_range: [20, 60]
+
+warhammer:
+  name: Warhammer
+  damage: "1d8"
+  damage_type: bludgeoning
+  properties: [versatile]
+  versatile_damage: "1d10"
+  mastery: push
+  category: martial
+  range: 5
+
+war_pick:
+  name: War Pick
+  damage: "1d8"
+  damage_type: piercing
+  properties: [versatile]
+  versatile_damage: "1d10"
+  mastery: sap
+  category: martial
+  range: 5
+
+whip:
+  name: Whip
+  damage: "1d4"
+  damage_type: slashing
+  properties: [finesse, reach]
+  mastery: slow
+  category: martial
+  range: 5
+
+# --- Martial Ranged Weapons ---
+
+hand_crossbow:
+  name: Hand Crossbow
+  damage: "1d6"
+  damage_type: piercing
+  properties: [ammunition, light, loading]
+  mastery: vex
+  category: martial
+  range: 30
+  long_range: 120
+
+heavy_crossbow:
+  name: Heavy Crossbow
+  damage: "1d10"
+  damage_type: piercing
+  properties: [ammunition, heavy, loading, two_handed]
+  mastery: push
+  category: martial
+  range: 100
+  long_range: 400
+
+longbow:
+  name: Longbow
+  damage: "1d8"
+  damage_type: piercing
+  properties: [ammunition, heavy, two_handed]
+  mastery: slow
+  category: martial
+  range: 150
+  long_range: 600

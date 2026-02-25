@@ -1,0 +1,12 @@
+name: Rogue (Thief)
+class: rogue
+level: 2
+species: elf
+background: criminal
+ability_scores: {str: 8, dex: 17, con: 14, int: 10, wis: 12, cha: 8}
+weapons: [rapier, shortbow]
+armor: leather
+shield: false
+origin_feat: alert
+tactic: aggressive
+powers: [sneak_attack, cunning_action]

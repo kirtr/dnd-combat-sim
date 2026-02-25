@@ -1,0 +1,106 @@
+# Species - 2024 PHB Chapter 4 (pp. 186-195)
+# Only combat-relevant traits are fully modeled.
+
+human:
+  name: Human
+  size: medium
+  speed: 30
+  traits:
+    resourceful:
+      description: Gain Heroic Inspiration on finishing a Long Rest
+      combat_effect: none
+    skillful:
+      description: Gain proficiency in one additional skill
+      combat_effect: none
+    versatile:
+      description: Gain an Origin feat of your choice
+      combat_effect: none
+orc:
+  name: Orc
+  size: medium
+  speed: 30
+  traits:
+    adrenaline_rush:
+      description: 'Bonus action Dash, gain temp HP equal to proficiency bonus (d6
+        per prof bonus times per long rest in 2024). PHB p.194: dash as BA, gain temp
+        HP = prof bonus * d6'
+      action_type: bonus_action
+      temp_hp: proficiency_bonus
+    darkvision:
+      range: 120
+    relentless_endurance:
+      description: Drop to 1 HP instead of 0 HP, 1/long rest. PHB p.194.
+      resource: relentless_endurance
+      uses: 1
+      recharge: long_rest
+elf:
+  name: Elf
+  size: medium
+  speed: 30
+  traits:
+    darkvision:
+      range: 60
+    fey_ancestry:
+      description: Advantage on saves vs Charmed condition
+    keen_senses:
+      description: Proficiency in Insight, Perception, or Survival skill
+      combat_effect: none
+    trance:
+      description: 4-hour Long Rest equivalent
+      combat_effect: none
+goliath:
+  name: Goliath
+  size: medium
+  speed: 35
+  traits:
+    giant_ancestry:
+      description: 'Cloud Giant (use Reaction when take damage: magically teleport
+        30ft and gain temp HP = prof bonus * d10), Fire Giant (fire damage to adjacents
+        when hit), Frost Giant (Stone''s Endurance Reaction: reduce damage by 1d12+CON
+        mod), Hill Giant (knock Large or smaller prone on hit), Storm Giant (Reaction:
+        force re-roll of attack that hit, use lower). PHB p.191.'
+      options:
+      - cloud
+      - fire
+      - frost
+      - hill
+      - storm
+    large_form:
+      description: Bonus action Large for prof bonus turns, advantage on STR checks,
+        +10 speed. PHB p.191.
+      action_type: bonus_action
+    powerful_build:
+      description: Count as Large for carrying/pushing/dragging/lifting
+      combat_effect: none
+dragonborn:
+  name: Dragonborn
+  size: medium
+  speed: 30
+  traits:
+    breath_weapon:
+      description: 'Action: 15ft cone or 30ft line 5ft wide, DEX/CON save DC = 8+CON+prof,
+        damage = 1d10 (levels 1-4). PHB p.187.'
+      action_type: action
+      damage: 1d10
+      save_dc: 8+con_mod+proficiency_bonus
+      uses: proficiency_bonus
+      recharge: long_rest
+    damage_resistance:
+      description: Resistance to damage type matching ancestry
+    darkvision:
+      range: 60
+halfling:
+  name: Halfling
+  size: small
+  speed: 30
+  traits:
+    brave:
+      description: Advantage on saves vs Frightened
+    halfling_nimbleness:
+      description: Move through space of Medium or larger creature
+      combat_effect: none
+    luck:
+      description: Reroll nat 1 on d20 Tests, must use new roll
+    naturally_stealthy:
+      description: Can hide behind Medium or larger creature
+      combat_effect: none

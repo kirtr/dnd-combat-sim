@@ -1,0 +1,33 @@
+name: Fighter
+hit_die: d10
+hp_base: 10
+armor_proficiencies:
+- light
+- medium
+- heavy
+- shield
+weapon_proficiencies:
+- simple
+- martial
+saving_throws:
+- strength
+- constitution
+weapon_mastery_slots: 3
+features:
+  1:
+  - fighting_style
+  - second_wind
+  - weapon_mastery_fighter
+  2:
+  - action_surge
+  - tactical_mind
+phb_ref: pp. 90-91
+notes:
+  second_wind_2024: 'Uses = 2 at levels 1-3 (from Fighter Features table p.91). Regain
+    1 on short rest, all on long rest. Bonus action: heal 1d10 + fighter level.'
+  action_surge_2024: 1 use, regain on short rest. Take one additional action this
+    turn.
+  weapon_mastery_2024: 3 weapon mastery slots at level 1. Can change choices on long
+    rest.
+  tactical_mind_2024: 'Level 2: add d10 to failed ability check (not modeled in combat
+    sim).'

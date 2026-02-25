@@ -1,0 +1,13 @@
+name: Fighter (Dueling Longsword)
+class: fighter
+level: 2
+species: human
+background: soldier
+ability_scores: {str: 17, dex: 10, con: 15, int: 8, wis: 12, cha: 8}
+weapons: [longsword]
+armor: chain_mail
+shield: true
+fighting_style: dueling
+origin_feat: savage_attacker
+tactic: aggressive
+powers: [second_wind, action_surge]
