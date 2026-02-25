@@ -1,13 +1,25 @@
+# Fighter (Archery Longbow) - Level 2 Build
+
 name: Fighter (Archery Longbow)
 class: fighter
 level: 2
 species: elf
 background: soldier
-ability_scores: {str: 10, dex: 17, con: 15, int: 8, wis: 12, cha: 8}
-weapons: [longbow, shortsword]
-armor: studded_leather
+origin_feat: savage_attacker
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 10
+  wis: 12
+  cha: 8
+weapons:
+- longbow
+- rapier
+armor: chain_shirt
 shield: false
 fighting_style: archery
-origin_feat: savage_attacker
 tactic: aggressive
-powers: [second_wind, action_surge]
+powers:
+- second_wind
+- action_surge

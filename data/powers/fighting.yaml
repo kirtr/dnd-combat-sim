@@ -1,35 +1,68 @@
-# Fighting Styles
-
-great_weapon_fighting:
-  name: Great Weapon Fighting
-  type: fighting_style
-  description: Reroll 1s and 2s on damage dice for two-handed/versatile weapons
-  reroll_damage: [1, 2]
-  requires: two_handed_or_versatile
-
-dueling:
-  name: Dueling
-  type: fighting_style
-  description: +2 damage with one-handed melee weapon (no weapon in other hand)
-  damage_bonus: 2
-  requires: one_handed_no_offhand
-
-defense:
-  name: Defense
-  type: fighting_style
-  description: +1 AC while wearing armor
-  ac_bonus: 1
-  requires: wearing_armor
+# Fighting Styles - 2024 PHB Chapter 5: Feats (pp. 208-209)
+# These are Fighting Style Feats; prerequisite: Fighting Style class feature.
 
 archery:
   name: Archery
   type: fighting_style
-  description: +2 to attack rolls with ranged weapons
+  description: +2 bonus to attack rolls with Ranged weapons. PHB p.208.
   attack_bonus: 2
   requires: ranged_weapon
-
+blind_fighting:
+  name: Blind Fighting
+  type: fighting_style
+  description: Blindsight with range of 10 feet. PHB p.208.
+  blindsight: 10
+defense:
+  name: Defense
+  type: fighting_style
+  description: +1 AC while wearing Light, Medium, or Heavy armor. PHB p.208.
+  ac_bonus: 1
+  requires: wearing_armor
+dueling:
+  name: Dueling
+  type: fighting_style
+  description: +2 bonus to damage rolls when holding Melee weapon in one hand and
+    no other weapons. PHB p.208.
+  damage_bonus: 2
+  requires: one_handed_melee_only
+great_weapon_fighting:
+  name: Great Weapon Fighting
+  type: fighting_style
+  description: 'Treat any 1 or 2 on a damage die as a 3 for Two-Handed or Versatile
+    melee weapons held in two hands. PHB p.208 (2024 CHANGE: no longer reroll, just
+    set minimum to 3).'
+  damage_die_minimum: 3
+  requires: two_handed_or_versatile
+interception:
+  name: Interception
+  type: fighting_style
+  description: 'Reaction: reduce damage to ally within 5ft by 1d10+prof bonus. Need
+    Shield or weapon. PHB p.208.'
+  action_type: reaction
+  damage_reduction: 1d10+proficiency_bonus
+protection:
+  name: Protection
+  type: fighting_style
+  description: 'Reaction: impose disadvantage on attack against ally within 5ft (need
+    Shield). PHB p.208.'
+  action_type: reaction
+  requires: shield
+thrown_weapon_fighting:
+  name: Thrown Weapon Fighting
+  type: fighting_style
+  description: +2 bonus to damage rolls with thrown weapon ranged attacks. PHB p.209.
+  damage_bonus: 2
+  requires: thrown_ranged_attack
 two_weapon_fighting:
   name: Two-Weapon Fighting
   type: fighting_style
-  description: Add ability modifier to off-hand damage
+  description: Add ability modifier to off-hand attack damage (normally not added).
+    PHB p.209.
   offhand_damage_mod: true
+unarmed_fighting:
+  name: Unarmed Fighting
+  type: fighting_style
+  description: 'Unarmed strikes deal 1d6+STR bludgeoning (1d8 if no weapons/shield).
+    Start of turn: 1d4 to grappled creature. PHB p.209.'
+  unarmed_die: 1d6
+  unarmed_die_empty_hands: 1d8

@@ -1,13 +1,25 @@
+# Fighter (Dueling Longsword) - Level 2 Build
+
 name: Fighter (Dueling Longsword)
 class: fighter
 level: 2
 species: human
 background: soldier
-ability_scores: {str: 17, dex: 10, con: 15, int: 8, wis: 12, cha: 8}
-weapons: [longsword]
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- longsword
+- javelin
 armor: chain_mail
 shield: true
 fighting_style: dueling
-origin_feat: savage_attacker
 tactic: aggressive
-powers: [second_wind, action_surge]
+powers:
+- second_wind
+- action_surge

@@ -1,0 +1,28 @@
+# Rogue (Rapier) - Level 2 Build
+# Ability Scores: Point buy 8/15/13/12/10/8, Criminal +2 DEX +1 CON
+# AC: Leather Armor 11 + DEX(3) = 14
+# HP: 8 + 2 (CON) + 5 + 2 (CON) = 17
+# Weapon Mastery: Rapier (Vex), Shortbow (Vex)
+
+name: Rogue (Rapier)
+class: rogue
+level: 2
+species: halfling
+background: criminal
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 12
+  wis: 10
+  cha: 8
+weapons:
+- rapier
+- shortbow
+armor: leather
+shield: false
+tactic: aggressive
+powers:
+- sneak_attack
+- cunning_action

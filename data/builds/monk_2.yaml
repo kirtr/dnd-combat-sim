@@ -1,0 +1,31 @@
+# Monk (Shortsword) - Level 2 Build
+# Ability Scores: Point buy 8/15/14/10/15/8, Guard +2 DEX +1 WIS = 8/16/14/10/16/8
+# AC: Unarmored Defense = 10 + DEX(3) + WIS(3) = 16
+# HP: 8 + 2 (CON) + 5 + 2 (CON) = 17
+# Weapon Mastery: Shortsword (Vex), Dart (Vex)
+
+name: Monk (Shortsword)
+class: monk
+level: 2
+species: human
+background: guard
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 10
+  wis: 16
+  cha: 8
+weapons:
+- shortsword
+- dart
+armor: unarmored
+shield: false
+tactic: aggressive
+powers:
+- martial_arts
+- flurry_of_blows
+- patient_defense
+- step_of_the_wind
+- unarmored_movement

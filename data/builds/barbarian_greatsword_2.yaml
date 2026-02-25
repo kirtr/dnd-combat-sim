@@ -1,0 +1,28 @@
+# Barbarian (Greatsword) - Level 2 Build
+# Ability Scores: Point buy 15/14/15/8/10/8, Soldier +2 STR +1 CON = 16/14/16
+# AC: Unarmored Defense = 10 + DEX(2) + CON(3) = 15
+# HP: 12 + 3 (CON) + 7 + 3 (CON) = 25
+# Weapon Mastery: Greatsword (Graze), Javelin (Slow)
+
+name: Barbarian (Greatsword)
+class: barbarian
+level: 2
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 14
+  con: 16
+  int: 8
+  wis: 10
+  cha: 8
+weapons:
+- greatsword
+- javelin
+armor: unarmored
+shield: false
+tactic: aggressive
+powers:
+- rage
+- reckless_attack

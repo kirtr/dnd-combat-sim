@@ -1,40 +1,43 @@
-# Common actions available to all characters
+# Common Actions - Available to all characters
+# 2024 PHB Rules Glossary
 
 attack:
   name: Attack
   action_type: action
   description: Make one weapon attack (or more with Extra Attack)
-
 dodge:
   name: Dodge
   action_type: action
-  description: Attacks against you have disadvantage until your next turn
+  description: Attacks against you have disadvantage until start of your next turn
   effect: dodging
-
 dash:
   name: Dash
   action_type: action
-  description: Double your movement for this turn
-
+  description: Gain extra movement equal to your speed for this turn
 help:
   name: Help
   action_type: action
-  description: Give an ally advantage on their next attack or ability check
-
+  description: Give an ally advantage on next attack or ability check against target
+    within 5ft
 grapple:
   name: Grapple
   action_type: action
-  description: Athletics vs Athletics/Acrobatics to grapple a creature
+  description: Replaces one attack. Athletics vs Athletics/Acrobatics to grapple.
+    Target speed = 0.
   replaces_attack: true
-
 shove:
   name: Shove
   action_type: action
-  description: Athletics vs Athletics/Acrobatics to push 5ft or knock prone
+  description: Replaces one attack. Athletics vs Athletics/Acrobatics to push 5ft
+    or knock prone.
   replaces_attack: true
-
+use_object:
+  name: Use Object
+  action_type: action
+  description: Interact with an object (drink potion, etc.)
 opportunity_attack:
   name: Opportunity Attack
   action_type: reaction
   trigger: enemy_leaves_reach
-  description: Make one melee attack against creature leaving your reach
+  description: Make one melee attack against creature leaving your reach (not in v1
+    sim)

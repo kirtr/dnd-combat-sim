@@ -1,8 +1,29 @@
 """Action resolution: attack rolls, damage, class features."""
 
 from __future__ import annotations
-from .models import Character, Weapon, CombatState, DamageType, ActiveEffect, Condition
-from .dice import d20, eval_dice, eval_dice_twice_take_best
+
+from dataclasses import dataclass
+
+from sim.models import (
+    Character,
+    Weapon,
+    CombatState,
+    DamageType,
+    ActiveEffect,
+    Condition,
+    MasteryProperty,
+)
+from sim.dice import d20, eval_dice, eval_dice_twice_take_best
+
+
+@dataclass
+class AttackResult:
+    hit: bool
+    critical: bool
+    damage: int
+    damage_type: DamageType
+    attack_roll: int
+    target_ac: int
 
 
 def resolve_attack(
@@ -13,8 +34,8 @@ def resolve_attack(
     *,
     is_thrown: bool = False,
     is_unarmed: bool = False,
-) -> None:
-    """Resolve a single attack, apply damage, and log the result."""
+) -> AttackResult:
+    """Resolve a single attack, apply damage, log, and return result."""
     # Determine advantage / disadvantage
     adv = _has_advantage(attacker, defender)
     disadv = _has_disadvantage(attacker, defender)
@@ -28,15 +49,19 @@ def resolve_attack(
     roll_result = d20(advantage=adv, disadvantage=disadv)
     is_crit = roll_result == 20
     total = roll_result + attack_bonus
+    target_ac = defender.effective_ac
 
+    # Natural 1 auto-miss (but check Graze)
     if roll_result == 1:
-        # Auto-miss, but check Graze mastery
-        graze = _try_graze(attacker, weapon, defender, state)
-        if not graze:
+        graze_dmg = _try_graze(attacker, weapon, defender, state)
+        if graze_dmg == 0:
             state.log(f"  {attacker.name} attacks with {weapon.name}: MISS (nat 1)")
-        return
+        return AttackResult(
+            hit=False, critical=False, damage=graze_dmg,
+            damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
+        )
 
-    if is_crit or total >= defender.effective_ac:
+    if is_crit or total >= target_ac:
         # HIT
         damage = _calc_damage(attacker, weapon, is_crit, is_unarmed, is_thrown)
 
@@ -46,25 +71,33 @@ def resolve_attack(
 
         actual = defender.take_damage(damage, weapon.damage_type)
 
-        # Vex: grant advantage on next attack vs this target
-        if not is_unarmed and _can_use_mastery(attacker, weapon, "vex"):
-            attacker.vex_target = defender.name
+        # Weapon Mastery on hit
+        if not is_unarmed and attacker.can_use_mastery(weapon):
+            _apply_mastery_on_hit(attacker, defender, weapon, state)
 
         crit_str = " CRIT!" if is_crit else ""
         sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
         state.log(
             f"  {attacker.name} attacks with {weapon.name}:{crit_str} HIT"
-            f" ({total} vs AC {defender.effective_ac}) for {actual} damage{sa_str}"
+            f" ({total} vs AC {target_ac}) for {actual} damage{sa_str}"
             f" ({defender.current_hp}/{defender.max_hp} HP)"
+        )
+        return AttackResult(
+            hit=True, critical=is_crit, damage=damage,
+            damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
         )
     else:
         # MISS — check Graze mastery
-        graze = _try_graze(attacker, weapon, defender, state)
-        if not graze:
+        graze_dmg = _try_graze(attacker, weapon, defender, state)
+        if graze_dmg == 0:
             state.log(
                 f"  {attacker.name} attacks with {weapon.name}:"
-                f" MISS ({total} vs AC {defender.effective_ac})"
+                f" MISS ({total} vs AC {target_ac})"
             )
+        return AttackResult(
+            hit=False, critical=False, damage=graze_dmg,
+            damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -80,13 +113,15 @@ def _calc_damage(
     if is_unarmed:
         dice_expr = attacker.martial_arts_die or "1"
 
-    # GWF: treat 1s and 2s as 3s on damage dice
+    # GWF: treat 1s and 2s as 3s on damage dice (2024 rules)
     gwf_min = None
     if (attacker.fighting_style == "great_weapon_fighting"
-            and weapon.is_two_handed and not is_unarmed):
-        gwf_min = 3  # 2024 GWF: treat 1-2 as 3
+            and (weapon.is_two_handed or weapon.is_versatile)
+            and weapon.is_melee
+            and not is_unarmed):
+        gwf_min = 3
 
-    # Savage Attacker: roll dice twice, take best
+    # Savage Attacker: roll dice twice, take best (once per turn)
     if attacker.has_savage_attacker and not getattr(attacker, "_savage_used_this_turn", False):
         base_result = eval_dice_twice_take_best(dice_expr, minimum=gwf_min)
         attacker._savage_used_this_turn = True  # type: ignore[attr-defined]
@@ -135,28 +170,64 @@ def _try_sneak_attack(attacker: Character, is_crit: bool, had_advantage: bool) -
 # Weapon Mastery helpers
 # ---------------------------------------------------------------------------
 
-def _can_use_mastery(attacker: Character, weapon: Weapon, mastery_name: str) -> bool:
-    if weapon.mastery and weapon.mastery.value == mastery_name:
-        return attacker.can_use_mastery(weapon)
-    return False
+def _apply_mastery_on_hit(
+    attacker: Character, defender: Character,
+    weapon: Weapon, state: CombatState,
+) -> None:
+    """Apply weapon mastery effects after a successful hit."""
+    mastery = weapon.mastery
+    if mastery is None:
+        return
+
+    if mastery == MasteryProperty.VEX:
+        attacker.vex_target = defender.name
+        state.log(f"  Vex: advantage on next attack vs {defender.name}")
+
+    elif mastery == MasteryProperty.SAP:
+        defender.active_effects.append(ActiveEffect(
+            name="Sapped",
+            source=weapon.name,
+            end_trigger="start_of_turn",
+            disadvantage_on_attacks=True,
+        ))
+        state.log(f"  Sap: {defender.name} has disadvantage on next attack")
+
+    elif mastery == MasteryProperty.SLOW:
+        state.log(f"  Slow: {defender.name}'s speed reduced by 10 ft")
+
+    elif mastery == MasteryProperty.TOPPLE:
+        ability_mod = attacker._attack_ability_mod(weapon)
+        dc = 8 + ability_mod + attacker.proficiency_bonus
+        save_roll = d20() + defender.con_mod
+        if save_roll < dc:
+            defender.conditions.add(Condition.PRONE)
+            state.log(f"  Topple: {defender.name} falls prone! (save {save_roll} vs DC {dc})")
+        else:
+            state.log(f"  Topple: {defender.name} resists (save {save_roll} vs DC {dc})")
+
+    elif mastery == MasteryProperty.PUSH:
+        state.distance = min(120, state.distance + 10)
+        state.log(f"  Push: {defender.name} pushed 10 ft (distance: {state.distance} ft)")
 
 
 def _try_graze(
     attacker: Character, weapon: Weapon,
     defender: Character, state: CombatState,
-) -> bool:
-    """Apply Graze mastery on a miss. Returns True if graze damage applied."""
-    if not _can_use_mastery(attacker, weapon, "graze"):
-        return False
-    graze_dmg = max(0, attacker.damage_modifier(weapon))
+) -> int:
+    """Apply Graze mastery on a miss. Returns damage dealt (0 if no graze)."""
+    if not weapon.mastery or weapon.mastery != MasteryProperty.GRAZE:
+        return 0
+    if not attacker.can_use_mastery(weapon):
+        return 0
+    graze_dmg = max(0, attacker._attack_ability_mod(weapon))
     if graze_dmg > 0:
         actual = defender.take_damage(graze_dmg, weapon.damage_type)
         state.log(
             f"  {attacker.name} attacks with {weapon.name}: GRAZE for {actual} damage"
             f" ({defender.current_hp}/{defender.max_hp} HP)"
         )
-        return True
-    return False
+        return actual
+    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -177,7 +248,11 @@ def _has_advantage(attacker: Character, defender: Character) -> bool:
 
 def _has_disadvantage(attacker: Character, defender: Character) -> bool:
     """Check all sources of disadvantage."""
-    return defender.is_dodging
+    if defender.is_dodging:
+        return True
+    if any(e.disadvantage_on_attacks for e in attacker.active_effects):
+        return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +274,6 @@ def do_second_wind(char: Character, state: CombatState) -> None:
 def do_dodge(char: Character, state: CombatState) -> None:
     """Take the Dodge action (or as part of Patient Defense)."""
     char.conditions.add(Condition.DODGING)
-    state.log(f"  {char.name} takes the Dodge action")
 
 
 def do_dash(char: Character, state: CombatState) -> None:
