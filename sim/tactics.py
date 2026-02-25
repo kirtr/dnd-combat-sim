@@ -85,6 +85,30 @@ class PriorityTactics(TacticsEngine):
         if "reckless_attack" in char.features and in_melee:
             actions.append(TurnAction(kind="reckless"))
 
+        # --- Goliath: Large Form on first turn if not in melee ---
+        if ("large_form" in char.species_traits
+                and not any(e.name == "Large Form" for e in char.active_effects)
+                and not char.bonus_action_used):
+            # Use if not in melee (speed boost helps close) or round 1
+            if not in_melee:
+                actions.append(TurnAction(kind="large_form"))
+
+        # --- Orc: Adrenaline Rush when not in melee (close distance) or when hurt ---
+        if "adrenaline_rush" in char.species_traits and not char.bonus_action_used:
+            res = char.resources.get("adrenaline_rush")
+            if res and res.available:
+                hp_pct = char.current_hp / char.max_hp
+                if not in_melee or hp_pct < 0.5:
+                    actions.append(TurnAction(kind="adrenaline_rush"))
+
+        # --- Dragonborn: Breath Weapon at range (only if in range and not in melee) ---
+        if "breath_weapon" in char.species_traits:
+            res = char.resources.get("breath_weapon")
+            shape = getattr(char, "breath_weapon_shape", "cone")
+            bw_range = 15 if shape == "cone" else 30
+            if res and res.available and not in_melee and distance <= bw_range:
+                actions.append(TurnAction(kind="breath_weapon"))
+
         # --- Ranged attack if not in melee and have ranged weapon ---
         if not in_melee and has_ranged:
             rw = char.best_ranged_weapon()

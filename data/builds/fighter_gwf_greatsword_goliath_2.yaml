@@ -1,0 +1,27 @@
+# Fighter (GWF Greatsword Goliath) - Level 2 Build
+# Goliath with Frost Giant ancestry (Stone's Endurance)
+
+name: Fighter (GWF Greatsword Goliath)
+class: fighter
+level: 2
+species: goliath
+giant_ancestry: frost
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- greatsword
+- javelin
+armor: chain_mail
+shield: false
+fighting_style: great_weapon_fighting
+tactic: aggressive
+powers:
+- second_wind
+- action_surge

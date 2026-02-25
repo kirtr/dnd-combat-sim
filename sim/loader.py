@@ -222,12 +222,28 @@ def load_build(path: str | Path) -> Character:
     if "adrenaline_rush" in species_traits:
         resources["adrenaline_rush"] = Resource("Adrenaline Rush", prof_bonus, prof_bonus, "short_rest")
 
-    # Stone's Endurance (Goliath)
-    if "stones_endurance" in species_traits:
+    # Stone's Endurance (Goliath with Frost Giant ancestry)
+    giant_ancestry_val = build.get("giant_ancestry", "")
+    if giant_ancestry_val == "frost":
         resources["stones_endurance"] = Resource("Stone's Endurance", prof_bonus, prof_bonus, "long_rest")
 
+    # Breath Weapon (Dragonborn)
+    if "breath_weapon" in species_traits:
+        resources["breath_weapon"] = Resource("Breath Weapon", prof_bonus, prof_bonus, "long_rest")
+
+    # Lucky feat resource (origin feat)
+    origin_feat_name = build.get("origin_feat", "")
+
+    # Tough feat: +2 HP per level
+    if origin_feat_name == "tough":
+        max_hp += 2 * level
+
+    # Lucky feat: PB luck points per long rest
+    if origin_feat_name == "lucky":
+        resources["luck_points"] = Resource("Luck Points", prof_bonus, prof_bonus, "long_rest")
+
     # Origin feat
-    origin_feat = build.get("origin_feat", "")
+    origin_feat = origin_feat_name
     has_savage_attacker = origin_feat == "savage_attacker"
 
     # Initiative bonus
@@ -250,6 +266,15 @@ def load_build(path: str | Path) -> Character:
     if build.get("shield", False):
         features.append("shield")
 
+    # Giant ancestry (Goliath)
+    giant_ancestry = build.get("giant_ancestry", "")
+
+    # Breath weapon config (Dragonborn)
+    breath_weapon_shape = build.get("breath_weapon_shape", "cone")
+    bw_damage_type_str = build.get("breath_weapon_damage_type", "fire")
+    from sim.models import DamageType as _DT
+    bw_damage_type = _DT[bw_damage_type_str.upper()] if bw_damage_type_str else _DT.FIRE
+
     char = Character(
         name=build.get("name", "Unknown"),
         level=level,
@@ -271,6 +296,10 @@ def load_build(path: str | Path) -> Character:
         sneak_attack_dice=sneak_attack_dice,
         martial_arts_die=martial_arts_die,
         species_traits=species_traits,
+        origin_feat=origin_feat,
+        giant_ancestry=giant_ancestry,
+        breath_weapon_shape=breath_weapon_shape,
+        breath_weapon_damage_type=bw_damage_type,
     )
     return char
 

@@ -1,0 +1,28 @@
+# Fighter (GWF Greatsword Dragonborn) - Level 2 Build
+# Red Dragonborn with fire breath weapon
+
+name: Fighter (GWF Greatsword Dragonborn)
+class: fighter
+level: 2
+species: dragonborn
+breath_weapon_shape: cone
+breath_weapon_damage_type: fire
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- greatsword
+- javelin
+armor: chain_mail
+shield: false
+fighting_style: great_weapon_fighting
+tactic: aggressive
+powers:
+- second_wind
+- action_surge

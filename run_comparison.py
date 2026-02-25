@@ -12,6 +12,10 @@ BUILDS_DIR = Path(__file__).parent / "data" / "builds"
 
 ALL_BUILDS = [
     "fighter_gwf_greatsword_2",
+    "fighter_gwf_greatsword_orc_2",
+    "fighter_gwf_greatsword_goliath_2",
+    "fighter_gwf_greatsword_dragonborn_2",
+    "fighter_tough_2",
     "fighter_dueling_longsword_2",
     "fighter_defense_greatsword_2",
     "fighter_archery_longbow_2",
@@ -20,6 +24,7 @@ ALL_BUILDS = [
     "monk_2",
     "rogue_rapier_2",
     "rogue_dual_wield_2",
+    "rogue_dual_wield_halfling_2",
 ]
 
 N = 10000

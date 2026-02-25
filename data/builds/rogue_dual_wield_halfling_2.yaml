@@ -1,0 +1,26 @@
+# Rogue (Dual Wield Halfling) - Level 2 Build
+# Halfling with Luck trait (reroll nat 1s)
+
+name: Rogue (Dual Wield Halfling)
+class: rogue
+level: 2
+species: halfling
+background: criminal
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 12
+  wis: 10
+  cha: 8
+weapons:
+- scimitar
+- shortsword
+- shortbow
+armor: leather
+shield: false
+tactic: aggressive
+powers:
+- sneak_attack
+- cunning_action

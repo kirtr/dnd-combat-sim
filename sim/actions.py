@@ -48,6 +48,13 @@ def resolve_attack(
         attack_bonus = attacker.attack_modifier(weapon)
 
     roll_result = d20(advantage=adv, disadvantage=disadv)
+
+    # Halfling Luck: reroll natural 1s on d20 attack rolls
+    if roll_result == 1 and "luck" in attacker.species_traits:
+        reroll = d20()
+        state.log(f"  Halfling Luck: rerolled nat 1 -> {reroll}")
+        roll_result = reroll  # must use new roll
+
     is_crit = roll_result == 20
     total = roll_result + attack_bonus
     target_ac = defender.effective_ac
@@ -70,7 +77,7 @@ def resolve_attack(
         sa_dmg = _try_sneak_attack(attacker, is_crit, adv and not disadv)
         damage += sa_dmg
 
-        actual = defender.take_damage(damage, weapon.damage_type)
+        actual = defender.take_damage(damage, weapon.damage_type, state)
 
         # Weapon Mastery on hit
         if not is_unarmed and attacker.can_use_mastery(weapon):
@@ -88,6 +95,37 @@ def resolve_attack(
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
         )
     else:
+        # Lucky feat: on miss, spend a luck point to reroll
+        luck_res = attacker.resources.get("luck_points")
+        if luck_res and luck_res.available:
+            luck_res.spend()
+            luck_roll = d20(advantage=adv, disadvantage=disadv)
+            # Halfling Luck on the lucky reroll too
+            if luck_roll == 1 and "luck" in attacker.species_traits:
+                luck_roll = d20()
+            luck_total = luck_roll + attack_bonus
+            state.log(f"  Lucky feat: rerolled {total} -> {luck_total}")
+            if luck_roll == 20 or luck_total >= target_ac:
+                # Now it's a hit! Recalculate
+                is_crit2 = luck_roll == 20
+                damage = _calc_damage(attacker, weapon, is_crit2, is_unarmed, is_thrown, is_nick_attack)
+                sa_dmg = _try_sneak_attack(attacker, is_crit2, adv and not disadv)
+                damage += sa_dmg
+                actual = defender.take_damage(damage, weapon.damage_type, state)
+                if not is_unarmed and attacker.can_use_mastery(weapon):
+                    _apply_mastery_on_hit(attacker, defender, weapon, state)
+                crit_str = " CRIT!" if is_crit2 else ""
+                sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
+                state.log(
+                    f"  {attacker.name} attacks with {weapon.name}:{crit_str} HIT (Lucky)"
+                    f" ({luck_total} vs AC {target_ac}) for {actual} damage{sa_str}"
+                    f" ({defender.current_hp}/{defender.max_hp} HP)"
+                )
+                return AttackResult(
+                    hit=True, critical=is_crit2, damage=damage,
+                    damage_type=weapon.damage_type, attack_roll=luck_total, target_ac=target_ac,
+                )
+
         # MISS — check Graze mastery
         graze_dmg = _try_graze(attacker, weapon, defender, state)
         if graze_dmg == 0:
@@ -226,7 +264,7 @@ def _try_graze(
         return 0
     graze_dmg = max(0, attacker._attack_ability_mod(weapon))
     if graze_dmg > 0:
-        actual = defender.take_damage(graze_dmg, weapon.damage_type)
+        actual = defender.take_damage(graze_dmg, weapon.damage_type, state)
         state.log(
             f"  {attacker.name} attacks with {weapon.name}: GRAZE for {actual} damage"
             f" ({defender.current_hp}/{defender.max_hp} HP)"

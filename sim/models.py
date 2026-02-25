@@ -209,6 +209,10 @@ class Character:
     sneak_attack_used: bool = False
     martial_arts_die: str | None = None   # e.g. "1d6"
     species_traits: dict[str, Any] = field(default_factory=dict)
+    origin_feat: str = ""
+    giant_ancestry: str = ""  # cloud/fire/frost/hill/storm
+    breath_weapon_shape: str = "cone"  # cone or line
+    breath_weapon_damage_type: DamageType = DamageType.FIRE
 
     # --- Per-combat state ---
     current_hp: int = 0
@@ -360,11 +364,26 @@ class Character:
             self.active_effects.remove(e)
         self.reaction_used = False
 
-    def take_damage(self, amount: int, damage_type: DamageType) -> int:
-        """Apply damage, respecting resistances and temp HP. Returns actual damage."""
+    def take_damage(self, amount: int, damage_type: DamageType, state: Any = None) -> int:
+        """Apply damage, respecting resistances, temp HP, and reactions. Returns actual damage."""
         resisted = any(damage_type in e.damage_resistance for e in self.active_effects)
         if resisted:
             amount = amount // 2
+
+        # Stone's Endurance (Goliath Frost Giant) — reaction to reduce damage
+        if (not self.reaction_used
+                and self.giant_ancestry == "frost"
+                and "stones_endurance" in self.resources):
+            res = self.resources["stones_endurance"]
+            if res.available:
+                from sim.dice import eval_dice
+                reduction = eval_dice("1d12").total + self.con_mod
+                reduction = max(0, reduction)
+                amount = max(0, amount - reduction)
+                res.spend()
+                self.reaction_used = True
+                if state:
+                    state.log(f"  {self.name} uses Stone's Endurance, reducing damage by {reduction}")
 
         # Absorb with temp HP first
         if self.temp_hp > 0:
@@ -373,6 +392,16 @@ class Character:
             amount -= absorbed
 
         self.current_hp = max(0, self.current_hp - amount)
+
+        # Relentless Endurance (Orc) — drop to 1 HP instead of 0
+        if self.current_hp == 0 and "relentless_endurance" in self.resources:
+            res = self.resources["relentless_endurance"]
+            if res.available:
+                res.spend()
+                self.current_hp = 1
+                if state:
+                    state.log(f"  {self.name} uses Relentless Endurance! Drops to 1 HP instead of 0!")
+
         return amount
 
     def heal(self, amount: int) -> int:

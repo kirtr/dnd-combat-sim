@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sim.dice import d20, eval_dice
+from sim.dice import d20, eval_dice, roll
 from sim.models import Character, CombatState, Condition, ActiveEffect, DamageType, MasteryProperty
 from sim.actions import resolve_attack, do_second_wind, do_dash, do_dodge
 from sim.effects import apply_rage, apply_reckless_attack
@@ -125,6 +125,16 @@ def _execute_turn(
 
         elif action.kind == "patient_defense":
             _do_patient_defense(char, state)
+
+        elif action.kind == "adrenaline_rush":
+            _do_adrenaline_rush(char, opponent, state)
+
+        elif action.kind == "large_form":
+            _do_large_form(char, state)
+
+        elif action.kind == "breath_weapon":
+            if not char.action_used:
+                _do_breath_weapon(char, opponent, state)
 
     char.end_turn()
 
@@ -324,6 +334,74 @@ def _do_patient_defense(char: Character, state: CombatState) -> None:
     char.bonus_action_used = True
     do_dodge(char, state)
     state.log(f"  {char.name} uses Patient Defense!")
+
+
+def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState) -> None:
+    """Orc Adrenaline Rush: bonus action Dash + gain temp HP = proficiency bonus."""
+    if char.bonus_action_used:
+        return
+    res = char.resources.get("adrenaline_rush")
+    if not res or not res.available:
+        return
+    res.spend()
+    char.bonus_action_used = True
+    # Dash
+    char.movement_remaining += char.speed
+    # Temp HP = proficiency bonus (2024 PHB: PB temp HP)
+    temp_hp = char.proficiency_bonus
+    char.gain_temp_hp(temp_hp)
+    state.log(f"  {char.name} uses Adrenaline Rush! Dash + {temp_hp} temp HP")
+    # Now move closer
+    if state.distance > 5:
+        move = min(char.movement_remaining, state.distance - 5)
+        if move > 0:
+            state.distance -= move
+            char.movement_remaining -= move
+            char.has_moved = True
+            state.log(f"  {char.name} rushes {move} ft closer (distance: {state.distance} ft)")
+
+
+def _do_large_form(char: Character, state: CombatState) -> None:
+    """Goliath Large Form: bonus action, become Large for PB turns, +10 speed."""
+    if char.bonus_action_used:
+        return
+    # Check if already in large form
+    if any(e.name == "Large Form" for e in char.active_effects):
+        return
+    char.bonus_action_used = True
+    char.active_effects.append(ActiveEffect(
+        name="Large Form",
+        source="goliath",
+        duration=char.proficiency_bonus,
+    ))
+    char.speed += 10
+    char.movement_remaining += 10
+    state.log(f"  {char.name} grows to Large size! (+10 speed for {char.proficiency_bonus} rounds)")
+
+
+def _do_breath_weapon(char: Character, opponent: Character, state: CombatState) -> None:
+    """Dragonborn Breath Weapon: action, DEX save, 1d10 damage."""
+    res = char.resources.get("breath_weapon")
+    if not res or not res.available:
+        return
+    # Check range: cone 15ft or line 30ft
+    shape = getattr(char, "breath_weapon_shape", "cone")
+    max_range = 15 if shape == "cone" else 30
+    if state.distance > max_range:
+        return
+    res.spend()
+    char.action_used = True
+    dc = 8 + char.con_mod + char.proficiency_bonus
+    save_roll = d20() + opponent.dex_mod
+    damage_roll = eval_dice("1d10").total
+    dmg_type = getattr(char, "breath_weapon_damage_type", DamageType.FIRE)
+    if save_roll >= dc:
+        damage_roll = damage_roll // 2
+        actual = opponent.take_damage(damage_roll, dmg_type, state)
+        state.log(f"  {char.name} uses Breath Weapon! {opponent.name} saves (roll {save_roll} vs DC {dc}), takes {actual} half damage")
+    else:
+        actual = opponent.take_damage(damage_roll, dmg_type, state)
+        state.log(f"  {char.name} uses Breath Weapon! {opponent.name} fails save (roll {save_roll} vs DC {dc}), takes {actual} damage")
 
 
 # ---------------------------------------------------------------------------

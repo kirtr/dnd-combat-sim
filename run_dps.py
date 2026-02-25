@@ -174,12 +174,17 @@ def _resolve_single_attack(char: Character, weapon: Weapon, target_ac: int,
 def main():
     builds = [
         "fighter_gwf_greatsword_2",
+        "fighter_gwf_greatsword_orc_2",
+        "fighter_gwf_greatsword_goliath_2",
+        "fighter_gwf_greatsword_dragonborn_2",
+        "fighter_tough_2",
         "fighter_dueling_longsword_2", 
         "fighter_defense_greatsword_2",
         "fighter_twf_shortswords_2",
         "fighter_archery_longbow_2",
         "rogue_rapier_2",
         "rogue_dual_wield_2",
+        "rogue_dual_wield_halfling_2",
     ]
     
     # Standard AC: fighter with no defense bonus = chain mail AC 16
