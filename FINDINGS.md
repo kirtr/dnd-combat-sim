@@ -1,149 +1,118 @@
-# D&D 2024 Combat Simulator — Phase 1 Findings
+# D&D 2024 Combat Simulator — Phase 1 Findings (Updated)
 
 **Sim Parameters:** 10,000 combats per matchup, 1v1, start at 60ft, aggressive tactics, level 2 builds.
+
+**Update (Phase 1.5):** Added Two-Weapon Fighting with Nick mastery, Vex mastery fix, and dual-wield builds.
 
 ## Overall Rankings (Level 2, by avg win rate across all matchups)
 
 | Rank | Build | Avg Win Rate | HP | AC | Key Feature |
 |------|-------|-------------|----|----|-------------|
-| 1 | **Barbarian (Greatsword)** | **87.9%** | 25 | 15 | Rage (half damage), Reckless Attack |
-| 2 | Fighter (Defense Greatsword) | 54.9% | 20 | 17 | +1 AC from style, greatsword damage |
-| 3 | Fighter (Dueling Longsword) | 54.0% | 20 | 18 | Highest AC (shield), +2 flat damage |
-| 4 | Fighter (GWF Greatsword) | 52.6% | 20 | 16 | Reroll low damage dice |
-| 5 | Monk (Shortsword) | 45.0% | 17 | 16 | Flurry of Blows, extra attacks |
-| 6 | Fighter (Archery Longbow) | 41.3% | 20 | 15 | +2 to hit at range |
-| 7 | Rogue (Rapier) | 14.4% | 17 | 14 | Sneak Attack (needs advantage) |
+| 1 | **Barbarian (Greatsword)** | **88.8%** | 25 | 15 | Rage (half damage), Reckless Attack |
+| 2 | Fighter (Dueling Longsword) | 59.7% | 20 | 18 | Highest AC (shield), +2 flat damage |
+| 3 | Fighter (Defense Greatsword) | 59.7% | 20 | 17 | +1 AC from style, greatsword damage |
+| 4 | **Fighter (TWF Scimitar+SS)** | **58.2%** | 20 | 16 | Nick mastery = 2 attacks/turn + Vex |
+| 5 | Fighter (GWF Greatsword) | 57.4% | 20 | 16 | Reroll low damage dice |
+| 6 | Fighter (Archery Longbow) | 45.2% | 20 | 15 | +2 to hit at range |
+| 7 | Monk (Shortsword) | 42.8% | 17 | 16 | Flurry of Blows, extra attacks |
+| 8 | **Rogue (Dual Wield)** | **20.1%** | 17 | 14 | Nick = 2 SA chances per turn |
+| 9 | Rogue (Rapier) | 18.0% | 17 | 14 | Sneak Attack (needs advantage) |
+
+## What Changed: TWF & Nick Mastery Implementation
+
+### How Nick Mastery Works (2024 PHB)
+- Attack with a **Nick weapon** (Scimitar, Dagger, Light Hammer, Sickle) → get an **extra attack** with a different **Light weapon** as part of the same Attack action
+- The extra attack does **NOT** add ability modifier to damage unless you have **Two-Weapon Fighting style**
+- This is NOT a bonus action — it's part of the Attack action, leaving bonus action free
+
+### Key Implementation Details
+- Vex mastery now properly consumed after one attack (was persisting incorrectly before)
+- Tactics engine prefers Nick weapons as main attack to trigger the extra offhand attack
+- Action Surge also triggers Nick extra attacks on the surge action
+
+## New Build Analysis
+
+### Fighter TWF (Scimitar + Shortsword) — 58.2% avg win rate
+
+**Setup:** Scimitar (Nick) + Shortsword (Vex), TWF style, chain mail AC 16
+
+The TWF Fighter is **competitive with other melee fighter styles**, ranking 4th overall:
+- Beats GWF head-to-head: **52.7% vs 47.3%** — Nick's extra attack compensates for lower per-hit damage
+- Loses to Dueling: **46.3% vs 53.7%** — AC 18 shield is hard to overcome with d6 weapons
+- Loses to Defense: **48.3% vs 51.7%** — same issue, greatsword damage + AC 17 edge
+- Crushes Archery: **66.9% vs 33.1%**
+
+**Why TWF works now:** With Nick mastery, the TWF Fighter effectively gets 2 attacks per turn (3 on Action Surge turns) at level 2, while other fighters get 1 (2 on surge). Each attack is 1d6+3 (6.5 avg) with TWF style adding ability mod. Scimitar hit → Nick extra Shortsword attack → Vex on hit gives advantage on next turn's first attack.
+
+**The attack chain:**
+1. Attack with Scimitar (Nick) — 1d6+3
+2. Nick triggers extra Shortsword (Vex) attack — 1d6+3 (TWF style adds STR mod)
+3. If Shortsword hits: Vex gives advantage on next turn's first attack
+4. On Action Surge turns: another Scimitar attack + another Nick Shortsword attack = 4 attacks total
+
+### Rogue (Dual Wield) vs Rogue (Rapier) — 53.6% vs 46.4%
+
+**Dual Wield Rogue (Scimitar + Shortsword):** 20.1% avg win rate
+**Single Rapier Rogue:** 18.0% avg win rate
+
+The dual-wield Rogue is **modestly better** than the rapier Rogue:
+- Head-to-head: Dual Wield wins **53.6%** of the time
+- Better average win rate across all matchups: **20.1% vs 18.0%** (+2.1%)
+
+**Why it helps but doesn't transform:** The Rogue's core problem in 1v1 is needing advantage for Sneak Attack. Nick gives a second attack (two chances to trigger SA via Cunning Action: Hide), but each individual attack deals less damage (1d6 vs 1d8 rapier) and the Nick attack doesn't add DEX to damage (no TWF style). The improvement is real but modest — an extra ~2% win rate.
+
+**The math:**
+- Rapier Rogue: 1 attack at 1d8+3, one chance for SA
+- Dual Wield Rogue: Scimitar 1d6+3 + Nick Shortsword 1d6 (no DEX), two chances for SA
+- Extra SA chance matters more than the lower per-hit damage
+
+### TWF vs Other Fighter Styles — Head-to-Head
+
+| Matchup | TWF Win% | Opponent Win% |
+|---------|----------|---------------|
+| TWF vs GWF | **52.7%** | 47.3% |
+| TWF vs Dueling | 46.3% | **53.7%** |
+| TWF vs Defense | 48.3% | **51.7%** |
+| TWF vs Archery | **66.9%** | 33.1% |
+
+TWF beats GWF and Archery, loses to Dueling and Defense. The shield builds (Dueling AC 18) and higher-AC greatsword builds (Defense AC 17) punish TWF's lower per-hit damage — more attacks mean more chances to miss against high AC.
 
 ## Key Takeaways
 
-### Barbarian is King at Level 2
-The Barbarian's **87.9% average win rate** is dominant — not even close. Two factors:
-- **Rage resistance** effectively doubles HP vs physical damage (25 HP becomes ~50 effective HP)
-- **Reckless Attack** grants reliable advantage, boosting hit rate significantly
-- 25 HP base (d12 hit die + 16 CON) is the highest pool
+### Barbarian is Still King at Level 2
+88.8% average win rate, dominant across the board. Rage resistance + Reckless Attack + high HP pool remains unbeatable in 1v1.
 
-The Barbarian beats every other build by massive margins. The closest fight is vs Dueling Fighter (81.4% barb win rate), where AC 18 provides some mitigation.
+### Fighter Styles Are All Viable
+All four melee fighter styles (Defense, Dueling, TWF, GWF) cluster between **57-60%** average win rate. The differences are small enough that player preference, subclass features (level 3), and party composition should drive the choice.
 
-### Fighter Styles Are Closer Than Expected
-The three melee fighter styles are within ~5% of each other:
+**Style Tier List (1v1 at level 2):**
+1. Defense / Dueling (tied at 59.7%)
+2. TWF (58.2%)
+3. GWF (57.4%)
+4. Archery (45.2% — bad in 1v1, great in parties)
 
-| Matchup | Result |
-|---------|--------|
-| GWF vs Dueling | 48.8% — 51.2% |
-| GWF vs Defense | 49.2% — 50.8% |
-| Dueling vs Defense | 47.7% — 52.3% |
+### Nick Mastery Is Legit
+Nick mastery makes TWF competitive without requiring a bonus action for the offhand attack. This is a huge improvement over 2014's TWF, which consumed your bonus action. Now TWF fighters can use Second Wind or other bonus actions while still getting two attacks per turn.
 
-**Defense wins the fighter mirror.** The +1 AC on greatsword (AC 17) slightly outperforms both GWF's damage rerolls and Dueling's +2 damage with shield (AC 18). This is counterintuitive — Dueling has the highest AC at 18 but Defense edges it out because it keeps the greatsword's 2d6 + Graze mastery.
+### Dual-Wield Rogue: Marginal Improvement
+Going from rapier to scimitar + shortsword gives the Rogue +2% win rate. The extra attack helps land Sneak Attack more reliably, but the Rogue's fundamental problem (needing advantage in 1v1, low HP/AC) remains. In party play with an adjacent ally guaranteeing SA, the dual-wield Rogue would benefit more from two chances to land the hit.
 
-**Why Defense > Dueling despite lower AC:** The greatsword deals more damage per hit (2d6+3 avg 10 vs 1d8+5 avg 9.5) AND has Graze mastery (deal STR mod damage on miss). That chip damage on misses adds up over 3-4 round fights.
-
-### Archery Is a Trap in 1v1
-The Archery fighter (41.3% avg) underperforms badly. At 60ft starting distance, everyone gets roughly one ranged exchange before closing to melee. The +2 to-hit at range doesn't compensate for:
-- Lower AC (chain shirt 15 vs chain mail 16-18)
-- DEX-based means weaker melee when forced to close
-- Longbow can't be used in melee (unlike javelin-wielders who throw and then draw swords)
-
-**Caveat:** Archery would perform dramatically better with longer engagement ranges, multiple rounds of ranged fire, or party support keeping enemies at distance.
-
-### Rogue Struggles Without Allies
-Rogue's 14.4% avg win rate is painful but expected. The 1v1 format is worst-case for Rogues because:
-- **Sneak Attack requires advantage** (no adjacent ally in 1v1)
-- Cunning Action: Hide is their only advantage source, and it's contested (Stealth vs Passive Perception)
-- Low HP (17) and AC (14) means they drop fast
-- Without reliable Sneak Attack, they're just doing 1d8+3 per turn
-
-**In party play, Rogue would jump significantly** — a nearby ally guarantees Sneak Attack every turn.
-
-### Monk: Lots of Attacks, Not Enough Punch
-Monk sits at 45.0%, middle of the pack. Flurry of Blows gives 3 attacks per turn (action + 2 bonus), but:
-- 1d6+3 per hit (6.5 avg) × 3 = 19.5 potential, but with ~60% hit rate that's ~11.7 actual
-- Only 17 HP — glass cannon without the cannon
-- Focus Points run out after 2 rounds of Flurry
-
-Martial Arts bonus strike (free, no resource) keeps them competitive, but they can't sustain the burst.
-
-## Fighter Style Deep Dive
-
-### Head-to-Head Matrix
-
-| Attacker ↓ / Defender → | GWF | Dueling | Defense | Archery |
-|--------------------------|-----|---------|---------|---------|
-| **GWF Greatsword** | — | 48.8% | 49.2% | 62.7% |
-| **Dueling Longsword** | 51.2% | — | 47.7% | 63.8% |
-| **Defense Greatsword** | 50.8% | 52.3% | — | 64.5% |
-| **Archery Longbow** | 37.3% | 36.2% | 35.5% | — |
-
-### Style Analysis
-
-**Great Weapon Fighting**
-- Rerolling 1s and 2s on 2d6 bumps average from 7.0 to ~8.33 (+1.33 per hit)
-- Combined with Graze mastery: even misses deal 3 damage
-- Best raw DPR among fighters, but no AC benefit
-
-**Dueling**
-- Flat +2 damage is reliable (1d8+5 = 9.5 avg per hit)
-- Shield brings AC to 18 — highest among all builds
-- Trades Graze/Cleave mastery for Sap (disadvantage on enemy attacks)
-- Longsword Sap mastery is defensive, complementing the shield playstyle
-
-**Defense**
-- +1 AC (17 with chain mail) is modest but constant
-- Keeps greatsword access — same damage as GWF minus the rerolls
-- Graze mastery still applies
-- The "boring but effective" choice
-
-**Archery**
-- +2 to hit at range is the best accuracy bonus available
-- Falls apart in melee — DEX-based but forced into close quarters
-- Would need 3+ rounds of free shooting to overcome the HP/AC deficit
-- Best style for party play, worst for dueling
-
-### Recommendation
-For a level 2 fighter "control" build: **Defense with Greatsword** is statistically the strongest in 1v1. GWF is within noise. Dueling + Shield is the best if you value survivability (AC 18) over damage. All three melee styles are viable — the differences are small enough that subclass features at level 3 will matter more.
-
-## Armor Progression Guide
-
-### Recommended Armor by Level (2024 PHB)
-
-D&D 2024 doesn't prescribe wealth-by-level, but typical campaign progression:
-
-| Level | Heavy Armor User | Medium Armor User | Light Armor User |
-|-------|-----------------|-------------------|------------------|
-| 1-2 | Chain Mail (AC 16) | Scale Mail (AC 14+2) | Leather (AC 11+DEX) |
-| 3-4 | Chain Mail (AC 16) | Breastplate (AC 14+2) | Studded Leather (AC 12+DEX) |
-| 5-8 | Splint (AC 17) | Half Plate (AC 15+2) | Studded Leather (AC 12+DEX) |
-| 9-12 | Plate (AC 18) | Half Plate +1 (AC 16+2) | Studded Leather +1 (AC 13+DEX) |
-| 13+ | Plate +1 (AC 19) | Half Plate +2 (AC 17+2) | Studded Leather +2 (AC 14+DEX) |
-
-**Unarmored builds (Barbarian, Monk)** scale with ability scores:
-
-| Level | Barbarian (DEX+CON) | Monk (DEX+WIS) |
-|-------|-------------------|----------------|
-| 1-3 | AC 15 (14 DEX, 16 CON) | AC 16 (16 DEX, 16 WIS) |
-| 4 (ASI) | AC 16 (14 DEX, 18 CON) | AC 17 (18 DEX, 16 WIS) |
-| 8 (ASI) | AC 17 (16 DEX, 18 CON) | AC 18 (20 DEX, 16 WIS) |
-| 12+ | AC 18 (18 DEX, 18 CON) | AC 19 (20 DEX, 18 WIS) |
-
-### Implementation Plan
-- Build YAML files specify armor explicitly (override)
-- If no armor specified, loader defaults based on class + level using the table above
-- Magic armor (+1/+2/+3) modeled as `ac_bonus` field in build YAML
+### Vex Mastery Fix
+Vex now properly consumed after one attack instead of persisting indefinitely. This slightly reduced win rates for Vex-using builds compared to Phase 1 (where the bug inflated them).
 
 ## Sim Limitations & Next Steps
 
 ### Known Limitations
-- **TWF not implemented** — Two-Weapon Fighting style builds can't use bonus action offhand attack yet
-- **No opportunity attacks** — closing distance is free (should provoke when disengaging)
-- **Simplified hiding** — Rogue's Cunning Action: Hide uses a contested roll but ignores cover/obscurement
+- **No opportunity attacks** — closing distance is free
+- **Simplified hiding** — Rogue's Cunning Action: Hide uses contested roll but ignores cover/obscurement
 - **No subclasses** — Level 3 subclass features will dramatically change the landscape
 - **1v1 bias** — heavily favors tanky builds; Rogue and Archery would perform much better with allies
 
 ### Phase 2 Priorities
 1. Level 3 subclass features (Champion, Battlemaster, Berserker, Open Hand, Thief)
-2. TWF implementation
-3. Level 5 (Extra Attack is a massive power spike)
-4. Casters: Warlock (simple spell slots), then Paladin (smites)
-5. Party vs party framework
+2. Level 5 (Extra Attack is a massive power spike — TWF gets 3 attacks/turn!)
+3. Casters: Warlock (simple spell slots), then Paladin (smites)
+4. Party vs party framework
 
 ---
-*Generated by dnd-combat-sim v0.1.0 — Phase 1, Level 2 Martial Builds*
+*Generated by dnd-combat-sim v0.1.5 — Phase 1.5, TWF & Nick Mastery Update*

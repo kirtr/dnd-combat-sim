@@ -11,7 +11,7 @@ import abc
 from dataclasses import dataclass, field
 from typing import Any
 
-from sim.models import Character, CombatState, Condition
+from sim.models import Character, CombatState, Condition, MasteryProperty
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +96,8 @@ class PriorityTactics(TacticsEngine):
             actions.append(TurnAction(kind="move"))
 
         # --- Melee attack ---
-        mw = char.best_melee_weapon()
+        # Prefer Nick weapon as main attack to trigger extra offhand attack
+        mw = _pick_melee_weapon(char)
         if mw:
             actions.append(TurnAction(kind="attack", weapon=mw.name))
         else:
@@ -195,6 +196,23 @@ class PriorityTactics(TacticsEngine):
                 actions.append(TurnAction(kind="action_surge"))
 
         return actions
+
+
+def _pick_melee_weapon(char: Character):
+    """Pick the best melee weapon. Prefer Nick weapon if dual-wielding to trigger extra attack."""
+    melee = [w for w in char.weapons if w.is_melee]
+    if not melee:
+        return None
+    # If we have a Nick weapon and another light weapon, prefer the Nick weapon
+    nick_weapons = [w for w in melee if w.mastery == MasteryProperty.NICK and char.can_use_mastery(w)]
+    if nick_weapons:
+        # Check there's a different light weapon for the offhand
+        for nw in nick_weapons:
+            others = [w for w in melee if w is not nw and w.name != nw.name and w.is_light]
+            if others:
+                return nw
+    # Fall back to best melee weapon
+    return max(melee, key=lambda w: w.damage_dice, default=None)
 
 
 def load_tactics(name: str) -> TacticsEngine:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from sim.dice import d20, eval_dice
-from sim.models import Character, CombatState, Condition, ActiveEffect, DamageType
+from sim.models import Character, CombatState, Condition, ActiveEffect, DamageType, MasteryProperty
 from sim.actions import resolve_attack, do_second_wind, do_dash, do_dodge
 from sim.effects import apply_rage, apply_reckless_attack
 from sim.tactics import TacticsEngine, TurnAction
@@ -220,6 +220,10 @@ def _do_melee_attack(
             break
         resolve_attack(char, opponent, weapon, state)
 
+    # Nick mastery: extra attack with offhand light weapon
+    if opponent.is_alive:
+        _try_nick_extra_attack(char, opponent, weapon, state)
+
 
 def _do_flurry(char: Character, opponent: Character, state: CombatState) -> None:
     """Flurry of Blows — 1 Focus Point, 2 unarmed strikes as bonus action."""
@@ -285,13 +289,17 @@ def _do_action_surge(
     state.log(f"  {char.name} uses ACTION SURGE!")
 
     # Find the attack action in decisions and repeat it
-    mw = char.best_melee_weapon()
+    from sim.tactics import _pick_melee_weapon
+    mw = _pick_melee_weapon(char) or char.best_melee_weapon()
     if state.distance <= 5 and mw:
         num_attacks = 1 + char.extra_attacks
         for _ in range(num_attacks):
             if not opponent.is_alive:
                 break
             resolve_attack(char, opponent, mw, state)
+        # Nick mastery on action surge attacks too
+        if opponent.is_alive:
+            _try_nick_extra_attack(char, opponent, mw, state)
     else:
         rw = char.best_ranged_weapon()
         if rw and state.distance <= rw.effective_range:
@@ -321,6 +329,29 @@ def _do_patient_defense(char: Character, state: CombatState) -> None:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _try_nick_extra_attack(
+    char: Character, opponent: Character,
+    main_weapon: "Weapon", state: CombatState,
+) -> None:
+    """If main_weapon has Nick mastery and char can use it, make an extra attack
+    with a different light weapon. This is part of the Attack action, not bonus action."""
+    if not main_weapon.mastery or main_weapon.mastery != MasteryProperty.NICK:
+        return
+    if not char.can_use_mastery(main_weapon):
+        return
+    # Find a different light melee weapon
+    from sim.models import WeaponProperty
+    offhand = None
+    for w in char.weapons:
+        if w is not main_weapon and w.name != main_weapon.name and w.is_light and w.is_melee:
+            offhand = w
+            break
+    if offhand is None:
+        return
+    state.log(f"  Nick mastery: extra attack with {offhand.name}!")
+    resolve_attack(char, opponent, offhand, state, is_nick_attack=True)
+
 
 def _find_weapon(char: Character, name: str | None) -> Weapon | None:
     if name is None:

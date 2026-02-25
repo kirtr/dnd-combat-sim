@@ -15,9 +15,11 @@ ALL_BUILDS = [
     "fighter_dueling_longsword_2",
     "fighter_defense_greatsword_2",
     "fighter_archery_longbow_2",
+    "fighter_twf_scimitar_shortsword_2",
     "barbarian_greatsword_2",
     "monk_2",
     "rogue_rapier_2",
+    "rogue_dual_wield_2",
 ]
 
 N = 10000

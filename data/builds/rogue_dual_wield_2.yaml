@@ -1,0 +1,28 @@
+# Rogue (Dual Wield) - Level 2 Build
+# Scimitar (Nick) + Shortsword (Vex), no fighting style
+# Nick mastery triggers extra shortsword attack = two chances for Sneak Attack
+# No TWF style means Nick attack doesn't add DEX to damage
+
+name: Rogue (Dual Wield)
+class: rogue
+level: 2
+species: halfling
+background: criminal
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 12
+  wis: 10
+  cha: 8
+weapons:
+- scimitar
+- shortsword
+- shortbow
+armor: leather
+shield: false
+tactic: aggressive
+powers:
+- sneak_attack
+- cunning_action

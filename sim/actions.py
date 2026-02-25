@@ -34,6 +34,7 @@ def resolve_attack(
     *,
     is_thrown: bool = False,
     is_unarmed: bool = False,
+    is_nick_attack: bool = False,
 ) -> AttackResult:
     """Resolve a single attack, apply damage, log, and return result."""
     # Determine advantage / disadvantage
@@ -63,7 +64,7 @@ def resolve_attack(
 
     if is_crit or total >= target_ac:
         # HIT
-        damage = _calc_damage(attacker, weapon, is_crit, is_unarmed, is_thrown)
+        damage = _calc_damage(attacker, weapon, is_crit, is_unarmed, is_thrown, is_nick_attack)
 
         # Sneak Attack
         sa_dmg = _try_sneak_attack(attacker, is_crit, adv and not disadv)
@@ -107,6 +108,7 @@ def resolve_attack(
 def _calc_damage(
     attacker: Character, weapon: Weapon,
     crit: bool, is_unarmed: bool, is_thrown: bool,
+    is_nick_attack: bool = False,
 ) -> int:
     """Calculate total damage for a hit."""
     dice_expr = weapon.damage_dice
@@ -140,6 +142,9 @@ def _calc_damage(
         damage += attacker.unarmed_damage_mod()
         if attacker.is_raging:
             damage += attacker.rage_damage
+    elif is_nick_attack and attacker.fighting_style != "two_weapon_fighting":
+        # Nick extra attack: no ability modifier unless TWF style
+        damage += weapon.bonus  # still add magic weapon bonus
     else:
         damage += attacker.damage_modifier(weapon, is_thrown=is_thrown)
 
@@ -239,6 +244,7 @@ def _has_advantage(attacker: Character, defender: Character) -> bool:
     if any(e.advantage_on_attacks for e in attacker.active_effects):
         return True
     if attacker.vex_target == defender.name:
+        attacker.vex_target = None  # consumed on use
         return True
     # Reckless on defender grants us advantage
     if any(e.grants_advantage_to_enemies for e in defender.active_effects):

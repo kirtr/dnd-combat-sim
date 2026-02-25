@@ -1,8 +1,9 @@
-# Fighter (TWF Shortswords) - Level 2 Build
-# DEPRECATED: Use fighter_twf_scimitar_shortsword_2.yaml instead
-# Kept for backward compatibility — now uses Scimitar (Nick) + Shortsword (Vex)
+# Fighter (TWF Scimitar+Shortsword) - Level 2 Build
+# Scimitar (Nick) + Shortsword (Vex), TWF style
+# Nick mastery triggers extra attack with shortsword as part of Attack action
+# TWF style adds ability modifier to Nick attack damage
 
-name: Fighter (TWF Shortswords)
+name: Fighter (TWF Scimitar+SS)
 class: fighter
 level: 2
 species: orc
