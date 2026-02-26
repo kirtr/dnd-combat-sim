@@ -385,30 +385,48 @@ class Character:
 
         Returns total actual damage dealt.
         """
-        # Step 1: Apply resistance per type
-        total = 0
-        type_breakdown = []
-        for amount, dtype in damage_components:
-            resisted = any(dtype in e.damage_resistance for e in self.active_effects)
-            adjusted = amount // 2 if resisted else amount
-            total += adjusted
-            type_breakdown.append((adjusted, dtype, resisted))
+        # PHB p.28 Order of Application:
+        # 1. Adjustments (bonuses, penalties, reductions) — FIRST
+        # 2. Resistance — SECOND
+        # 3. Vulnerability — THIRD
 
-        # Step 2: Stone's Endurance — reduce the TOTAL combined damage
+        # Step 1: Sum raw damage, then apply adjustments (Stone's Endurance)
+        raw_total = sum(amount for amount, _ in damage_components)
+
+        # Stone's Endurance — flat reduction on raw total (adjustment)
+        stones_reduction = 0
         if (not self.reaction_used
                 and self.giant_ancestry == "stone"
                 and "stones_endurance" in self.resources):
             res = self.resources["stones_endurance"]
             if res.available:
                 from sim.dice import eval_dice
-                reduction = eval_dice("1d12").total + self.con_mod
-                reduction = max(0, reduction)
-                old_total = total
-                total = max(0, total - reduction)
+                stones_reduction = eval_dice("1d12").total + self.con_mod
+                stones_reduction = max(0, stones_reduction)
                 res.spend()
                 self.reaction_used = True
                 if state:
-                    state.log(f"  {self.name} uses Stone's Endurance, reducing {old_total} damage by {reduction} to {total}")
+                    state.log(f"  {self.name} uses Stone's Endurance, reducing {raw_total} by {stones_reduction}")
+
+        # Distribute Stone's reduction proportionally across damage types,
+        # then apply resistance per type
+        adjusted_total = max(0, raw_total - stones_reduction)
+        if raw_total > 0 and adjusted_total > 0:
+            ratio = adjusted_total / raw_total
+        else:
+            ratio = 0
+
+        # Step 2: Apply resistance per type on the adjusted amounts
+        total = 0
+        for amount, dtype in damage_components:
+            # Scale this component by the Stone's Endurance reduction ratio
+            adjusted_amount = round(amount * ratio)
+            # Apply resistance (e.g., Rage halves B/S/P)
+            resisted = any(dtype in e.damage_resistance for e in self.active_effects)
+            if resisted:
+                adjusted_amount = adjusted_amount // 2
+            # Step 3: Vulnerability would double here (not yet implemented)
+            total += adjusted_amount
 
         # Step 3: Storm's Thunder — retaliatory damage as reaction
         if (not self.reaction_used
