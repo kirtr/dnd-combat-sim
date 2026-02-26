@@ -1,0 +1,26 @@
+# Fighter (Dueling Goliath Fire) - Level 2
+# Fire Giant + Dueling + Shield = AC 18 + fire damage
+name: Fighter (Dueling Goliath Fire)
+class: fighter
+level: 2
+species: goliath
+giant_ancestry: fire
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- longsword
+- javelin
+armor: chain_mail
+shield: true
+fighting_style: dueling
+tactic: aggressive
+powers:
+- second_wind
+- action_surge

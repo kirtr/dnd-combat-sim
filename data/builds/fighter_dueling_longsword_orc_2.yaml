@@ -1,0 +1,25 @@
+# Fighter (Dueling Longsword Orc) - Level 2
+# Orc baseline for fair style comparison
+name: Fighter (Dueling Orc)
+class: fighter
+level: 2
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- longsword
+- javelin
+armor: chain_mail
+shield: true
+fighting_style: dueling
+tactic: aggressive
+powers:
+- second_wind
+- action_surge
