@@ -1,10 +1,10 @@
-name: Fighter (Dueling Longsword)
+name: Champion GWF Orc
 class: fighter
-level: 2
-species: human
+subclass: champion
+level: 3
+species: orc
 background: soldier
 origin_feat: savage_attacker
-versatile_feat: tough
 ability_scores:
   str: 16
   dex: 10
@@ -13,18 +13,19 @@ ability_scores:
   wis: 12
   cha: 8
 weapons:
-- longsword
+- greatsword
 - javelin
 armor: chain_mail
-shield: true
-fighting_style: dueling
+shield: false
+fighting_style: great_weapon_fighting
 tactic: aggressive
 powers:
 - second_wind
 - action_surge
 tags:
-- dueling
+- champion
 - fighter
-- human
-- level2
+- gwf
+- level3
 - melee
+- orc

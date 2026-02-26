@@ -278,6 +278,28 @@ def load_build(path: str | Path) -> Character:
         # 1d6 at levels 1-2
         sneak_attack_dice = "1d6"
 
+    # Champion Fighter: Improved Critical (crit on 19-20)
+    crit_threshold = 20
+    subclass = build.get("subclass", "")
+    if subclass == "champion":
+        crit_threshold = 19
+
+    # Battle Master Fighter: Superiority Dice + Maneuvers
+    superiority_dice = 0
+    maneuvers = build.get("maneuvers", [])
+    if subclass == "battle_master":
+        superiority_dice = 4
+        resources["superiority_dice"] = Resource("Superiority Dice", 4, 4, "short_rest")
+
+    # Ranger: Hunter's Mark
+    hunters_mark_uses = 0
+    if "hunters_mark" in features:
+        hunters_mark_uses = prof_bonus
+        resources["hunters_mark"] = Resource("Hunter's Mark", prof_bonus, prof_bonus, "long_rest")
+
+    # Hunter Ranger: Colossus Slayer
+    has_colossus_slayer = subclass == "hunter" and level >= 3
+
     # Martial Arts
     martial_arts_die = None
     if "martial_arts" in features:
@@ -316,6 +338,12 @@ def load_build(path: str | Path) -> Character:
         has_savage_attacker=has_savage_attacker,
         sneak_attack_dice=sneak_attack_dice,
         martial_arts_die=martial_arts_die,
+        crit_threshold=crit_threshold,
+        superiority_dice=superiority_dice,
+        superiority_die_size="1d8",
+        maneuvers=maneuvers,
+        hunters_mark_uses=hunters_mark_uses,
+        has_colossus_slayer=has_colossus_slayer,
         species_traits=species_traits,
         origin_feat=origin_feat,
         giant_ancestry=giant_ancestry,

@@ -169,7 +169,7 @@ def _resolve_single_attack(char: Character, weapon: Weapon, target_ac: int,
     if roll == 1:
         return 0  # nat 1 always misses (graze handled separately)
     
-    is_crit = roll == 20
+    is_crit = roll >= char.crit_threshold
     attack_bonus = char.attack_modifier(weapon)
     total = roll + attack_bonus
     

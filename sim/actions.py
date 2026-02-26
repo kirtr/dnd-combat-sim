@@ -55,7 +55,7 @@ def resolve_attack(
         state.log(f"  Halfling Luck: rerolled nat 1 -> {reroll}")
         roll_result = reroll  # must use new roll
 
-    is_crit = roll_result == 20
+    is_crit = roll_result >= attacker.crit_threshold
     total = roll_result + attack_bonus
     target_ac = defender.effective_ac
 
@@ -76,6 +76,33 @@ def resolve_attack(
         # Sneak Attack (same damage type as weapon)
         sa_dmg = _try_sneak_attack(attacker, is_crit, adv and not disadv)
         damage += sa_dmg
+
+        # Hunter's Mark: +1d6 per hit
+        hm_dmg = 0
+        if attacker.hunters_mark_active:
+            hm_dmg = eval_dice("1d6").total
+            if is_crit:
+                hm_dmg += eval_dice("1d6").total
+            damage += hm_dmg
+
+        # Colossus Slayer: +1d8 once per turn if target below max HP
+        cs_dmg = 0
+        if (attacker.has_colossus_slayer
+                and not attacker.colossus_slayer_used
+                and defender.current_hp < defender.max_hp):
+            cs_dmg = eval_dice("1d8").total
+            if is_crit:
+                cs_dmg += eval_dice("1d8").total
+            damage += cs_dmg
+            attacker.colossus_slayer_used = True
+
+        # Battle Master: Trip Attack (on hit, add die to damage + prone on STR save fail)
+        trip_dmg = _try_trip_attack(attacker, defender, state)
+        damage += trip_dmg
+
+        # Battle Master: Menacing Attack (on hit, add die to damage + frightened on WIS save fail)
+        menacing_dmg = _try_menacing_attack(attacker, defender, state)
+        damage += menacing_dmg
 
         # Build damage packet: [(amount, type), ...]
         damage_packet = [(damage, weapon.damage_type)]
@@ -134,6 +161,55 @@ def resolve_attack(
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
         )
     else:
+        # Battle Master: Precision Attack — add superiority die to attack roll on near-miss
+        if (total < target_ac
+                and "precision" in attacker.maneuvers
+                and not is_unarmed):
+            sup_res = attacker.resources.get("superiority_dice")
+            if sup_res and sup_res.available:
+                # Use precision if the die could bridge the gap (within d8 range)
+                gap = target_ac - total
+                if gap <= 8:  # max d8 roll
+                    precision_roll = eval_dice(attacker.superiority_die_size).total
+                    sup_res.spend()
+                    state.log(f"  Precision Attack: +{precision_roll} to attack roll ({total} -> {total + precision_roll})")
+                    total += precision_roll
+                    if total >= target_ac:
+                        # Now it's a hit!
+                        damage = _calc_damage(attacker, weapon, False, is_unarmed, is_thrown, is_nick_attack)
+                        sa_dmg = _try_sneak_attack(attacker, False, adv and not disadv)
+                        damage += sa_dmg
+                        hm_dmg = 0
+                        if attacker.hunters_mark_active:
+                            hm_dmg = eval_dice("1d6").total
+                            damage += hm_dmg
+                        cs_dmg = 0
+                        if (attacker.has_colossus_slayer
+                                and not attacker.colossus_slayer_used
+                                and defender.current_hp < defender.max_hp):
+                            cs_dmg = eval_dice("1d8").total
+                            damage += cs_dmg
+                            attacker.colossus_slayer_used = True
+                        damage_packet = [(damage, weapon.damage_type)]
+                        if attacker.giant_ancestry == "fire":
+                            fire_res = attacker.resources.get("fire_giant")
+                            if fire_res and fire_res.available:
+                                fire_res.spend()
+                                fire_extra = eval_dice("1d10").total
+                                damage_packet.append((fire_extra, DamageType.FIRE))
+                        actual = defender.take_attack_damage(damage_packet, state)
+                        if not is_unarmed and attacker.can_use_mastery(weapon):
+                            _apply_mastery_on_hit(attacker, defender, weapon, state)
+                        state.log(
+                            f"  {attacker.name} attacks with {weapon.name}: HIT (Precision)"
+                            f" ({total} vs AC {target_ac}) for {actual} damage"
+                            f" ({defender.current_hp}/{defender.max_hp} HP)"
+                        )
+                        return AttackResult(
+                            hit=True, critical=False, damage=damage,
+                            damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
+                        )
+
         # Lucky feat: on miss, spend a luck point to reroll
         luck_res = attacker.resources.get("luck_points")
         if luck_res and luck_res.available:
@@ -144,9 +220,9 @@ def resolve_attack(
                 luck_roll = d20()
             luck_total = luck_roll + attack_bonus
             state.log(f"  Lucky feat: rerolled {total} -> {luck_total}")
-            if luck_roll == 20 or luck_total >= target_ac:
+            if luck_roll >= attacker.crit_threshold or luck_total >= target_ac:
                 # Now it's a hit! Build damage packet
-                is_crit2 = luck_roll == 20
+                is_crit2 = luck_roll >= attacker.crit_threshold
                 damage = _calc_damage(attacker, weapon, is_crit2, is_unarmed, is_thrown, is_nick_attack)
                 sa_dmg = _try_sneak_attack(attacker, is_crit2, adv and not disadv)
                 damage += sa_dmg
@@ -203,6 +279,9 @@ def resolve_attack(
                 f"  {attacker.name} attacks with {weapon.name}:"
                 f" MISS ({total} vs AC {target_ac})"
             )
+        # Battle Master Riposte: defender can counter-attack on miss
+        if not is_unarmed:
+            try_riposte(defender, attacker, weapon, state)
         return AttackResult(
             hit=False, critical=False, damage=graze_dmg,
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
@@ -376,7 +455,106 @@ def _has_disadvantage(attacker: Character, defender: Character) -> bool:
         return True
     if any(e.disadvantage_on_attacks for e in attacker.active_effects):
         return True
+    # Frightened: disadvantage on attacks while source is visible (always in 1v1)
+    if Condition.FRIGHTENED in attacker.conditions:
+        return True
+    # Lucky feat defensive: defender spends luck point to impose disadvantage
+    if not defender.reaction_used:
+        luck_res = defender.resources.get("luck_points")
+        if luck_res and luck_res.available:
+            luck_res.spend()
+            defender.reaction_used = True
+            return True
     return False
+
+
+# ---------------------------------------------------------------------------
+# Battle Master maneuver helpers
+# ---------------------------------------------------------------------------
+
+def _try_trip_attack(attacker: Character, defender: Character, state: CombatState) -> int:
+    """Trip Attack: add superiority die to damage + prone on failed STR save."""
+    if "trip" not in attacker.maneuvers:
+        return 0
+    if Condition.PRONE in defender.conditions:
+        return 0  # already prone, don't waste
+    sup_res = attacker.resources.get("superiority_dice")
+    if not sup_res or not sup_res.available:
+        return 0
+    sup_res.spend()
+    dmg = eval_dice(attacker.superiority_die_size).total
+    dc = 8 + attacker.str_mod + attacker.proficiency_bonus
+    save = d20() + defender.str_mod
+    if save < dc:
+        defender.conditions.add(Condition.PRONE)
+        state.log(f"  Trip Attack: +{dmg} damage, {defender.name} falls prone! (save {save} vs DC {dc})")
+    else:
+        state.log(f"  Trip Attack: +{dmg} damage, {defender.name} resists prone (save {save} vs DC {dc})")
+    return dmg
+
+
+def _try_menacing_attack(attacker: Character, defender: Character, state: CombatState) -> int:
+    """Menacing Attack: add superiority die to damage + frightened on failed WIS save."""
+    if "menacing" not in attacker.maneuvers:
+        return 0
+    if Condition.FRIGHTENED in defender.conditions:
+        return 0  # already frightened
+    sup_res = attacker.resources.get("superiority_dice")
+    if not sup_res or not sup_res.available:
+        return 0
+    # Don't use menacing if we already used trip this hit (prefer trip first)
+    if "trip" in attacker.maneuvers:
+        return 0  # trip is checked first; menacing is backup
+    sup_res.spend()
+    dmg = eval_dice(attacker.superiority_die_size).total
+    dc = 8 + attacker.str_mod + attacker.proficiency_bonus
+    save = d20() + defender.wis_mod
+    if save < dc:
+        defender.conditions.add(Condition.FRIGHTENED)
+        defender.active_effects.append(ActiveEffect(
+            name="Frightened",
+            source="menacing_attack",
+            duration=1,  # until end of attacker's next turn
+            end_trigger="end_of_turn",
+        ))
+        state.log(f"  Menacing Attack: +{dmg} damage, {defender.name} is frightened! (save {save} vs DC {dc})")
+    else:
+        state.log(f"  Menacing Attack: +{dmg} damage, {defender.name} resists fear (save {save} vs DC {dc})")
+    return dmg
+
+
+def try_riposte(defender: Character, attacker: Character, weapon: Weapon, state: CombatState) -> None:
+    """Riposte: reaction attack when enemy misses, add superiority die to damage."""
+    if "riposte" not in defender.maneuvers:
+        return
+    if defender.reaction_used:
+        return
+    sup_res = defender.resources.get("superiority_dice")
+    if not sup_res or not sup_res.available:
+        return
+    # Make a reaction melee attack
+    mw = defender.best_melee_weapon()
+    if not mw or state.distance > 5:
+        return
+    sup_res.spend()
+    defender.reaction_used = True
+    state.log(f"  Riposte: {defender.name} counter-attacks!")
+    # Simplified: resolve a normal attack + add superiority die damage
+    attack_bonus = defender.attack_modifier(mw)
+    roll_result = d20()
+    total_roll = roll_result + attack_bonus
+    is_crit = roll_result >= defender.crit_threshold
+    if roll_result == 1:
+        state.log(f"  Riposte: MISS (nat 1)")
+        return
+    if is_crit or total_roll >= attacker.effective_ac:
+        damage = _calc_damage(defender, mw, is_crit, False, False, False)
+        riposte_dmg = eval_dice(defender.superiority_die_size).total
+        damage += riposte_dmg
+        actual = attacker.take_attack_damage([(damage, mw.damage_type)], state)
+        state.log(f"  Riposte: HIT for {actual} damage (+{riposte_dmg} superiority) ({attacker.current_hp}/{attacker.max_hp} HP)")
+    else:
+        state.log(f"  Riposte: MISS ({total_roll} vs AC {attacker.effective_ac})")
 
 
 # ---------------------------------------------------------------------------

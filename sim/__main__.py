@@ -192,7 +192,7 @@ def cmd_rank(args):
 
 def cmd_dps(args):
     """DPS analysis against static AC targets."""
-    from run_dps import simulate_dpr
+    from sim.dps import simulate_dpr
     builds = _resolve_builds(args)
     acs = [int(x) for x in (args.ac or "14,16,18").split(",")]
     n = args.n or 5000

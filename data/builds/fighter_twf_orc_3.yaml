@@ -1,10 +1,9 @@
-name: Fighter (Dueling Longsword)
+name: Fighter TWF Orc (L3)
 class: fighter
-level: 2
-species: human
+level: 3
+species: orc
 background: soldier
 origin_feat: savage_attacker
-versatile_feat: tough
 ability_scores:
   str: 16
   dex: 10
@@ -13,18 +12,19 @@ ability_scores:
   wis: 12
   cha: 8
 weapons:
-- longsword
+- scimitar
+- shortsword
 - javelin
 armor: chain_mail
-shield: true
-fighting_style: dueling
+shield: false
+fighting_style: two_weapon_fighting
 tactic: aggressive
 powers:
 - second_wind
 - action_surge
 tags:
-- dueling
 - fighter
-- human
-- level2
+- level3
 - melee
+- orc
+- twf

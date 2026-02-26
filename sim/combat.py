@@ -129,6 +129,9 @@ def _execute_turn(
         elif action.kind == "adrenaline_rush":
             _do_adrenaline_rush(char, opponent, state)
 
+        elif action.kind == "hunters_mark":
+            _do_hunters_mark(char, state)
+
         elif action.kind == "heroic_inspiration":
             _do_heroic_inspiration(char, state)
 
@@ -369,6 +372,21 @@ def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState
             char.movement_remaining -= move
             char.has_moved = True
             state.log(f"  {char.name} rushes {move} ft closer (distance: {state.distance} ft)")
+
+
+def _do_hunters_mark(char: Character, state: CombatState) -> None:
+    """Activate Hunter's Mark as bonus action (2024: no concentration)."""
+    if char.bonus_action_used:
+        return
+    res = char.resources.get("hunters_mark")
+    if not res or not res.available:
+        return
+    if char.hunters_mark_active:
+        return
+    res.spend()
+    char.bonus_action_used = True
+    char.hunters_mark_active = True
+    state.log(f"  {char.name} casts Hunter's Mark!")
 
 
 def _do_heroic_inspiration(char: Character, state: CombatState) -> None:

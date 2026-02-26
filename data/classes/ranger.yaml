@@ -1,0 +1,28 @@
+name: Ranger
+hit_die: d10
+hp_base: 10
+armor_proficiencies:
+- light
+- medium
+- shield
+weapon_proficiencies:
+- simple
+- martial
+saving_throws:
+- strength
+- dexterity
+weapon_mastery_slots: 2
+features:
+  1:
+  - fighting_style
+  - favored_enemy
+  - weapon_mastery_ranger
+  2:
+  - deft_explorer
+  - hunters_mark
+  3:
+  - hunter_subclass
+phb_ref: pp. 114-119
+notes:
+  hunters_mark_2024: "Uses = PB per long rest, NO concentration in 2024. Bonus action to cast, +1d6 per hit."
+  colossus_slayer: "Hunter level 3: +1d8 once per turn if target below max HP."

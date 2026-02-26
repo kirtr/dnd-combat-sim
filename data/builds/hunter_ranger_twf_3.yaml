@@ -1,0 +1,31 @@
+name: Hunter Ranger TWF
+class: ranger
+subclass: hunter
+level: 3
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 14
+  con: 14
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- scimitar
+- shortsword
+- javelin
+armor: half_plate
+shield: false
+fighting_style: two_weapon_fighting
+tactic: aggressive
+powers:
+- hunters_mark
+tags:
+- hunter
+- level3
+- melee
+- orc
+- ranger
+- twf

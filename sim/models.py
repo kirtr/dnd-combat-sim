@@ -208,6 +208,14 @@ class Character:
     sneak_attack_dice: str | None = None  # e.g. "1d6"
     sneak_attack_used: bool = False
     martial_arts_die: str | None = None   # e.g. "1d6"
+    crit_threshold: int = 20              # Champion: 19
+    superiority_dice: int = 0             # Battle Master: 4 at level 3
+    superiority_die_size: str = "1d8"
+    maneuvers: list[str] = field(default_factory=list)  # e.g. ["precision", "trip", "riposte"]
+    hunters_mark_active: bool = False
+    hunters_mark_uses: int = 0            # Ranger: PB per long rest
+    colossus_slayer_used: bool = False     # Hunter Ranger: once per turn
+    has_colossus_slayer: bool = False
     species_traits: dict[str, Any] = field(default_factory=dict)
     origin_feat: str = ""
     giant_ancestry: str = ""  # cloud/fire/frost/hill/stone/storm
@@ -344,6 +352,7 @@ class Character:
         self.has_moved = False
         self.movement_remaining = self.speed
         self.sneak_attack_used = False
+        self.colossus_slayer_used = False
         # Tick down effects
         expired = []
         for e in self.active_effects:
@@ -493,6 +502,8 @@ class Character:
         self.has_moved = False
         self.movement_remaining = self.speed
         self.sneak_attack_used = False
+        self.colossus_slayer_used = False
+        self.hunters_mark_active = False
         self.vex_target = None
         for r in self.resources.values():
             r.restore()

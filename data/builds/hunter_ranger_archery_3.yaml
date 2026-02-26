@@ -1,0 +1,29 @@
+name: Hunter Ranger Archery
+class: ranger
+subclass: hunter
+level: 3
+species: elf
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 10
+  wis: 12
+  cha: 8
+weapons:
+- longbow
+- rapier
+armor: studded_leather
+shield: false
+fighting_style: archery
+tactic: aggressive
+powers:
+- hunters_mark
+tags:
+- archery
+- hunter
+- level3
+- ranged
+- ranger
