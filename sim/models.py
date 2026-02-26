@@ -368,13 +368,33 @@ class Character:
             self.active_effects.remove(e)
         self.reaction_used = False
 
-    def take_damage(self, amount: int, damage_type: DamageType, state: Any = None) -> int:
-        """Apply damage, respecting resistances, temp HP, and reactions. Returns actual damage."""
-        resisted = any(damage_type in e.damage_resistance for e in self.active_effects)
-        if resisted:
-            amount = amount // 2
+    def take_attack_damage(
+        self,
+        damage_components: list[tuple[int, DamageType]],
+        state: Any = None,
+    ) -> int:
+        """Apply all damage from a single attack/effect as one packet.
 
-        # Stone's Endurance (Goliath Frost Giant) — reaction to reduce damage
+        Damage pipeline (per RAW):
+        1. Apply resistance/vulnerability PER damage type
+        2. Sum all components into a total
+        3. Apply damage reduction (Stone's Endurance) on the total
+        4. Apply reactions (Storm's Thunder)
+        5. Absorb with temp HP, then real HP
+        6. Relentless Endurance check
+
+        Returns total actual damage dealt.
+        """
+        # Step 1: Apply resistance per type
+        total = 0
+        type_breakdown = []
+        for amount, dtype in damage_components:
+            resisted = any(dtype in e.damage_resistance for e in self.active_effects)
+            adjusted = amount // 2 if resisted else amount
+            total += adjusted
+            type_breakdown.append((adjusted, dtype, resisted))
+
+        # Step 2: Stone's Endurance — reduce the TOTAL combined damage
         if (not self.reaction_used
                 and self.giant_ancestry == "stone"
                 and "stones_endurance" in self.resources):
@@ -383,16 +403,18 @@ class Character:
                 from sim.dice import eval_dice
                 reduction = eval_dice("1d12").total + self.con_mod
                 reduction = max(0, reduction)
-                amount = max(0, amount - reduction)
+                old_total = total
+                total = max(0, total - reduction)
                 res.spend()
                 self.reaction_used = True
                 if state:
-                    state.log(f"  {self.name} uses Stone's Endurance, reducing damage by {reduction}")
+                    state.log(f"  {self.name} uses Stone's Endurance, reducing {old_total} damage by {reduction} to {total}")
 
-        # Storm's Thunder (Storm Giant): reaction to deal 1d8 thunder to attacker, no save
+        # Step 3: Storm's Thunder — retaliatory damage as reaction
         if (not self.reaction_used
                 and self.giant_ancestry == "storm"
-                and "storm_giant" in self.resources):
+                and "storm_giant" in self.resources
+                and total > 0):
             res = self.resources["storm_giant"]
             if res.available:
                 res.spend()
@@ -401,19 +423,23 @@ class Character:
                 if state and hasattr(state, 'opponent_of'):
                     attacker = state.opponent_of(self)
                     thunder_dmg = _eval("1d8").total
-                    thunder_actual = attacker.take_damage(thunder_dmg, DamageType.THUNDER, None)
+                    # Storm's Thunder is a separate effect, not part of this packet
+                    thunder_actual = attacker.take_attack_damage(
+                        [(thunder_dmg, DamageType.THUNDER)], None
+                    )
                     if state:
                         state.log(f"  {self.name} Storm's Thunder! {attacker.name} takes {thunder_actual} thunder damage")
 
-        # Absorb with temp HP first
+        # Step 4: Absorb with temp HP
         if self.temp_hp > 0:
-            absorbed = min(self.temp_hp, amount)
+            absorbed = min(self.temp_hp, total)
             self.temp_hp -= absorbed
-            amount -= absorbed
+            total -= absorbed
 
-        self.current_hp = max(0, self.current_hp - amount)
+        # Step 5: Apply to real HP
+        self.current_hp = max(0, self.current_hp - total)
 
-        # Relentless Endurance (Orc) — drop to 1 HP instead of 0
+        # Step 6: Relentless Endurance (Orc)
         if self.current_hp == 0 and "relentless_endurance" in self.resources:
             res = self.resources["relentless_endurance"]
             if res.available:
@@ -422,7 +448,11 @@ class Character:
                 if state:
                     state.log(f"  {self.name} uses Relentless Endurance! Drops to 1 HP instead of 0!")
 
-        return amount
+        return total
+
+    def take_damage(self, amount: int, damage_type: DamageType, state: Any = None) -> int:
+        """Legacy single-type damage. Delegates to take_attack_damage."""
+        return self.take_attack_damage([(amount, damage_type)], state)
 
     def heal(self, amount: int) -> int:
         actual = min(amount, self.max_hp - self.current_hp)

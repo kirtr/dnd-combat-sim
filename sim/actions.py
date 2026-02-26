@@ -70,37 +70,49 @@ def resolve_attack(
         )
 
     if is_crit or total >= target_ac:
-        # HIT
+        # HIT — build damage packet with all components
         damage = _calc_damage(attacker, weapon, is_crit, is_unarmed, is_thrown, is_nick_attack)
 
-        # Sneak Attack
+        # Sneak Attack (same damage type as weapon)
         sa_dmg = _try_sneak_attack(attacker, is_crit, adv and not disadv)
         damage += sa_dmg
 
-        actual = defender.take_damage(damage, weapon.damage_type, state)
+        # Build damage packet: [(amount, type), ...]
+        damage_packet = [(damage, weapon.damage_type)]
 
-        # Weapon Mastery on hit
-        if not is_unarmed and attacker.can_use_mastery(weapon):
-            _apply_mastery_on_hit(attacker, defender, weapon, state)
-
-        # Goliath Fire Giant ancestry: +1d10 fire damage on hit (PB uses/long rest)
+        # Goliath Fire Giant ancestry: +1d10 fire damage on hit
+        fire_extra = 0
         if attacker.giant_ancestry == "fire":
             fire_res = attacker.resources.get("fire_giant")
             if fire_res and fire_res.available:
                 fire_res.spend()
-                fire_dmg = eval_dice("1d10").total
-                fire_actual = defender.take_damage(fire_dmg, DamageType.FIRE, state)
-                state.log(f"  Fire Giant: +{fire_actual} fire damage ({defender.current_hp}/{defender.max_hp} HP)")
+                fire_extra = eval_dice("1d10").total
+                damage_packet.append((fire_extra, DamageType.FIRE))
 
-        # Frost's Chill (Frost Giant): +1d6 cold on hit + reduce speed by 10ft
+        # Frost's Chill (Frost Giant): +1d6 cold on hit + reduce speed
+        frost_extra = 0
         if attacker.giant_ancestry == "frost":
             frost_res = attacker.resources.get("frost_giant")
             if frost_res and frost_res.available:
                 frost_res.spend()
-                frost_dmg = eval_dice("1d6").total
-                frost_actual = defender.take_damage(frost_dmg, DamageType.COLD, state)
+                frost_extra = eval_dice("1d6").total
+                damage_packet.append((frost_extra, DamageType.COLD))
                 defender.speed = max(0, defender.speed - 10)
-                state.log(f"  Frost's Chill: +{frost_actual} cold damage, speed -10ft ({defender.current_hp}/{defender.max_hp} HP)")
+
+        # Apply entire damage packet at once (resistance per type, then reduction on total)
+        actual = defender.take_attack_damage(damage_packet, state)
+
+        # Log the hit
+        extras = []
+        if fire_extra:
+            extras.append(f"+{fire_extra} fire")
+        if frost_extra:
+            extras.append(f"+{frost_extra} cold")
+        extra_str = f" ({', '.join(extras)})" if extras else ""
+
+        # Weapon Mastery on hit (post-damage effects)
+        if not is_unarmed and attacker.can_use_mastery(weapon):
+            _apply_mastery_on_hit(attacker, defender, weapon, state)
 
         # Hill's Tumble (Hill Giant): free Prone on hit vs Large or smaller, no save
         if attacker.giant_ancestry == "hill":
@@ -114,7 +126,7 @@ def resolve_attack(
         sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
         state.log(
             f"  {attacker.name} attacks with {weapon.name}:{crit_str} HIT"
-            f" ({total} vs AC {target_ac}) for {actual} damage{sa_str}"
+            f" ({total} vs AC {target_ac}) for {actual} damage{sa_str}{extra_str}"
             f" ({defender.current_hp}/{defender.max_hp} HP)"
         )
         return AttackResult(
@@ -133,43 +145,50 @@ def resolve_attack(
             luck_total = luck_roll + attack_bonus
             state.log(f"  Lucky feat: rerolled {total} -> {luck_total}")
             if luck_roll == 20 or luck_total >= target_ac:
-                # Now it's a hit! Recalculate
+                # Now it's a hit! Build damage packet
                 is_crit2 = luck_roll == 20
                 damage = _calc_damage(attacker, weapon, is_crit2, is_unarmed, is_thrown, is_nick_attack)
                 sa_dmg = _try_sneak_attack(attacker, is_crit2, adv and not disadv)
                 damage += sa_dmg
-                actual = defender.take_damage(damage, weapon.damage_type, state)
-                if not is_unarmed and attacker.can_use_mastery(weapon):
-                    _apply_mastery_on_hit(attacker, defender, weapon, state)
-                # Fire Giant on Lucky reroll hit
+
+                damage_packet = [(damage, weapon.damage_type)]
+                extras = []
+
                 if attacker.giant_ancestry == "fire":
                     fire_res = attacker.resources.get("fire_giant")
                     if fire_res and fire_res.available:
                         fire_res.spend()
-                        fire_dmg = eval_dice("1d10").total
-                        fire_actual = defender.take_damage(fire_dmg, DamageType.FIRE, state)
-                        state.log(f"  Fire Giant: +{fire_actual} fire damage ({defender.current_hp}/{defender.max_hp} HP)")
-                # Frost's Chill on Lucky reroll hit
+                        fire_extra = eval_dice("1d10").total
+                        damage_packet.append((fire_extra, DamageType.FIRE))
+                        extras.append(f"+{fire_extra} fire")
+
                 if attacker.giant_ancestry == "frost":
                     frost_res = attacker.resources.get("frost_giant")
                     if frost_res and frost_res.available:
                         frost_res.spend()
-                        frost_dmg = eval_dice("1d6").total
-                        frost_actual = defender.take_damage(frost_dmg, DamageType.COLD, state)
+                        frost_extra = eval_dice("1d6").total
+                        damage_packet.append((frost_extra, DamageType.COLD))
                         defender.speed = max(0, defender.speed - 10)
-                        state.log(f"  Frost's Chill: +{frost_actual} cold damage, speed -10ft ({defender.current_hp}/{defender.max_hp} HP)")
-                # Hill's Tumble on Lucky reroll hit
+                        extras.append(f"+{frost_extra} cold")
+
+                actual = defender.take_attack_damage(damage_packet, state)
+
+                if not is_unarmed and attacker.can_use_mastery(weapon):
+                    _apply_mastery_on_hit(attacker, defender, weapon, state)
+
                 if attacker.giant_ancestry == "hill":
                     hill_res = attacker.resources.get("hill_giant")
                     if hill_res and hill_res.available:
                         hill_res.spend()
                         defender.conditions.add(Condition.PRONE)
                         state.log(f"  Hill's Tumble: {defender.name} knocked prone!")
+
+                extra_str = f" ({', '.join(extras)})" if extras else ""
                 crit_str = " CRIT!" if is_crit2 else ""
                 sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
                 state.log(
                     f"  {attacker.name} attacks with {weapon.name}:{crit_str} HIT (Lucky)"
-                    f" ({luck_total} vs AC {target_ac}) for {actual} damage{sa_str}"
+                    f" ({luck_total} vs AC {target_ac}) for {actual} damage{sa_str}{extra_str}"
                     f" ({defender.current_hp}/{defender.max_hp} HP)"
                 )
                 return AttackResult(
