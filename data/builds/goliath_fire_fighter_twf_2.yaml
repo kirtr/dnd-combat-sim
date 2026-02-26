@@ -1,4 +1,3 @@
-# Fighter (TWF Scimitar+SS Goliath Fire Giant) - Level 2
 name: Fighter (TWF Goliath Fire)
 class: fighter
 level: 2
@@ -24,3 +23,10 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- fire
+- goliath
+- level2
+- melee
+- twf

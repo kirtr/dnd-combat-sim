@@ -1,5 +1,3 @@
-# Fighter (TWF Scimitar+SS Goliath Hill Giant) - Level 2
-# Hill's Tumble: free prone on hit → advantage on Nick attack
 name: Fighter (TWF Goliath Hill)
 class: fighter
 level: 2
@@ -25,3 +23,10 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- goliath
+- hill
+- level2
+- melee
+- twf

@@ -1,6 +1,3 @@
-# Fighter (TWF Scimitar+SS Human) - Level 2
-# Soldier bg → Savage Attacker, Versatile → Tough
-# Heroic Inspiration from Resourceful
 name: Fighter (TWF Human SA+Tough)
 class: fighter
 level: 2
@@ -26,3 +23,9 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- human
+- level2
+- melee
+- twf

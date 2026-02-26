@@ -1,7 +1,3 @@
-# Fighter (TWF Shortswords) - Level 2 Build
-# DEPRECATED: Use fighter_twf_scimitar_shortsword_2.yaml instead
-# Kept for backward compatibility — now uses Scimitar (Nick) + Shortsword (Vex)
-
 name: Fighter (TWF Shortswords)
 class: fighter
 level: 2
@@ -26,3 +22,9 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- level2
+- melee
+- orc
+- twf

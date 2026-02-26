@@ -1,6 +1,3 @@
-# Fighter (GWF Greatsword Goliath) - Level 2 Build
-# Goliath with Stone Giant ancestry (Stone's Endurance)
-
 name: Fighter (GWF Goliath Stone)
 class: fighter
 level: 2
@@ -25,3 +22,10 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- goliath
+- gwf
+- level2
+- melee
+- stone

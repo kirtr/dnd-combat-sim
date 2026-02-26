@@ -1,5 +1,3 @@
-# Fighter (GWF Greatsword) - Level 2 Build
-
 name: Fighter (GWF Greatsword)
 class: fighter
 level: 2
@@ -23,3 +21,9 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- gwf
+- level2
+- melee
+- orc

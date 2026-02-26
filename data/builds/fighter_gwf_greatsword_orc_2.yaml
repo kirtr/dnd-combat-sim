@@ -1,7 +1,3 @@
-# Fighter (GWF Greatsword Orc) - Level 2 Build
-# Orc with Relentless Endurance and Adrenaline Rush
-# Same as fighter_gwf_greatsword_2 but explicitly named for species comparison
-
 name: Fighter (GWF Greatsword Orc)
 class: fighter
 level: 2
@@ -25,3 +21,9 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- gwf
+- level2
+- melee
+- orc

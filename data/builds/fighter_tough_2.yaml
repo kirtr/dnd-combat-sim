@@ -1,6 +1,3 @@
-# Fighter (GWF Greatsword Tough) - Level 2 Build
-# Human with Tough feat (Farmer background) — +4 HP at level 2
-
 name: Fighter (GWF Tough)
 class: fighter
 level: 2
@@ -24,3 +21,9 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- H
+- fighter
+- gwf
+- level2
+- melee

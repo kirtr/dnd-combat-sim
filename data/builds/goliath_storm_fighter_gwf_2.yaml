@@ -1,4 +1,3 @@
-# Fighter (GWF Greatsword Goliath Storm Giant) - Level 2
 name: Fighter (GWF Goliath Storm)
 class: fighter
 level: 2
@@ -23,3 +22,10 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- goliath
+- gwf
+- level2
+- melee
+- storm

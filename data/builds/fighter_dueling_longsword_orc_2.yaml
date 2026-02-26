@@ -1,5 +1,3 @@
-# Fighter (Dueling Longsword Orc) - Level 2
-# Orc baseline for fair style comparison
 name: Fighter (Dueling Orc)
 class: fighter
 level: 2
@@ -23,3 +21,9 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- dueling
+- fighter
+- level2
+- melee
+- orc

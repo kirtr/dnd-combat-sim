@@ -1,6 +1,3 @@
-# Fighter (Defense Greatsword) - Level 2 Build
-# Same as GWF build but with Defense fighting style (+1 AC)
-
 name: Fighter (Defense Greatsword)
 class: fighter
 level: 2
@@ -24,3 +21,9 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- defense
+- fighter
+- level2
+- melee
+- orc

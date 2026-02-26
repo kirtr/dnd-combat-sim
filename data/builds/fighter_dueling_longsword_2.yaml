@@ -1,5 +1,3 @@
-# Fighter (Dueling Longsword) - Level 2 Build
-
 name: Fighter (Dueling Longsword)
 class: fighter
 level: 2
@@ -23,3 +21,9 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- dueling
+- fighter
+- human
+- level2
+- melee

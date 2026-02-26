@@ -1,6 +1,3 @@
-# Fighter (GWF Greatsword Dragonborn) - Level 2 Build
-# Red Dragonborn with fire breath weapon
-
 name: Fighter (GWF Greatsword Dragonborn)
 class: fighter
 level: 2
@@ -26,3 +23,9 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- dragonborn
+- fighter
+- gwf
+- level2
+- melee

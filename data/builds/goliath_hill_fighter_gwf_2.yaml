@@ -1,4 +1,3 @@
-# Fighter (GWF Greatsword Goliath Hill Giant) - Level 2
 name: Fighter (GWF Goliath Hill)
 class: fighter
 level: 2
@@ -23,3 +22,10 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- goliath
+- gwf
+- hill
+- level2
+- melee

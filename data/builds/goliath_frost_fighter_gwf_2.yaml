@@ -1,5 +1,3 @@
-# Fighter (GWF Goliath Frost) - Level 2
-# Frost's Chill: +1d6 cold on hit + reduce speed 10ft
 name: Fighter (GWF Goliath Frost)
 class: fighter
 level: 2
@@ -24,3 +22,10 @@ tactic: aggressive
 powers:
 - second_wind
 - action_surge
+tags:
+- fighter
+- frost
+- goliath
+- gwf
+- level2
+- melee
