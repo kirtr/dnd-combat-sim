@@ -85,8 +85,9 @@ class PriorityTactics(TacticsEngine):
         if "reckless_attack" in char.features and in_melee:
             actions.append(TurnAction(kind="reckless"))
 
-        # --- Goliath: Large Form on first turn if not in melee ---
+        # --- Goliath: Large Form on first turn if not in melee (level 5+) ---
         if ("large_form" in char.species_traits
+                and char.level >= 5
                 and not any(e.name == "Large Form" for e in char.active_effects)
                 and not char.bonus_action_used):
             # Use if not in melee (speed boost helps close) or round 1

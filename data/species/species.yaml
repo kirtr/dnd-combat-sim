@@ -70,6 +70,7 @@ goliath:
       description: Bonus action Large for prof bonus turns, advantage on STR checks,
         +10 speed. PHB p.191.
       action_type: bonus_action
+      min_level: 5
     powerful_build:
       description: Count as Large for carrying/pushing/dragging/lifting
       combat_effect: none
