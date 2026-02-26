@@ -92,6 +92,16 @@ def resolve_attack(
                 fire_actual = defender.take_damage(fire_dmg, DamageType.FIRE, state)
                 state.log(f"  Fire Giant: +{fire_actual} fire damage ({defender.current_hp}/{defender.max_hp} HP)")
 
+        # Frost's Chill (Frost Giant): +1d6 cold on hit + reduce speed by 10ft
+        if attacker.giant_ancestry == "frost":
+            frost_res = attacker.resources.get("frost_giant")
+            if frost_res and frost_res.available:
+                frost_res.spend()
+                frost_dmg = eval_dice("1d6").total
+                frost_actual = defender.take_damage(frost_dmg, DamageType.COLD, state)
+                defender.speed = max(0, defender.speed - 10)
+                state.log(f"  Frost's Chill: +{frost_actual} cold damage, speed -10ft ({defender.current_hp}/{defender.max_hp} HP)")
+
         # Hill's Tumble (Hill Giant): free Prone on hit vs Large or smaller, no save
         if attacker.giant_ancestry == "hill":
             hill_res = attacker.resources.get("hill_giant")
@@ -139,6 +149,15 @@ def resolve_attack(
                         fire_dmg = eval_dice("1d10").total
                         fire_actual = defender.take_damage(fire_dmg, DamageType.FIRE, state)
                         state.log(f"  Fire Giant: +{fire_actual} fire damage ({defender.current_hp}/{defender.max_hp} HP)")
+                # Frost's Chill on Lucky reroll hit
+                if attacker.giant_ancestry == "frost":
+                    frost_res = attacker.resources.get("frost_giant")
+                    if frost_res and frost_res.available:
+                        frost_res.spend()
+                        frost_dmg = eval_dice("1d6").total
+                        frost_actual = defender.take_damage(frost_dmg, DamageType.COLD, state)
+                        defender.speed = max(0, defender.speed - 10)
+                        state.log(f"  Frost's Chill: +{frost_actual} cold damage, speed -10ft ({defender.current_hp}/{defender.max_hp} HP)")
                 # Hill's Tumble on Lucky reroll hit
                 if attacker.giant_ancestry == "hill":
                     hill_res = attacker.resources.get("hill_giant")

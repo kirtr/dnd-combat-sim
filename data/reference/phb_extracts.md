@@ -8,7 +8,9 @@
 
 **Hill's Tumble (Hill Giant).** When you hit a Large or smaller creature with an attack roll and deal damage to it, you can give that target the Prone condition. PB uses per long rest.
 
-**Stone's Endurance (Frost Giant).** When you take damage, you can take a Reaction to reduce the damage by 1d12 + CON modifier. PB uses per long rest.
+**Frost's Chill (Frost Giant).** When you hit a target with an attack roll and deal damage to it, you can also deal 1d6 Cold damage to that target and reduce its Speed by 10 feet until the start of your next turn. PB uses per long rest.
+
+**Stone's Endurance (Stone Giant).** When you take damage, you can take a Reaction to roll 1d12. Add your Constitution modifier to the number rolled and reduce the damage by that total. PB uses per long rest.
 
 **Cloud's Jaunt (Cloud Giant).** When you take damage, you can take a Reaction to magically teleport up to 30 feet and gain temporary hit points equal to PB × d10. PB uses per long rest.
 

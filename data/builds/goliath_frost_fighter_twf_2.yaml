@@ -1,11 +1,10 @@
-# Fighter (GWF Greatsword Goliath) - Level 2 Build
-# Goliath with Stone Giant ancestry (Stone's Endurance)
-
-name: Fighter (GWF Goliath Stone)
+# Fighter (TWF Goliath Frost) - Level 2
+# Frost's Chill: +1d6 cold on hit + reduce speed 10ft
+name: Fighter (TWF Goliath Frost)
 class: fighter
 level: 2
 species: goliath
-giant_ancestry: stone
+giant_ancestry: frost
 background: soldier
 origin_feat: savage_attacker
 ability_scores:
@@ -16,11 +15,12 @@ ability_scores:
   wis: 12
   cha: 8
 weapons:
-- greatsword
+- scimitar
+- shortsword
 - javelin
 armor: chain_mail
 shield: false
-fighting_style: great_weapon_fighting
+fighting_style: two_weapon_fighting
 tactic: aggressive
 powers:
 - second_wind

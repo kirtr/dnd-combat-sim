@@ -227,8 +227,10 @@ def load_build(path: str | Path) -> Character:
 
     # Goliath Giant Ancestry resources
     giant_ancestry_val = build.get("giant_ancestry", "")
-    if giant_ancestry_val == "frost":
+    if giant_ancestry_val == "stone":
         resources["stones_endurance"] = Resource("Stone's Endurance", prof_bonus, prof_bonus, "long_rest")
+    elif giant_ancestry_val == "frost":
+        resources["frost_giant"] = Resource("Frost Giant", prof_bonus, prof_bonus, "long_rest")
     elif giant_ancestry_val == "fire":
         resources["fire_giant"] = Resource("Fire Giant", prof_bonus, prof_bonus, "long_rest")
     elif giant_ancestry_val == "hill":

@@ -210,7 +210,7 @@ class Character:
     martial_arts_die: str | None = None   # e.g. "1d6"
     species_traits: dict[str, Any] = field(default_factory=dict)
     origin_feat: str = ""
-    giant_ancestry: str = ""  # cloud/fire/frost/hill/storm
+    giant_ancestry: str = ""  # cloud/fire/frost/hill/stone/storm
     breath_weapon_shape: str = "cone"  # cone or line
     breath_weapon_damage_type: DamageType = DamageType.FIRE
 
@@ -376,7 +376,7 @@ class Character:
 
         # Stone's Endurance (Goliath Frost Giant) — reaction to reduce damage
         if (not self.reaction_used
-                and self.giant_ancestry == "frost"
+                and self.giant_ancestry == "stone"
                 and "stones_endurance" in self.resources):
             res = self.resources["stones_endurance"]
             if res.available:

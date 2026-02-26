@@ -63,6 +63,7 @@ goliath:
       - cloud
       - fire
       - frost
+      - stone
       - hill
       - storm
     large_form:
