@@ -25,6 +25,13 @@ ALL_BUILDS = [
     "rogue_rapier_2",
     "rogue_dual_wield_2",
     "rogue_dual_wield_halfling_2",
+    "goliath_fire_fighter_gwf_2",
+    "goliath_fire_fighter_twf_2",
+    "goliath_hill_fighter_gwf_2",
+    "goliath_hill_fighter_twf_2",
+    "goliath_storm_fighter_gwf_2",
+    "human_fighter_twf_2",
+    "human_fighter_gwf_2",
 ]
 
 N = 10000

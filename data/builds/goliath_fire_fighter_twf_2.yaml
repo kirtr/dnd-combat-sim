@@ -1,0 +1,26 @@
+# Fighter (TWF Scimitar+SS Goliath Fire Giant) - Level 2
+name: Fighter (TWF Goliath Fire)
+class: fighter
+level: 2
+species: goliath
+giant_ancestry: fire
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- scimitar
+- shortsword
+- javelin
+armor: chain_mail
+shield: false
+fighting_style: two_weapon_fighting
+tactic: aggressive
+powers:
+- second_wind
+- action_surge

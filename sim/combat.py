@@ -98,7 +98,7 @@ def _execute_turn(
             _do_reckless(char, state)
 
         elif action.kind == "ranged_attack":
-            if not char.action_used:
+            if not char.action_used and state.distance > 5:
                 _do_ranged_attack(char, opponent, action, state)
 
         elif action.kind == "move":
@@ -128,6 +128,9 @@ def _execute_turn(
 
         elif action.kind == "adrenaline_rush":
             _do_adrenaline_rush(char, opponent, state)
+
+        elif action.kind == "heroic_inspiration":
+            _do_heroic_inspiration(char, state)
 
         elif action.kind == "large_form":
             _do_large_form(char, state)
@@ -298,7 +301,10 @@ def _do_action_surge(
     char.action_used = False  # reset to allow another action
     state.log(f"  {char.name} uses ACTION SURGE!")
 
-    # Find the attack action in decisions and repeat it
+    # Try to close distance first if not in melee
+    if state.distance > 5:
+        _do_move(char, opponent, state)
+
     from sim.tactics import _pick_melee_weapon
     mw = _pick_melee_weapon(char) or char.best_melee_weapon()
     if state.distance <= 5 and mw:
@@ -313,7 +319,11 @@ def _do_action_surge(
     else:
         rw = char.best_ranged_weapon()
         if rw and state.distance <= rw.effective_range:
-            resolve_attack(char, opponent, rw, state, is_thrown=rw.is_thrown)
+            num_attacks = 1 + char.extra_attacks
+            for _ in range(num_attacks):
+                if not opponent.is_alive:
+                    break
+                resolve_attack(char, opponent, rw, state, is_thrown=rw.is_thrown)
     char.action_used = True
 
 
@@ -359,6 +369,14 @@ def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState
             char.movement_remaining -= move
             char.has_moved = True
             state.log(f"  {char.name} rushes {move} ft closer (distance: {state.distance} ft)")
+
+
+def _do_heroic_inspiration(char: Character, state: CombatState) -> None:
+    """Mark that Heroic Inspiration should be used on next attack."""
+    res = char.resources.get("heroic_inspiration")
+    if res and res.available:
+        char._use_heroic_inspiration = True
+        state.log(f"  {char.name} will use Heroic Inspiration on next attack!")
 
 
 def _do_large_form(char: Character, state: CombatState) -> None:

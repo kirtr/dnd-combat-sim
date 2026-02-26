@@ -83,6 +83,23 @@ def resolve_attack(
         if not is_unarmed and attacker.can_use_mastery(weapon):
             _apply_mastery_on_hit(attacker, defender, weapon, state)
 
+        # Goliath Fire Giant ancestry: +1d10 fire damage on hit (PB uses/long rest)
+        if attacker.giant_ancestry == "fire":
+            fire_res = attacker.resources.get("fire_giant")
+            if fire_res and fire_res.available:
+                fire_res.spend()
+                fire_dmg = eval_dice("1d10").total
+                fire_actual = defender.take_damage(fire_dmg, DamageType.FIRE, state)
+                state.log(f"  Fire Giant: +{fire_actual} fire damage ({defender.current_hp}/{defender.max_hp} HP)")
+
+        # Hill's Tumble (Hill Giant): free Prone on hit vs Large or smaller, no save
+        if attacker.giant_ancestry == "hill":
+            hill_res = attacker.resources.get("hill_giant")
+            if hill_res and hill_res.available:
+                hill_res.spend()
+                defender.conditions.add(Condition.PRONE)
+                state.log(f"  Hill's Tumble: {defender.name} knocked prone!")
+
         crit_str = " CRIT!" if is_crit else ""
         sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
         state.log(
@@ -114,6 +131,21 @@ def resolve_attack(
                 actual = defender.take_damage(damage, weapon.damage_type, state)
                 if not is_unarmed and attacker.can_use_mastery(weapon):
                     _apply_mastery_on_hit(attacker, defender, weapon, state)
+                # Fire Giant on Lucky reroll hit
+                if attacker.giant_ancestry == "fire":
+                    fire_res = attacker.resources.get("fire_giant")
+                    if fire_res and fire_res.available:
+                        fire_res.spend()
+                        fire_dmg = eval_dice("1d10").total
+                        fire_actual = defender.take_damage(fire_dmg, DamageType.FIRE, state)
+                        state.log(f"  Fire Giant: +{fire_actual} fire damage ({defender.current_hp}/{defender.max_hp} HP)")
+                # Hill's Tumble on Lucky reroll hit
+                if attacker.giant_ancestry == "hill":
+                    hill_res = attacker.resources.get("hill_giant")
+                    if hill_res and hill_res.available:
+                        hill_res.spend()
+                        defender.conditions.add(Condition.PRONE)
+                        state.log(f"  Hill's Tumble: {defender.name} knocked prone!")
                 crit_str = " CRIT!" if is_crit2 else ""
                 sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
                 state.log(
@@ -287,6 +319,16 @@ def _has_advantage(attacker: Character, defender: Character) -> bool:
     # Reckless on defender grants us advantage
     if any(e.grants_advantage_to_enemies for e in defender.active_effects):
         return True
+    # Prone grants advantage on melee attacks (within 5ft)
+    if Condition.PRONE in defender.conditions:
+        return True
+    # Heroic Inspiration: spend to gain advantage on this attack
+    if hasattr(attacker, '_use_heroic_inspiration') and attacker._use_heroic_inspiration:
+        hi_res = attacker.resources.get("heroic_inspiration")
+        if hi_res and hi_res.available:
+            hi_res.spend()
+            attacker._use_heroic_inspiration = False
+            return True
     return False
 
 

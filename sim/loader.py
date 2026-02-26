@@ -172,6 +172,9 @@ def load_build(path: str | Path) -> Character:
     species_name = build.get("species", "human")
     species_data_all = _get_data("species.yaml")
     species_data = species_data_all.get(species_name, {})
+    # Handle alias: "human" -> "H"
+    if not species_data and species_name == "human":
+        species_data = species_data_all.get("H", {})
     speed = species_data.get("speed", 30)
 
     # Monk unarmored movement
@@ -222,10 +225,20 @@ def load_build(path: str | Path) -> Character:
     if "adrenaline_rush" in species_traits:
         resources["adrenaline_rush"] = Resource("Adrenaline Rush", prof_bonus, prof_bonus, "short_rest")
 
-    # Stone's Endurance (Goliath with Frost Giant ancestry)
+    # Goliath Giant Ancestry resources
     giant_ancestry_val = build.get("giant_ancestry", "")
     if giant_ancestry_val == "frost":
         resources["stones_endurance"] = Resource("Stone's Endurance", prof_bonus, prof_bonus, "long_rest")
+    elif giant_ancestry_val == "fire":
+        resources["fire_giant"] = Resource("Fire Giant", prof_bonus, prof_bonus, "long_rest")
+    elif giant_ancestry_val == "hill":
+        resources["hill_giant"] = Resource("Hill Giant", prof_bonus, prof_bonus, "long_rest")
+    elif giant_ancestry_val == "storm":
+        resources["storm_giant"] = Resource("Storm Giant", prof_bonus, prof_bonus, "long_rest")
+
+    # Human: Heroic Inspiration (1 per long rest)
+    if species_name in ("human", "H") or "resourceful" in species_traits:
+        resources["heroic_inspiration"] = Resource("Heroic Inspiration", 1, 1, "long_rest")
 
     # Breath Weapon (Dragonborn)
     if "breath_weapon" in species_traits:
@@ -242,13 +255,19 @@ def load_build(path: str | Path) -> Character:
     if origin_feat_name == "lucky":
         resources["luck_points"] = Resource("Luck Points", prof_bonus, prof_bonus, "long_rest")
 
+    # Versatile feat (Human racial bonus feat)
+    versatile_feat = build.get("versatile_feat", "")
+    if versatile_feat == "tough":
+        max_hp += 2 * level
+    if versatile_feat == "lucky":
+        resources["luck_points"] = Resource("Luck Points", prof_bonus, prof_bonus, "long_rest")
     # Origin feat
     origin_feat = origin_feat_name
-    has_savage_attacker = origin_feat == "savage_attacker"
+    has_savage_attacker = origin_feat == "savage_attacker" or versatile_feat == "savage_attacker"
 
     # Initiative bonus
     init_bonus = 0
-    if origin_feat == "alert":
+    if origin_feat == "alert" or versatile_feat == "alert":
         init_bonus = prof_bonus
 
     # Sneak attack

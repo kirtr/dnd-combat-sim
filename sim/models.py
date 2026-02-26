@@ -357,6 +357,10 @@ class Character:
             self.active_effects.remove(e)
         # Remove dodging at start of turn (it lasts until start of your next turn)
         self.conditions.discard(Condition.DODGING)
+        # Stand up from prone (costs half movement)
+        if Condition.PRONE in self.conditions:
+            self.conditions.discard(Condition.PRONE)
+            self.movement_remaining = max(0, self.movement_remaining - self.speed // 2)
 
     def end_turn(self) -> None:
         expired = [e for e in self.active_effects if e.end_trigger == "end_of_turn"]
@@ -384,6 +388,22 @@ class Character:
                 self.reaction_used = True
                 if state:
                     state.log(f"  {self.name} uses Stone's Endurance, reducing damage by {reduction}")
+
+        # Storm's Thunder (Storm Giant): reaction to deal 1d8 thunder to attacker, no save
+        if (not self.reaction_used
+                and self.giant_ancestry == "storm"
+                and "storm_giant" in self.resources):
+            res = self.resources["storm_giant"]
+            if res.available:
+                res.spend()
+                self.reaction_used = True
+                from sim.dice import eval_dice as _eval
+                if state and hasattr(state, 'opponent_of'):
+                    attacker = state.opponent_of(self)
+                    thunder_dmg = _eval("1d8").total
+                    thunder_actual = attacker.take_damage(thunder_dmg, DamageType.THUNDER, None)
+                    if state:
+                        state.log(f"  {self.name} Storm's Thunder! {attacker.name} takes {thunder_actual} thunder damage")
 
         # Absorb with temp HP first
         if self.temp_hp > 0:

@@ -119,6 +119,15 @@ class PriorityTactics(TacticsEngine):
         if not in_melee:
             actions.append(TurnAction(kind="move"))
 
+        # --- Heroic Inspiration: use on first melee attack if we don't have advantage ---
+        if "heroic_inspiration" in char.species_traits or char.resources.get("heroic_inspiration"):
+            hi_res = char.resources.get("heroic_inspiration")
+            if hi_res and hi_res.available:
+                # Use it when we're about to melee and don't already have advantage
+                has_reckless = any(a.kind == "reckless" for a in actions)
+                if not has_reckless:
+                    actions.append(TurnAction(kind="heroic_inspiration"))
+
         # --- Melee attack ---
         # Prefer Nick weapon as main attack to trigger extra offhand attack
         mw = _pick_melee_weapon(char)

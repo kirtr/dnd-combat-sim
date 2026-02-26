@@ -20,7 +20,8 @@ N_ROUNDS = 5000  # rounds to simulate for DPR
 
 
 def simulate_dpr(char_template: Character, target_ac: int, n: int = N_ROUNDS, 
-                 use_surge: bool = False, use_hide: bool = False) -> float:
+                 use_surge: bool = False, use_hide: bool = False,
+                 depleted: bool = False) -> float:
     """Simulate average damage per round against a static AC target.
     
     Simplified: character attacks every round, uses class features optimally.
@@ -30,8 +31,19 @@ def simulate_dpr(char_template: Character, target_ac: int, n: int = N_ROUNDS,
     
     for _ in range(n):
         char = char_template.deep_copy()
+        # Depleted mode: drain all limited resources
+        if depleted:
+            for res in char.resources.values():
+                res.current = 0
         round_damage = 0
         advantage = False
+        
+        # Heroic Inspiration: advantage on first attack
+        heroic_available = False
+        hi_res = char.resources.get("heroic_inspiration")
+        if hi_res and hi_res.available:
+            heroic_available = True
+            hi_res.spend()
         
         # Reckless Attack (Barbarian) — always on in aggressive mode
         if "reckless_attack" in char.features:
@@ -84,9 +96,25 @@ def simulate_dpr(char_template: Character, target_ac: int, n: int = N_ROUNDS,
             vex_advantage = False
             
             for atk_idx in range(num_attacks):
-                atk_adv = advantage or vex_advantage
+                atk_adv = advantage or vex_advantage or (heroic_available and atk_idx == 0 and seq == 0)
+                if heroic_available and atk_idx == 0 and seq == 0:
+                    heroic_available = False  # consumed
                 dmg = _resolve_single_attack(char, attack_weapon, target_ac, atk_adv)
                 round_damage += dmg
+                
+                # Fire Giant: +1d10 fire on hit
+                if dmg > 0 and char.giant_ancestry == "fire":
+                    fire_res = char.resources.get("fire_giant")
+                    if fire_res and fire_res.available:
+                        fire_res.spend()
+                        round_damage += eval_dice("1d10").total
+                
+                # Hill Giant: free prone on hit → advantage on subsequent attacks
+                if dmg > 0 and char.giant_ancestry == "hill":
+                    hill_res = char.resources.get("hill_giant")
+                    if hill_res and hill_res.available:
+                        hill_res.spend()
+                        vex_advantage = True  # prone = advantage on melee
                 
                 # Vex mastery on hit
                 if dmg > 0 and attack_weapon.mastery == MasteryProperty.VEX:
@@ -106,6 +134,20 @@ def simulate_dpr(char_template: Character, target_ac: int, n: int = N_ROUNDS,
                     no_ability_mod=char.fighting_style != "two_weapon_fighting"
                 )
                 round_damage += nick_dmg
+                
+                # Fire Giant on nick hit
+                if nick_dmg > 0 and char.giant_ancestry == "fire":
+                    fire_res = char.resources.get("fire_giant")
+                    if fire_res and fire_res.available:
+                        fire_res.spend()
+                        round_damage += eval_dice("1d10").total
+                
+                # Hill Giant on nick hit
+                if nick_dmg > 0 and char.giant_ancestry == "hill":
+                    hill_res = char.resources.get("hill_giant")
+                    if hill_res and hill_res.available:
+                        hill_res.spend()
+                        # already prone, no further effect in DPS sim
                 
                 if nick_dmg > 0 and off_weapon.mastery == MasteryProperty.VEX:
                     vex_advantage = True
@@ -185,6 +227,13 @@ def main():
         "rogue_rapier_2",
         "rogue_dual_wield_2",
         "rogue_dual_wield_halfling_2",
+        "goliath_fire_fighter_gwf_2",
+        "goliath_fire_fighter_twf_2",
+        "goliath_hill_fighter_gwf_2",
+        "goliath_hill_fighter_twf_2",
+        "goliath_storm_fighter_gwf_2",
+        "human_fighter_twf_2",
+        "human_fighter_gwf_2",
     ]
     
     # Standard AC: fighter with no defense bonus = chain mail AC 16
@@ -264,6 +313,21 @@ def main():
             dpr = simulate_dpr(char, ac, use_surge=False, use_hide=True)
             dprs.append(dpr)
         print(f"  {char.name + ' (Hidden)':<35} {dprs[0]:>10.2f} {dprs[1]:>10.2f} {dprs[2]:>10.2f}")
+
+    # Burst vs Depleted comparison at AC 16
+    print(f"\n  {'BURST vs DEPLETED DPR (AC 16 only)':^86}")
+    print(f"  {'Build':<35} {'Burst':>10} {'Sustained':>10} {'Depleted':>10}")
+    print("  " + "-" * 65)
+
+    for name in builds:
+        path = BUILDS_DIR / f"{name}.yaml"
+        if not path.exists():
+            continue
+        char = load_build(path)
+        burst = simulate_dpr(char, 16, use_surge=True)
+        sust = simulate_dpr(char, 16, use_surge=False)
+        depl = simulate_dpr(char, 16, depleted=True)
+        print(f"  {char.name:<35} {burst:>10.2f} {sust:>10.2f} {depl:>10.2f}")
 
 
 if __name__ == "__main__":
