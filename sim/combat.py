@@ -167,6 +167,19 @@ def _execute_turn(
         elif action.kind == "large_form":
             _do_large_form(char, state)
 
+        elif action.kind == "eldritch_blast":
+            if not char.action_used:
+                _do_eldritch_blast(char, opponent, state)
+
+        elif action.kind == "armor_of_agathys":
+            _do_armor_of_agathys(char, state)
+
+        elif action.kind == "hex":
+            _do_hex(char, state)
+
+        elif action.kind == "vow_of_enmity":
+            _do_vow_of_enmity(char, state)
+
         elif action.kind == "breath_weapon":
             if not char.action_used:
                 _do_breath_weapon(char, opponent, state)
@@ -295,7 +308,9 @@ def _do_melee_attack(
     for i in range(num_attacks):
         if not opponent.is_alive:
             break
-        resolve_attack(char, opponent, weapon, state, attack_label="ACTION")
+        result = resolve_attack(char, opponent, weapon, state, attack_label="ACTION")
+        if result.hit and char.is_concentrating("Hex"):
+            _apply_hex(char, opponent, state)
 
     # Nick mastery: extra attack with offhand light weapon
     if opponent.is_alive:
@@ -619,6 +634,109 @@ def _do_booming_blade(char: Character, opponent: Character, state: CombatState) 
             boom_dmg = eval_dice("1d8").total
             actual = opponent.take_damage(boom_dmg, DamageType.THUNDER, state)
             state.log(f"  Booming Blade detonates! {actual} thunder damage ({opponent.current_hp}/{opponent.max_hp} HP)")
+
+
+# ---------------------------------------------------------------------------
+# Spell action handlers
+# ---------------------------------------------------------------------------
+
+def _do_eldritch_blast(char: Character, opponent: Character, state: CombatState) -> None:
+    """Eldritch Blast: ranged spell attack, 1d10 (+CHA if Agonizing Blast), force damage."""
+    if char.action_used:
+        return
+    char.action_used = True
+    bonus = char.cha_mod if "agonizing_blast" in getattr(char, "invocations", []) else 0
+    # Advantage/disadvantage for spell attacks
+    adv = any(e.advantage_on_attacks for e in char.active_effects)
+    disadv = (
+        Condition.FRIGHTENED in char.conditions
+        or opponent.is_dodging
+        or any(e.disadvantage_on_attacks for e in char.active_effects)
+        or any(e.name == "Shadow Darkness" for e in opponent.active_effects)
+    )
+    attack_roll = d20(advantage=adv, disadvantage=disadv) + char.spell_attack_bonus
+    hit = attack_roll >= opponent.effective_ac
+    if hit:
+        dmg = eval_dice("1d10").total + bonus
+        actual = opponent.take_damage(dmg, DamageType.FORCE, state)
+        hex_dmg = _apply_hex(char, opponent, state) if char.is_concentrating("Hex") else 0
+        state.log(
+            f"  ACTION: {char.name} casts Eldritch Blast: HIT ({attack_roll} vs AC {opponent.effective_ac})"
+            f" for {actual} force{f' +{hex_dmg} hex' if hex_dmg else ''} damage"
+            f" ({opponent.current_hp}/{opponent.max_hp} HP)"
+        )
+    else:
+        state.log(
+            f"  ACTION: {char.name} casts Eldritch Blast: MISS ({attack_roll} vs AC {opponent.effective_ac})"
+        )
+
+
+def _apply_hex(char: Character, target: Character, state: CombatState) -> int:
+    """Apply Hex bonus necrotic damage on hit. Returns actual damage dealt."""
+    if not char.is_concentrating("Hex"):
+        return 0
+    dmg = eval_dice("1d6").total
+    actual = target.take_damage(dmg, DamageType.NECROTIC, state)
+    state.log(f"    Hex: {actual} necrotic damage")
+    return actual
+
+
+def _do_armor_of_agathys(char: Character, state: CombatState) -> None:
+    """Armor of Agathys: action, 2nd-level slot, +10 temp HP, 10 cold retaliation on melee hit."""
+    if char.action_used:
+        return
+    if not char.has_spell_slot(2):
+        return
+    if any(e.name == "Armor of Agathys" for e in char.active_effects):
+        return  # already active
+    char.spend_spell_slot(2)
+    char.action_used = True
+    temp_hp = 10  # 2nd-level slot = 10 temp HP
+    char.gain_temp_hp(temp_hp)
+    char.active_effects.append(ActiveEffect(
+        name="Armor of Agathys",
+        source="armor_of_agathys",
+        duration=99,  # lasts until temp HP depleted
+    ))
+    char.aoa_cold_damage = 10
+    state.log(
+        f"  ACTION: {char.name} casts Armor of Agathys!"
+        f" +{temp_hp} temp HP, {temp_hp} cold retaliation on melee hit"
+    )
+
+
+def _do_hex(char: Character, state: CombatState) -> None:
+    """Hex: bonus action, 2nd-level slot, concentration, +1d6 necrotic on hit."""
+    if char.bonus_action_used:
+        return
+    if char.is_concentrating():
+        return  # already concentrating on something
+    if not char.has_spell_slot(2):
+        return
+    char.spend_spell_slot(2)
+    char.bonus_action_used = True
+    char.concentrate("Hex")
+    state.log(f"  BONUS: {char.name} casts Hex! (+1d6 necrotic on each hit)")
+
+
+def _do_vow_of_enmity(char: Character, state: CombatState) -> None:
+    """Vow of Enmity: bonus action, Channel Divinity, advantage on attacks for 10 rounds."""
+    if char.bonus_action_used:
+        return
+    if any(e.name == "Vow of Enmity" for e in char.active_effects):
+        return  # already active
+    res = char.resources.get("channel_divinity")
+    if not res or not res.available:
+        return
+    res.spend()
+    char.bonus_action_used = True
+    char.vow_of_enmity_active = True
+    char.active_effects.append(ActiveEffect(
+        name="Vow of Enmity",
+        source="vow_of_enmity",
+        duration=10,  # 10 rounds = 1 minute
+    ))
+    state.log(f"  BONUS: {char.name} uses Vow of Enmity! Advantage on all attacks for 10 rounds!")
 
 
 # ---------------------------------------------------------------------------

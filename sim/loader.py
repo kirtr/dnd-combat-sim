@@ -347,6 +347,18 @@ def load_build(path: str | Path) -> Character:
     if "martial_arts" in features:
         martial_arts_die = "1d6"  # levels 1-4
 
+    # Warlock: Invocations
+    invocations = build.get("invocations", [])
+
+    # Spells known: add each to features if not already present
+    for spell in build.get("spells_known", []):
+        if spell not in features:
+            features.append(spell)
+
+    # Paladin level 3+: Channel Divinity (1 use per short rest)
+    if class_name == "paladin" and level >= 3:
+        resources["channel_divinity"] = Resource("Channel Divinity", 1, 1, "short_rest")
+
     # Shield check — add to features for _has_shield check
     if build.get("shield", False):
         features.append("shield")
@@ -408,6 +420,7 @@ def load_build(path: str | Path) -> Character:
         breath_weapon_damage_type=bw_damage_type,
         spellcasting_ability=spellcasting_ability,
         spell_slots=spell_slots,
+        invocations=invocations,
     )
     return char
 

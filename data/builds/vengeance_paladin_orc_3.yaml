@@ -7,29 +7,23 @@ background: soldier
 origin_feat: savage_attacker
 ability_scores:
   str: 16
-  dex: 10
+  dex: 8
   con: 14
-  int: 8
+  int: 10
   wis: 10
-  cha: 14
+  cha: 16
 weapons:
   - longsword
-  - javelin
 armor: chain_mail
 shield: true
 fighting_style: dueling
 spellcasting_ability: charisma
 spell_slots:
   1: 3
-spells_known:
-  - hunters_mark
-  - bane
+tactic: aggressive
 powers:
-  - channel_divinity
   - divine_smite
   - vow_of_enmity
-  - lay_on_hands
-tactic: aggressive
 tags:
   - paladin
   - vengeance

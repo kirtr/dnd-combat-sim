@@ -232,6 +232,9 @@ class Character:
     spellcasting_ability: str | None = None   # "charisma", "wisdom", "intelligence"
     spell_slots: dict[int, int] = field(default_factory=dict)   # {level: max_slots}
     concentration_effect: str | None = None   # name of active concentration spell, or None
+    invocations: list[str] = field(default_factory=list)    # Eldritch Invocations (Warlock)
+    aoa_cold_damage: int = 0                  # Armor of Agathys: cold retaliation on melee hit
+    vow_of_enmity_active: bool = False        # Vengeance Paladin: advantage on attacks this combat
 
     # --- Per-combat state ---
     current_hp: int = 0
@@ -579,6 +582,8 @@ class Character:
         self.bonus_action_used = False
         self.nick_used_this_turn = False
         self.reaction_used = False
+        self.aoa_cold_damage = 0
+        self.vow_of_enmity_active = False
         self.has_moved = False
         self.movement_remaining = self.speed
         self.sneak_attack_used = False

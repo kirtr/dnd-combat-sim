@@ -1,5 +1,6 @@
 name: warlock
 hit_die: d8
+hp_base: 8
 armor_proficiencies: [light]
 weapon_proficiencies: [simple]
 saving_throw_proficiencies: [wisdom, charisma]

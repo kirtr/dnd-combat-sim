@@ -146,7 +146,12 @@ def resolve_attack(
                 defender.speed = max(0, defender.speed - 10)
 
         # Apply entire damage packet at once (resistance per type, then reduction on total)
+        pre_temp_hp = defender.temp_hp
         actual = defender.take_attack_damage(damage_packet, state)
+
+        # Armor of Agathys: retaliation cold damage on melee hit while temp HP remained
+        if not weapon.is_ranged and not is_thrown:
+            _try_aoa_retaliation(attacker, defender, state, pre_temp_hp)
 
         # Log the hit
         extras = []
@@ -218,7 +223,10 @@ def resolve_attack(
                                 fire_res.spend()
                                 fire_extra = eval_dice("1d10").total
                                 damage_packet.append((fire_extra, DamageType.FIRE))
+                        pre_temp_hp_p = defender.temp_hp
                         actual = defender.take_attack_damage(damage_packet, state)
+                        if not weapon.is_ranged and not is_thrown:
+                            _try_aoa_retaliation(attacker, defender, state, pre_temp_hp_p)
                         if not is_unarmed and attacker.can_use_mastery(weapon):
                             _apply_mastery_on_hit(attacker, defender, weapon, state)
                         state.log(
@@ -269,7 +277,10 @@ def resolve_attack(
                         defender.speed = max(0, defender.speed - 10)
                         extras.append(f"+{frost_extra} cold")
 
+                pre_temp_hp_l = defender.temp_hp
                 actual = defender.take_attack_damage(damage_packet, state)
+                if not weapon.is_ranged and not is_thrown:
+                    _try_aoa_retaliation(attacker, defender, state, pre_temp_hp_l)
 
                 if not is_unarmed and attacker.can_use_mastery(weapon):
                     _apply_mastery_on_hit(attacker, defender, weapon, state)
@@ -449,6 +460,26 @@ def _apply_mastery_on_hit(
     elif mastery == MasteryProperty.PUSH:
         state.distance = min(120, state.distance + 10)
         state.log(f"  Push: {defender.name} pushed 10 ft (distance: {state.distance} ft)")
+
+
+def _try_aoa_retaliation(
+    attacker: Character, defender: Character,
+    state: CombatState, had_temp_hp: int,
+) -> None:
+    """Armor of Agathys: deal cold damage to attacker on melee hit while temp HP remains."""
+    if had_temp_hp <= 0:
+        return
+    aoa_dmg = getattr(defender, "aoa_cold_damage", 0)
+    if aoa_dmg <= 0:
+        return
+    aoa_effect = next((e for e in defender.active_effects if e.name == "Armor of Agathys"), None)
+    if aoa_effect is None:
+        return
+    actual_aoa = attacker.take_damage(aoa_dmg, DamageType.COLD, state)
+    state.log(
+        f"  REACTION: Armor of Agathys retaliates! {attacker.name} takes {actual_aoa} cold damage"
+        f" ({attacker.current_hp}/{attacker.max_hp} HP)"
+    )
 
 
 def _try_graze(

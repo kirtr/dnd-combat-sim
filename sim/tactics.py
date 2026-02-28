@@ -128,8 +128,30 @@ class PriorityTactics(TacticsEngine):
             if res and res.available and not in_melee and distance <= bw_range:
                 actions.append(TurnAction(kind="breath_weapon"))
 
-        # --- Ranged attack if not in melee and have ranged weapon ---
-        if not in_melee and has_ranged:
+        # --- Warlock: Armor of Agathys on first turn as action (defensive setup) ---
+        if "armor_of_agathys" in char.features:
+            if not any(e.name == "Armor of Agathys" for e in char.active_effects):
+                if char.has_spell_slot(2):
+                    actions.append(TurnAction(kind="armor_of_agathys"))
+
+        # --- Warlock: Hex as bonus action when not concentrating and have a slot ---
+        if "hex" in char.features and not char.is_concentrating():
+            if char.has_spell_slot(2):
+                actions.append(TurnAction(kind="hex"))
+
+        # --- Warlock: Eldritch Blast as primary action every turn ---
+        if "eldritch_blast" in char.features:
+            actions.append(TurnAction(kind="eldritch_blast"))
+
+        # --- Paladin: Vow of Enmity as bonus action on first turn ---
+        if "vow_of_enmity" in char.features:
+            if not any(e.name == "Vow of Enmity" for e in char.active_effects):
+                res = char.resources.get("channel_divinity")
+                if res and res.available:
+                    actions.append(TurnAction(kind="vow_of_enmity"))
+
+        # --- Ranged attack if not in melee and have ranged weapon (non-Warlock) ---
+        if not in_melee and has_ranged and "eldritch_blast" not in char.features:
             rw = char.best_ranged_weapon()
             if rw:
                 actions.append(TurnAction(kind="ranged_attack", weapon=rw.name))
