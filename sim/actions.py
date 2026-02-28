@@ -13,7 +13,7 @@ from sim.models import (
     Condition,
     MasteryProperty,
 )
-from sim.dice import d20, eval_dice, eval_dice_twice_take_best
+from sim.dice import d20, eval_dice, eval_dice_twice_take_best, flush_rolls
 
 
 @dataclass
@@ -83,6 +83,7 @@ def resolve_attack(
         graze_dmg = _try_graze(attacker, weapon, defender, state, attack_label)
         if graze_dmg == 0:
             state.log(f"  {attack_label}: {attacker.name} attacks with {weapon.name}: MISS (nat 1)")
+        state.log(f"  Rolls: {flush_rolls()}")
         return AttackResult(
             hit=False, critical=False, damage=graze_dmg,
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
@@ -182,6 +183,7 @@ def resolve_attack(
         )
         # Divine Smite (Paladin): expend spell slot for extra radiant damage on any hit
         _try_divine_smite(attacker, defender, is_crit, state)
+        state.log(f"  Rolls: {flush_rolls()}")
         return AttackResult(
             hit=True, critical=is_crit, damage=damage,
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
@@ -235,6 +237,7 @@ def resolve_attack(
                             f" ({defender.current_hp}/{defender.max_hp} HP)"
                         )
                         _try_divine_smite(attacker, defender, False, state)
+                        state.log(f"  Rolls: {flush_rolls()}")
                         return AttackResult(
                             hit=True, critical=False, damage=damage,
                             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
@@ -301,6 +304,7 @@ def resolve_attack(
                     f" ({defender.current_hp}/{defender.max_hp} HP)"
                 )
                 _try_divine_smite(attacker, defender, is_crit2, state)
+                state.log(f"  Rolls: {flush_rolls()}")
                 return AttackResult(
                     hit=True, critical=is_crit2, damage=damage,
                     damage_type=weapon.damage_type, attack_roll=luck_total, target_ac=target_ac,
@@ -316,6 +320,7 @@ def resolve_attack(
         # Battle Master Riposte: defender can counter-attack on miss
         if not is_unarmed:
             try_riposte(defender, attacker, weapon, state)
+        state.log(f"  Rolls: {flush_rolls()}")
         return AttackResult(
             hit=False, critical=False, damage=graze_dmg,
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
@@ -633,6 +638,7 @@ def try_riposte(defender: Character, attacker: Character, weapon: Weapon, state:
     is_crit = roll_result >= defender.crit_threshold
     if roll_result == 1:
         state.log(f"  REACTION: Riposte: MISS (nat 1)")
+        state.log(f"  Rolls: {flush_rolls()}")
         return
     if is_crit or total_roll >= attacker.effective_ac:
         damage = _calc_damage(defender, mw, is_crit, False, False, False)
@@ -642,6 +648,7 @@ def try_riposte(defender: Character, attacker: Character, weapon: Weapon, state:
         state.log(f"  REACTION: Riposte: HIT for {actual} damage (+{riposte_dmg} superiority) ({attacker.current_hp}/{attacker.max_hp} HP)")
     else:
         state.log(f"  REACTION: Riposte: MISS ({total_roll} vs AC {attacker.effective_ac})")
+    state.log(f"  Rolls: {flush_rolls()}")
 
 
 # ---------------------------------------------------------------------------
@@ -675,6 +682,7 @@ def resolve_spell_attack(
             f"  ACTION: {caster.name} casts {spell_name}: MISS"
             f" ({attack_roll} vs AC {target.effective_ac})"
         )
+    state.log(f"  Rolls: {flush_rolls()}")
     return hit
 
 
@@ -704,6 +712,7 @@ def resolve_spell_save(
         f"  ACTION: {caster.name} casts {spell_name}: {target.name} {result}"
         f" ({save_roll} vs DC {dc}), {actual} {damage_type.name.lower()} damage"
     )
+    state.log(f"  Rolls: {flush_rolls()}")
     return actual
 
 
@@ -717,6 +726,7 @@ def do_second_wind(char: Character, state: CombatState) -> None:
     healing = eval_dice("1d10").total + char.level
     actual = char.heal(healing)
     state.log(f"  BONUS: {char.name} uses Second Wind, heals {actual} HP ({char.current_hp}/{char.max_hp})")
+    state.log(f"  Rolls: {flush_rolls()}")
 
 
 def do_dodge(char: Character, state: CombatState) -> None:

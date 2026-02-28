@@ -14,6 +14,31 @@ class DiceResult:
     expression: str
 
 
+# ---------------------------------------------------------------------------
+# Roll log — per-action buffer
+# ---------------------------------------------------------------------------
+_roll_log: list[str] = []
+
+
+def push_roll(entry: str) -> None:
+    """Append a formatted roll entry to the current action log."""
+    _roll_log.append(entry)
+
+
+def flush_rolls() -> str:
+    """Return roll log as bracketed array string, then clear it."""
+    global _roll_log
+    out = f"[{', '.join(_roll_log)}]" if _roll_log else "[]"
+    _roll_log = []
+    return out
+
+
+def clear_rolls() -> None:
+    """Clear the roll log without returning it (e.g. before an action starts)."""
+    global _roll_log
+    _roll_log = []
+
+
 def roll(n: int, sides: int) -> tuple[int, ...]:
     """Roll n dice with given sides, return individual results."""
     return tuple(random.randint(1, sides) for _ in range(n))
@@ -35,12 +60,24 @@ def roll_with_minimum(n: int, sides: int, minimum: int = 1) -> tuple[int, ...]:
 def d20(advantage: bool = False, disadvantage: bool = False) -> int:
     """Roll a d20 with advantage/disadvantage.  They cancel if both true."""
     if advantage and disadvantage:
-        return random.randint(1, 20)
+        result = random.randint(1, 20)
+        push_roll(f"d20={result}")
+        return result
     if advantage:
-        return max(random.randint(1, 20), random.randint(1, 20))
+        a, b = random.randint(1, 20), random.randint(1, 20)
+        result = max(a, b)
+        other = min(a, b)
+        push_roll(f"d20={result}(adv:{other})")
+        return result
     if disadvantage:
-        return min(random.randint(1, 20), random.randint(1, 20))
-    return random.randint(1, 20)
+        a, b = random.randint(1, 20), random.randint(1, 20)
+        result = min(a, b)
+        other = max(a, b)
+        push_roll(f"d20={result}(dis:{other})")
+        return result
+    result = random.randint(1, 20)
+    push_roll(f"d20={result}")
+    return result
 
 
 # Simple dice expression parser: "2d6", "1d10+5", "3d8+2d6+3"
@@ -86,6 +123,16 @@ def eval_dice(expr: str, minimum: int | None = None) -> DiceResult:
         except ValueError:
             pass
 
+    # Build roll log entry
+    _rolls_str = ",".join(str(r) for r in all_rolls)
+    flat_mod = total - sum(all_rolls)
+    if flat_mod > 0:
+        push_roll(f"{expr.replace(' ', '')}=[{_rolls_str}]+{flat_mod}={total}")
+    elif flat_mod < 0:
+        push_roll(f"{expr.replace(' ', '')}=[{_rolls_str}]{flat_mod}={total}")
+    else:
+        push_roll(f"{expr.replace(' ', '')}=[{_rolls_str}]={total}")
+
     return DiceResult(total=total, rolls=tuple(all_rolls), expression=expr)
 
 
@@ -120,8 +167,12 @@ def eval_dice_twice_take_best(expr: str, minimum: int | None = None) -> DiceResu
     r1 = _roll_dice()
     r2 = _roll_dice()
     best = r1 if sum(r1) >= sum(r2) else r2
+    r1_str = ",".join(str(r) for r in r1)
+    r2_str = ",".join(str(r) for r in r2)
+    total_val = sum(best) + flat
+    push_roll(f"{expr.replace(' ', '')}=best([{r1_str}],[{r2_str}])={total_val}")
     return DiceResult(
-        total=sum(best) + flat,
+        total=total_val,
         rolls=best,
         expression=expr,
     )
