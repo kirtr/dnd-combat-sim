@@ -177,9 +177,6 @@ def _execute_turn(
         elif action.kind == "hex":
             _do_hex(char, state)
 
-        elif action.kind == "vow_of_enmity":
-            _do_vow_of_enmity(char, state)
-
         elif action.kind == "breath_weapon":
             if not char.action_used:
                 _do_breath_weapon(char, opponent, state)
@@ -717,26 +714,6 @@ def _do_hex(char: Character, state: CombatState) -> None:
     char.bonus_action_used = True
     char.concentrate("Hex")
     state.log(f"  BONUS: {char.name} casts Hex! (+1d6 necrotic on each hit)")
-
-
-def _do_vow_of_enmity(char: Character, state: CombatState) -> None:
-    """Vow of Enmity: bonus action, Channel Divinity, advantage on attacks for 10 rounds."""
-    if char.bonus_action_used:
-        return
-    if any(e.name == "Vow of Enmity" for e in char.active_effects):
-        return  # already active
-    res = char.resources.get("channel_divinity")
-    if not res or not res.available:
-        return
-    res.spend()
-    char.bonus_action_used = True
-    char.vow_of_enmity_active = True
-    char.active_effects.append(ActiveEffect(
-        name="Vow of Enmity",
-        source="vow_of_enmity",
-        duration=10,  # 10 rounds = 1 minute
-    ))
-    state.log(f"  BONUS: {char.name} uses Vow of Enmity! Advantage on all attacks for 10 rounds!")
 
 
 # ---------------------------------------------------------------------------

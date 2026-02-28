@@ -301,9 +301,9 @@ def load_build(path: str | Path) -> Character:
     # bane and other unimplemented spells: added to features silently so they don't crash;
     # the combat loop only fires a handler if explicitly dispatched
 
-    # Channel Divinity: 2 uses per short rest at level 3
+    # Channel Divinity: 1 use per short rest at level 3 (standard 2024 PHB)
     if "channel_divinity" in features:
-        resources["channel_divinity"] = Resource("Channel Divinity", 2, 2, "short_rest")
+        resources["channel_divinity"] = Resource("Channel Divinity", 1, 1, "short_rest")
 
     # Ranger / Paladin: Hunter's Mark
     hunters_mark_uses = 0
@@ -350,14 +350,10 @@ def load_build(path: str | Path) -> Character:
     # Warlock: Invocations
     invocations = build.get("invocations", [])
 
-    # Spells known: add each to features if not already present
+    # Spells known: add each to features if not already present (broader handler — c874821 handles hunters_mark; this catches all others)
     for spell in build.get("spells_known", []):
         if spell not in features:
             features.append(spell)
-
-    # Paladin level 3+: Channel Divinity (1 use per short rest)
-    if class_name == "paladin" and level >= 3:
-        resources["channel_divinity"] = Resource("Channel Divinity", 1, 1, "short_rest")
 
     # Shield check — add to features for _has_shield check
     if build.get("shield", False):

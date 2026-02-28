@@ -143,13 +143,6 @@ class PriorityTactics(TacticsEngine):
         if "eldritch_blast" in char.features:
             actions.append(TurnAction(kind="eldritch_blast"))
 
-        # --- Paladin: Vow of Enmity as bonus action on first turn ---
-        if "vow_of_enmity" in char.features:
-            if not any(e.name == "Vow of Enmity" for e in char.active_effects):
-                res = char.resources.get("channel_divinity")
-                if res and res.available:
-                    actions.append(TurnAction(kind="vow_of_enmity"))
-
         # --- Ranged attack if not in melee and have ranged weapon (non-Warlock) ---
         if not in_melee and has_ranged and "eldritch_blast" not in char.features:
             rw = char.best_ranged_weapon()
