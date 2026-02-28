@@ -196,16 +196,16 @@ def _do_rage(char: Character, state: CombatState) -> None:
     res.spend()
     if "bear_totem_spirit" in char.features:
         apply_bear_totem_rage(char)
-        state.log(f"  {char.name} RAGES (Bear Totem — resist all)!")
+        state.log(f"  BONUS: {char.name} RAGES (Bear Totem — resist all)!")
     else:
         apply_rage(char)
-        state.log(f"  {char.name} RAGES!")
+        state.log(f"  BONUS: {char.name} RAGES!")
     char.bonus_action_used = True
 
 
 def _do_reckless(char: Character, state: CombatState) -> None:
     apply_reckless_attack(char)
-    state.log(f"  {char.name} attacks recklessly!")
+    state.log(f"  FREE: {char.name} attacks recklessly!")
 
 
 def _do_move(char: Character, opponent: Character, state: CombatState) -> None:
@@ -241,7 +241,7 @@ def _do_ranged_attack(
     for i in range(num_attacks):
         if not opponent.is_alive:
             break
-        resolve_attack(char, opponent, weapon, state, is_thrown=is_thrown)
+        resolve_attack(char, opponent, weapon, state, is_thrown=is_thrown, attack_label="ACTION")
 
     # Move remaining distance after ranged attack
     _do_move(char, opponent, state)
@@ -258,7 +258,7 @@ def _do_melee_attack(
             rw = char.best_ranged_weapon()
             if rw and state.distance <= rw.effective_range:
                 char.action_used = True
-                resolve_attack(char, opponent, rw, state, is_thrown=rw.is_thrown)
+                resolve_attack(char, opponent, rw, state, is_thrown=rw.is_thrown, attack_label="ACTION")
             return
 
     weapon = _find_weapon(char, action.weapon)
@@ -267,7 +267,7 @@ def _do_melee_attack(
     if not weapon:
         # Unarmed strike as action
         char.action_used = True
-        resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True)
+        resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True, attack_label="ACTION")
         return
 
     char.action_used = True
@@ -276,7 +276,7 @@ def _do_melee_attack(
     for i in range(num_attacks):
         if not opponent.is_alive:
             break
-        resolve_attack(char, opponent, weapon, state)
+        resolve_attack(char, opponent, weapon, state, attack_label="ACTION")
 
     # Nick mastery: extra attack with offhand light weapon
     if opponent.is_alive:
@@ -293,11 +293,11 @@ def _do_flurry(char: Character, opponent: Character, state: CombatState) -> None
         return
     res.spend()
     char.bonus_action_used = True
-    state.log(f"  {char.name} uses Flurry of Blows!")
+    state.log(f"  BONUS: {char.name} uses Flurry of Blows!")
     for _ in range(2):
         if not opponent.is_alive:
             break
-        resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True)
+        resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True, attack_label="BONUS")
 
 
 def _do_martial_arts_strike(char: Character, opponent: Character, state: CombatState) -> None:
@@ -305,8 +305,8 @@ def _do_martial_arts_strike(char: Character, opponent: Character, state: CombatS
     if char.bonus_action_used or state.distance > 5:
         return
     char.bonus_action_used = True
-    state.log(f"  {char.name} makes a Martial Arts bonus unarmed strike")
-    resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True)
+    state.log(f"  BONUS: {char.name} makes a Martial Arts bonus unarmed strike")
+    resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True, attack_label="BONUS")
 
 
 def _do_cunning_hide(char: Character, state: CombatState) -> None:
@@ -328,9 +328,9 @@ def _do_cunning_hide(char: Character, state: CombatState) -> None:
             end_trigger="start_of_turn",
             advantage_on_attacks=True,
         ))
-        state.log(f"  {char.name} hides successfully (roll {hide_roll} vs DC {dc})")
+        state.log(f"  BONUS: {char.name} hides successfully (roll {hide_roll} vs DC {dc})")
     else:
-        state.log(f"  {char.name} fails to hide (roll {hide_roll} vs DC {dc})")
+        state.log(f"  BONUS: {char.name} fails to hide (roll {hide_roll} vs DC {dc})")
     char.bonus_action_used = True
 
 
@@ -344,7 +344,7 @@ def _do_action_surge(
         return
     res.spend()
     char.action_used = False  # reset to allow another action
-    state.log(f"  {char.name} uses ACTION SURGE!")
+    state.log(f"  SURGE: {char.name} uses ACTION SURGE!")
 
     # Try to close distance first if not in melee
     if state.distance > 5:
@@ -357,7 +357,7 @@ def _do_action_surge(
         for _ in range(num_attacks):
             if not opponent.is_alive:
                 break
-            resolve_attack(char, opponent, mw, state)
+            resolve_attack(char, opponent, mw, state, attack_label="SURGE")
         # Nick mastery on action surge attacks too
         if opponent.is_alive:
             _try_nick_extra_attack(char, opponent, mw, state)
@@ -368,7 +368,7 @@ def _do_action_surge(
             for _ in range(num_attacks):
                 if not opponent.is_alive:
                     break
-                resolve_attack(char, opponent, rw, state, is_thrown=rw.is_thrown)
+                resolve_attack(char, opponent, rw, state, is_thrown=rw.is_thrown, attack_label="SURGE")
     char.action_used = True
 
 
@@ -388,7 +388,7 @@ def _do_patient_defense(char: Character, state: CombatState) -> None:
     res.spend()
     char.bonus_action_used = True
     do_dodge(char, state)
-    state.log(f"  {char.name} uses Patient Defense!")
+    state.log(f"  BONUS: {char.name} uses Patient Defense!")
 
 
 def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState) -> None:
@@ -405,7 +405,7 @@ def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState
     # Temp HP = proficiency bonus (2024 PHB: PB temp HP)
     temp_hp = char.proficiency_bonus
     char.gain_temp_hp(temp_hp)
-    state.log(f"  {char.name} uses Adrenaline Rush! Dash + {temp_hp} temp HP")
+    state.log(f"  BONUS: {char.name} uses Adrenaline Rush! Dash + {temp_hp} temp HP")
     # Now move closer
     if state.distance > 5:
         move = min(char.movement_remaining, state.distance - 5)
@@ -428,7 +428,7 @@ def _do_hunters_mark(char: Character, state: CombatState) -> None:
     res.spend()
     char.bonus_action_used = True
     char.hunters_mark_active = True
-    state.log(f"  {char.name} casts Hunter's Mark!")
+    state.log(f"  BONUS: {char.name} casts Hunter's Mark!")
 
 
 def _do_heroic_inspiration(char: Character, state: CombatState) -> None:
@@ -436,7 +436,7 @@ def _do_heroic_inspiration(char: Character, state: CombatState) -> None:
     res = char.resources.get("heroic_inspiration")
     if res and res.available:
         char._use_heroic_inspiration = True
-        state.log(f"  {char.name} will use Heroic Inspiration on next attack!")
+        state.log(f"  FREE: {char.name} will use Heroic Inspiration on next attack!")
 
 
 def _do_large_form(char: Character, state: CombatState) -> None:
@@ -454,7 +454,7 @@ def _do_large_form(char: Character, state: CombatState) -> None:
     ))
     char.speed += 10
     char.movement_remaining += 10
-    state.log(f"  {char.name} grows to Large size! (+10 speed for {char.proficiency_bonus} rounds)")
+    state.log(f"  BONUS: {char.name} grows to Large size! (+10 speed for {char.proficiency_bonus} rounds)")
 
 
 def _do_breath_weapon(char: Character, opponent: Character, state: CombatState) -> None:
@@ -476,10 +476,10 @@ def _do_breath_weapon(char: Character, opponent: Character, state: CombatState) 
     if save_roll >= dc:
         damage_roll = damage_roll // 2
         actual = opponent.take_damage(damage_roll, dmg_type, state)
-        state.log(f"  {char.name} uses Breath Weapon! {opponent.name} saves (roll {save_roll} vs DC {dc}), takes {actual} half damage")
+        state.log(f"  ACTION: {char.name} uses Breath Weapon! {opponent.name} saves (roll {save_roll} vs DC {dc}), takes {actual} half damage")
     else:
         actual = opponent.take_damage(damage_roll, dmg_type, state)
-        state.log(f"  {char.name} uses Breath Weapon! {opponent.name} fails save (roll {save_roll} vs DC {dc}), takes {actual} damage")
+        state.log(f"  ACTION: {char.name} uses Breath Weapon! {opponent.name} fails save (roll {save_roll} vs DC {dc}), takes {actual} damage")
 
 
 def _do_frenzy_attack(char: Character, opponent: Character, state: CombatState) -> None:
@@ -490,8 +490,8 @@ def _do_frenzy_attack(char: Character, opponent: Character, state: CombatState) 
     mw = char.best_melee_weapon()
     if not mw:
         return
-    state.log(f"  {char.name} makes a Frenzy attack!")
-    resolve_attack(char, opponent, mw, state)
+    state.log(f"  BONUS: {char.name} makes a Frenzy attack!")
+    resolve_attack(char, opponent, mw, state, attack_label="BONUS")
 
 
 def _do_open_hand_flurry(char: Character, opponent: Character, state: CombatState) -> None:
@@ -503,11 +503,11 @@ def _do_open_hand_flurry(char: Character, opponent: Character, state: CombatStat
         return
     res.spend()
     char.bonus_action_used = True
-    state.log(f"  {char.name} uses Flurry of Blows (Open Hand)!")
+    state.log(f"  BONUS: {char.name} uses Flurry of Blows (Open Hand)!")
     for i in range(2):
         if not opponent.is_alive:
             break
-        result = resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True)
+        result = resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True, attack_label="BONUS")
         if result.hit:
             # Knock prone (best option for 1v1 — grants advantage)
             opponent.conditions.add(Condition.PRONE)
@@ -531,7 +531,7 @@ def _do_shadow_arts(char: Character, state: CombatState) -> None:
         source="shadow_arts",
         duration=10,  # ~1 minute
     ))
-    state.log(f"  {char.name} casts Darkness (Shadow Arts)!")
+    state.log(f"  BONUS: {char.name} casts Darkness (Shadow Arts)!")
 
 
 def _do_fast_hands(char: Character, state: CombatState) -> None:
@@ -545,7 +545,7 @@ def _do_fast_hands(char: Character, state: CombatState) -> None:
         end_trigger="start_of_turn",
         advantage_on_attacks=True,
     ))
-    state.log(f"  {char.name} uses Fast Hands (self-Help for advantage)!")
+    state.log(f"  BONUS: {char.name} uses Fast Hands (self-Help for advantage)!")
 
 
 def _do_steady_aim(char: Character, state: CombatState) -> None:
@@ -560,7 +560,7 @@ def _do_steady_aim(char: Character, state: CombatState) -> None:
         end_trigger="start_of_turn",
         advantage_on_attacks=True,
     ))
-    state.log(f"  {char.name} uses Steady Aim!")
+    state.log(f"  BONUS: {char.name} uses Steady Aim!")
 
 
 def _do_booming_blade(char: Character, opponent: Character, state: CombatState) -> None:
@@ -573,8 +573,8 @@ def _do_booming_blade(char: Character, opponent: Character, state: CombatState) 
     if not mw:
         return
     char.action_used = True
-    state.log(f"  {char.name} uses Booming Blade!")
-    result = resolve_attack(char, opponent, mw, state)
+    state.log(f"  ACTION: {char.name} uses Booming Blade!")
+    result = resolve_attack(char, opponent, mw, state, attack_label="ACTION")
     if result.hit:
         # At level 3, booming blade doesn't add extra on-hit damage yet (that's level 5)
         # But movement damage = 1d8 thunder (assume ~50% chance they move in 1v1)
@@ -611,8 +611,8 @@ def _try_nick_extra_attack(
     if offhand is None:
         return
     char.nick_used_this_turn = True
-    state.log(f"  Nick mastery: extra attack with {offhand.name}!")
-    resolve_attack(char, opponent, offhand, state, is_nick_attack=True)
+    state.log(f"  ACTION: Nick mastery: extra attack with {offhand.name}!")
+    resolve_attack(char, opponent, offhand, state, is_nick_attack=True, attack_label="ACTION")
 
 
 def _find_weapon(char: Character, name: str | None) -> Weapon | None:

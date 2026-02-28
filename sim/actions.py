@@ -35,6 +35,7 @@ def resolve_attack(
     is_thrown: bool = False,
     is_unarmed: bool = False,
     is_nick_attack: bool = False,
+    attack_label: str = "ACTION",
 ) -> AttackResult:
     """Resolve a single attack, apply damage, log, and return result."""
     # Determine advantage / disadvantage
@@ -79,9 +80,9 @@ def resolve_attack(
 
     # Natural 1 auto-miss (but check Graze)
     if roll_result == 1:
-        graze_dmg = _try_graze(attacker, weapon, defender, state)
+        graze_dmg = _try_graze(attacker, weapon, defender, state, attack_label)
         if graze_dmg == 0:
-            state.log(f"  {attacker.name} attacks with {weapon.name}: MISS (nat 1)")
+            state.log(f"  {attack_label}: {attacker.name} attacks with {weapon.name}: MISS (nat 1)")
         return AttackResult(
             hit=False, critical=False, damage=graze_dmg,
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
@@ -170,7 +171,7 @@ def resolve_attack(
         crit_str = " CRIT!" if is_crit else ""
         sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
         state.log(
-            f"  {attacker.name} attacks with {weapon.name}:{crit_str} HIT"
+            f"  {attack_label}: {attacker.name} attacks with {weapon.name}:{crit_str} HIT"
             f" ({total} vs AC {target_ac}) for {actual} damage{sa_str}{extra_str}"
             f" ({defender.current_hp}/{defender.max_hp} HP)"
         )
@@ -190,7 +191,7 @@ def resolve_attack(
                 if gap <= 8:  # max d8 roll
                     precision_roll = eval_dice(attacker.superiority_die_size).total
                     sup_res.spend()
-                    state.log(f"  Precision Attack: +{precision_roll} to attack roll ({total} -> {total + precision_roll})")
+                    state.log(f"  {attack_label}: Precision Attack: +{precision_roll} to attack roll ({total} -> {total + precision_roll})")
                     total += precision_roll
                     if total >= target_ac:
                         # Now it's a hit!
@@ -219,7 +220,7 @@ def resolve_attack(
                         if not is_unarmed and attacker.can_use_mastery(weapon):
                             _apply_mastery_on_hit(attacker, defender, weapon, state)
                         state.log(
-                            f"  {attacker.name} attacks with {weapon.name}: HIT (Precision)"
+                            f"  {attack_label}: {attacker.name} attacks with {weapon.name}: HIT (Precision)"
                             f" ({total} vs AC {target_ac}) for {actual} damage"
                             f" ({defender.current_hp}/{defender.max_hp} HP)"
                         )
@@ -281,7 +282,7 @@ def resolve_attack(
                 crit_str = " CRIT!" if is_crit2 else ""
                 sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
                 state.log(
-                    f"  {attacker.name} attacks with {weapon.name}:{crit_str} HIT (Lucky)"
+                    f"  {attack_label}: {attacker.name} attacks with {weapon.name}:{crit_str} HIT (Lucky)"
                     f" ({luck_total} vs AC {target_ac}) for {actual} damage{sa_str}{extra_str}"
                     f" ({defender.current_hp}/{defender.max_hp} HP)"
                 )
@@ -291,10 +292,10 @@ def resolve_attack(
                 )
 
         # MISS — check Graze mastery
-        graze_dmg = _try_graze(attacker, weapon, defender, state)
+        graze_dmg = _try_graze(attacker, weapon, defender, state, attack_label)
         if graze_dmg == 0:
             state.log(
-                f"  {attacker.name} attacks with {weapon.name}:"
+                f"  {attack_label}: {attacker.name} attacks with {weapon.name}:"
                 f" MISS ({total} vs AC {target_ac})"
             )
         # Battle Master Riposte: defender can counter-attack on miss
@@ -423,6 +424,7 @@ def _apply_mastery_on_hit(
 def _try_graze(
     attacker: Character, weapon: Weapon,
     defender: Character, state: CombatState,
+    attack_label: str = "ACTION",
 ) -> int:
     """Apply Graze mastery on a miss. Returns damage dealt (0 if no graze)."""
     if not weapon.mastery or weapon.mastery != MasteryProperty.GRAZE:
@@ -433,7 +435,7 @@ def _try_graze(
     if graze_dmg > 0:
         actual = defender.take_damage(graze_dmg, weapon.damage_type, state)
         state.log(
-            f"  {attacker.name} attacks with {weapon.name}: GRAZE for {actual} damage"
+            f"  {attack_label}: {attacker.name} attacks with {weapon.name}: GRAZE for {actual} damage"
             f" ({defender.current_hp}/{defender.max_hp} HP)"
         )
         return actual
@@ -559,23 +561,23 @@ def try_riposte(defender: Character, attacker: Character, weapon: Weapon, state:
         return
     sup_res.spend()
     defender.reaction_used = True
-    state.log(f"  Riposte: {defender.name} counter-attacks!")
+    state.log(f"  REACTION: Riposte: {defender.name} counter-attacks!")
     # Simplified: resolve a normal attack + add superiority die damage
     attack_bonus = defender.attack_modifier(mw)
     roll_result = d20()
     total_roll = roll_result + attack_bonus
     is_crit = roll_result >= defender.crit_threshold
     if roll_result == 1:
-        state.log(f"  Riposte: MISS (nat 1)")
+        state.log(f"  REACTION: Riposte: MISS (nat 1)")
         return
     if is_crit or total_roll >= attacker.effective_ac:
         damage = _calc_damage(defender, mw, is_crit, False, False, False)
         riposte_dmg = eval_dice(defender.superiority_die_size).total
         damage += riposte_dmg
         actual = attacker.take_attack_damage([(damage, mw.damage_type)], state)
-        state.log(f"  Riposte: HIT for {actual} damage (+{riposte_dmg} superiority) ({attacker.current_hp}/{attacker.max_hp} HP)")
+        state.log(f"  REACTION: Riposte: HIT for {actual} damage (+{riposte_dmg} superiority) ({attacker.current_hp}/{attacker.max_hp} HP)")
     else:
-        state.log(f"  Riposte: MISS ({total_roll} vs AC {attacker.effective_ac})")
+        state.log(f"  REACTION: Riposte: MISS ({total_roll} vs AC {attacker.effective_ac})")
 
 
 # ---------------------------------------------------------------------------
@@ -591,7 +593,7 @@ def do_second_wind(char: Character, state: CombatState) -> None:
     char.bonus_action_used = True
     healing = eval_dice("1d10").total + char.level
     actual = char.heal(healing)
-    state.log(f"  {char.name} uses Second Wind, heals {actual} HP ({char.current_hp}/{char.max_hp})")
+    state.log(f"  BONUS: {char.name} uses Second Wind, heals {actual} HP ({char.current_hp}/{char.max_hp})")
 
 
 def do_dodge(char: Character, state: CombatState) -> None:
