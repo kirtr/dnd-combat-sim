@@ -155,6 +155,9 @@ def _execute_turn(
         elif action.kind == "adrenaline_rush":
             _do_adrenaline_rush(char, opponent, state)
 
+        elif action.kind == "vow_of_enmity":
+            _do_vow_of_enmity(char, state)
+
         elif action.kind == "hunters_mark":
             _do_hunters_mark(char, state)
 
@@ -432,6 +435,21 @@ def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState
             char.movement_remaining -= move
             char.has_moved = True
             state.log(f"  {char.name} rushes {move} ft closer (distance: {state.distance} ft)")
+
+
+def _do_vow_of_enmity(char: Character, state: CombatState) -> None:
+    """Vow of Enmity (Channel Divinity): bonus action, gain advantage on all attacks this combat."""
+    if char.bonus_action_used:
+        return
+    res = char.resources.get("channel_divinity")
+    if not res or not res.available:
+        return
+    res.spend()
+    char.bonus_action_used = True
+    char.vow_of_enmity_active = True
+    state.log(
+        f"  BONUS: {char.name} uses Vow of Enmity! Advantage on all attacks for this combat."
+    )
 
 
 def _do_hunters_mark(char: Character, state: CombatState) -> None:

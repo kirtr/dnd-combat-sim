@@ -242,6 +242,7 @@ class Character:
     has_moved: bool = False
     movement_remaining: int = 0
     vex_target: str | None = None  # name of creature with Vex advantage
+    vow_of_enmity_active: bool = False  # Vengeance Paladin: advantage on all attacks this combat
 
     def __post_init__(self):
         if self.current_hp == 0:
@@ -584,6 +585,7 @@ class Character:
         self.colossus_slayer_used = False
         self.hunters_mark_active = False
         self.vex_target = None
+        self.vow_of_enmity_active = False
         self.concentration_effect = None
         for r in self.resources.values():
             r.restore()

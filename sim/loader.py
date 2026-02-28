@@ -293,7 +293,19 @@ def load_build(path: str | Path) -> Character:
         superiority_dice = 4
         resources["superiority_dice"] = Resource("Superiority Dice", 4, 4, "short_rest")
 
-    # Ranger: Hunter's Mark
+    # Spells known: wire up any spell features that need resources
+    spells_known = build.get("spells_known", [])
+    if "hunters_mark" in spells_known:
+        if "hunters_mark" not in features:
+            features.append("hunters_mark")
+    # bane and other unimplemented spells: added to features silently so they don't crash;
+    # the combat loop only fires a handler if explicitly dispatched
+
+    # Channel Divinity: 2 uses per short rest at level 3
+    if "channel_divinity" in features:
+        resources["channel_divinity"] = Resource("Channel Divinity", 2, 2, "short_rest")
+
+    # Ranger / Paladin: Hunter's Mark
     hunters_mark_uses = 0
     if "hunters_mark" in features:
         hunters_mark_uses = prof_bonus

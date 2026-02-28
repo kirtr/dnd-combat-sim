@@ -175,6 +175,8 @@ def resolve_attack(
             f" ({total} vs AC {target_ac}) for {actual} damage{sa_str}{extra_str}"
             f" ({defender.current_hp}/{defender.max_hp} HP)"
         )
+        # Divine Smite (Paladin): expend spell slot for extra radiant damage on any hit
+        _try_divine_smite(attacker, defender, is_crit, state)
         return AttackResult(
             hit=True, critical=is_crit, damage=damage,
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
@@ -224,6 +226,7 @@ def resolve_attack(
                             f" ({total} vs AC {target_ac}) for {actual} damage"
                             f" ({defender.current_hp}/{defender.max_hp} HP)"
                         )
+                        _try_divine_smite(attacker, defender, False, state)
                         return AttackResult(
                             hit=True, critical=False, damage=damage,
                             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
@@ -286,6 +289,7 @@ def resolve_attack(
                     f" ({luck_total} vs AC {target_ac}) for {actual} damage{sa_str}{extra_str}"
                     f" ({defender.current_hp}/{defender.max_hp} HP)"
                 )
+                _try_divine_smite(attacker, defender, is_crit2, state)
                 return AttackResult(
                     hit=True, critical=is_crit2, damage=damage,
                     damage_type=weapon.damage_type, attack_roll=luck_total, target_ac=target_ac,
@@ -378,6 +382,32 @@ def _try_sneak_attack(attacker: Character, is_crit: bool, had_advantage: bool) -
 
 
 # ---------------------------------------------------------------------------
+# Divine Smite
+# ---------------------------------------------------------------------------
+
+def _try_divine_smite(
+    attacker: Character, defender: Character,
+    is_crit: bool, state: CombatState,
+) -> None:
+    """Divine Smite: expend a 1st-level spell slot on a hit for 2d8 radiant damage.
+    On a crit, the smite dice are doubled (extra 2d8).
+    """
+    if "divine_smite" not in attacker.features:
+        return
+    if not attacker.has_spell_slot(1):
+        return
+    attacker.spend_spell_slot(1)
+    smite_dmg = eval_dice("2d8").total
+    if is_crit:
+        smite_dmg += eval_dice("2d8").total  # crit doubles smite dice
+    actual_smite = defender.take_damage(smite_dmg, DamageType.RADIANT, state)
+    state.log(
+        f"  ✦ Divine Smite: {actual_smite} radiant damage!"
+        f" ({defender.current_hp}/{defender.max_hp} HP)"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Weapon Mastery helpers
 # ---------------------------------------------------------------------------
 
@@ -449,6 +479,9 @@ def _try_graze(
 def _has_advantage(attacker: Character, defender: Character) -> bool:
     """Check all sources of advantage."""
     if any(e.advantage_on_attacks for e in attacker.active_effects):
+        return True
+    # Vow of Enmity: Vengeance Paladin gains advantage on all attacks this combat
+    if attacker.vow_of_enmity_active:
         return True
     if attacker.vex_target == defender.name:
         attacker.vex_target = None  # consumed on use

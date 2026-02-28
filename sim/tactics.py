@@ -94,8 +94,19 @@ class PriorityTactics(TacticsEngine):
             if not in_melee:
                 actions.append(TurnAction(kind="large_form"))
 
-        # --- Ranger: Hunter's Mark on first turn ---
+        # --- Paladin: Vow of Enmity on first turn (before Hunter's Mark — lasts all combat) ---
+        if (
+            "vow_of_enmity" in char.features
+            and not char.vow_of_enmity_active
+            and not char.bonus_action_used
+        ):
+            res = char.resources.get("channel_divinity")
+            if res and res.available:
+                actions.append(TurnAction(kind="vow_of_enmity"))
+
+        # --- Ranger/Paladin: Hunter's Mark on first turn ---
         # (prioritized before Adrenaline Rush since it boosts all hits)
+        # Note: _do_hunters_mark checks bonus_action_used, so if Vow fired, this skips safely
         if "hunters_mark" in char.features and not char.hunters_mark_active and not char.bonus_action_used:
             hm_res = char.resources.get("hunters_mark")
             if hm_res and hm_res.available:

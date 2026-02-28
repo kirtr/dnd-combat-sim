@@ -1,0 +1,38 @@
+name: Vengeance Paladin Orc
+class: paladin
+subclass: vengeance
+level: 3
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  int: 8
+  wis: 10
+  cha: 14
+weapons:
+  - longsword
+  - javelin
+armor: chain_mail
+shield: true
+fighting_style: dueling
+spellcasting_ability: charisma
+spell_slots:
+  1: 3
+spells_known:
+  - hunters_mark
+  - bane
+powers:
+  - channel_divinity
+  - divine_smite
+  - vow_of_enmity
+  - lay_on_hands
+tactic: aggressive
+tags:
+  - paladin
+  - vengeance
+  - level3
+  - melee
+  - orc
