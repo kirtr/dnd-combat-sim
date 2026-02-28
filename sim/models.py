@@ -525,6 +525,7 @@ class CombatState:
     turn_order: list[Character] = field(default_factory=list)
     combat_log: list[str] = field(default_factory=list)
     verbose: bool = False
+    ranged_first_round: bool = True  # if True, melee attacks are skipped in round 1
 
     def opponent_of(self, char: Character) -> Character:
         return self.combatant_b if char is self.combatant_a else self.combatant_a

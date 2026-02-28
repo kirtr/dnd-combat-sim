@@ -22,6 +22,7 @@ def run_combat(
     *,
     starting_distance: int = 60,
     verbose: bool = False,
+    ranged_first_round: bool = True,
 ) -> CombatState:
     """Run a full 1v1 combat to completion. Returns the final CombatState."""
     state = CombatState(
@@ -29,6 +30,7 @@ def run_combat(
         combatant_b=b,
         distance=starting_distance,
         verbose=verbose,
+        ranged_first_round=ranged_first_round,
     )
 
     # Roll initiative
@@ -87,9 +89,26 @@ def _execute_turn(
     decisions = tactics.decide_turn(char, state)
     action_surge_available = False
 
+    # Round 1 ranged-only enforcement
+    is_ranged_only_round = state.ranged_first_round and state.round_number == 1
+    _melee_skip_logged = False  # log the skip message at most once per turn
+
+    # Actions blocked in ranged-only round
+    _melee_action_kinds = frozenset({
+        "attack", "action_surge", "frenzy_attack", "flurry",
+        "martial_arts_strike", "open_hand_flurry", "booming_blade",
+    })
+
     for action in decisions:
         if not opponent.is_alive:
             break
+
+        # Skip melee actions in round 1 when ranged_first_round is enabled
+        if is_ranged_only_round and action.kind in _melee_action_kinds:
+            if not _melee_skip_logged:
+                state.log(f"  [Round 1: ranged only — {char.name} cannot attack in melee]")
+                _melee_skip_logged = True
+            continue
 
         if action.kind == "rage":
             _do_rage(char, state)
