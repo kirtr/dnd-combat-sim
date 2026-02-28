@@ -405,15 +405,18 @@ def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState
     # Temp HP = proficiency bonus (2024 PHB: PB temp HP)
     temp_hp = char.proficiency_bonus
     char.gain_temp_hp(temp_hp)
-    state.log(f"  BONUS: {char.name} uses Adrenaline Rush! Dash + {temp_hp} temp HP")
-    # Now move closer
-    if state.distance > 5:
-        move = min(char.movement_remaining, state.distance - 5)
-        if move > 0:
-            state.distance -= move
-            char.movement_remaining -= move
-            char.has_moved = True
-            state.log(f"  {char.name} rushes {move} ft closer (distance: {state.distance} ft)")
+    if state.ranged_first_round and state.round_number == 1:
+        state.log(f"  BONUS: {char.name} uses Adrenaline Rush! +{temp_hp} temp HP (holding position — ranged round)")
+    else:
+        state.log(f"  BONUS: {char.name} uses Adrenaline Rush! Dash + {temp_hp} temp HP")
+        # Now move closer
+        if state.distance > 5:
+            move = min(char.movement_remaining, state.distance - 5)
+            if move > 0:
+                state.distance -= move
+                char.movement_remaining -= move
+                char.has_moved = True
+                state.log(f"  {char.name} rushes {move} ft closer (distance: {state.distance} ft)")
 
 
 def _do_hunters_mark(char: Character, state: CombatState) -> None:
