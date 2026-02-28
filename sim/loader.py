@@ -339,6 +339,20 @@ def load_build(path: str | Path) -> Character:
     if build.get("shield", False):
         features.append("shield")
 
+    # Spellcasting ability (from build or class data)
+    spellcasting_ability = build.get("spellcasting_ability") or class_data.get("spellcasting_ability")
+
+    # Spell slots: load from build YAML, create Resources for each level
+    spell_slots_raw = build.get("spell_slots", {})
+    if isinstance(spell_slots_raw, dict):
+        spell_slots = {int(k): int(v) for k, v in spell_slots_raw.items() if int(v) > 0}
+    else:
+        spell_slots = {}
+    for slot_level, max_slots in spell_slots.items():
+        resources[f"spell_slot_{slot_level}"] = Resource(
+            f"Spell Slot {slot_level}", max_slots, max_slots, "long_rest"
+        )
+
     # Giant ancestry (Goliath)
     giant_ancestry = build.get("giant_ancestry", "")
 
@@ -352,6 +366,7 @@ def load_build(path: str | Path) -> Character:
         name=build.get("name", "Unknown"),
         level=level,
         class_name=class_name,
+        subclass=subclass,
         ability_scores=ability_scores,
         max_hp=max_hp,
         ac=ac,
@@ -379,6 +394,8 @@ def load_build(path: str | Path) -> Character:
         giant_ancestry=giant_ancestry,
         breath_weapon_shape=breath_weapon_shape,
         breath_weapon_damage_type=bw_damage_type,
+        spellcasting_ability=spellcasting_ability,
+        spell_slots=spell_slots,
     )
     return char
 

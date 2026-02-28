@@ -6,11 +6,225 @@ import argparse
 import sys
 import time
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from sim.combat import run_combat
 from sim.loader import load_build
 from sim.tactics import load_tactics
 
+if TYPE_CHECKING:
+    from sim.models import Character, Weapon
+
+
+# ---------------------------------------------------------------------------
+# Character sheet formatting helpers
+# ---------------------------------------------------------------------------
+
+def _fmt_mod(value: int) -> str:
+    """Format a modifier as +X or -X (never ±0)."""
+    return f"+{value}" if value >= 0 else str(value)
+
+
+def _fmt_stat(score: int) -> str:
+    """Format score(mod) e.g. 16(+3)."""
+    mod = (score - 10) // 2
+    return f"{score}({_fmt_mod(mod)})"
+
+
+_SUBCLASS_NAMES: dict[str, str] = {
+    "battle_master": "BattleMaster",
+    "champion": "Champion",
+    "berserker": "Berserker",
+    "bear_totem": "BearTotem",
+    "wild_heart_sea": "WildHeartSea",
+    "hunter": "Hunter",
+    "open_hand": "OpenHand",
+    "shadow": "Shadow",
+    "thief": "Thief",
+    "arcane_trickster": "ArcaneTrickster",
+}
+
+_FIGHTING_STYLE_DISPLAY: dict[str, str] = {
+    "dueling": "Dueling+2",
+    "two_weapon_fighting": "TWF",
+    "archery": "Archery+2",
+    "defense": "Defense+1",
+    "great_weapon_fighting": "GWF",
+    "thrown_weapon_fighting": "ThrowFight+2",
+    "protection": "Protection",
+    "blind_fighting": "BlindFight",
+}
+
+_MANEUVER_NAMES: dict[str, str] = {
+    "precision": "Precision",
+    "menacing": "Menacing",
+    "riposte": "Riposte",
+    "trip": "Trip",
+    "disarming": "Disarming",
+    "pushing": "Pushing",
+    "commanding": "Commanding",
+    "distracting": "Distracting",
+    "evasive": "Evasive",
+    "feinting": "Feinting",
+    "goading": "Goading",
+    "lunging": "Lunging",
+    "maneuvering": "Maneuvering",
+    "parrying": "Parrying",
+    "rally": "Rally",
+    "sweeping": "Sweeping",
+}
+
+_SPECIES_TRAIT_NAMES: dict[str, str | None] = {
+    "adrenaline_rush": "Adrenaline Rush",
+    "relentless_endurance": "Relentless Endurance",
+    "breath_weapon": "Breath Weapon",
+    "resourceful": "Heroic Inspiration",
+    "giant_ancestry": None,   # handled via char.giant_ancestry
+    # Non-combat traits — suppress
+    "darkvision": None,
+    "fey_ancestry": None,
+    "keen_senses": None,
+    "skillful": None,
+    "trance": None,
+    "versatile": None,
+}
+
+_GIANT_ANCESTRY_DISPLAY: dict[str, str] = {
+    "cloud": "Cloud Giant",
+    "fire": "Fire Giant",
+    "frost": "Stone's Endurance",
+    "stone": "Stone's Endurance",
+    "hill": "Hill Giant",
+    "storm": "Storm's Thunder",
+}
+
+_ORIGIN_FEAT_NAMES: dict[str, str] = {
+    "savage_attacker": "Savage Attacker",
+    "alert": "Alert",
+    "lucky": "Lucky",
+    "tough": "Tough",
+    "war_caster": "War Caster",
+    "charger": "Charger",
+    "durable": "Durable",
+    "mage_slayer": "Mage Slayer",
+    "tavern_brawler": "Tavern Brawler",
+}
+
+
+def _weapon_damage_str(char: "Character", weapon: "Weapon") -> str:
+    """Format weapon as Name(dice+mod[,Mastery])."""
+    from sim.models import WeaponProperty
+
+    # Determine ability modifier used for this weapon
+    if weapon.is_finesse:
+        ability_mod = max(char.str_mod, char.dex_mod)
+    elif weapon.is_ranged:
+        ability_mod = char.dex_mod
+    elif char.martial_arts_die and not weapon.is_heavy:
+        ability_mod = max(char.str_mod, char.dex_mod)
+    else:
+        ability_mod = char.str_mod
+
+    bonus = ability_mod + weapon.bonus
+
+    # Dueling: +2 for melee one-handed weapons that are not thrown weapons
+    is_thrown_only = (weapon.is_thrown and not weapon.is_ranged
+                      and weapon.range_normal == 5)
+    if (char.fighting_style == "dueling"
+            and weapon.is_melee
+            and not weapon.is_two_handed
+            and not is_thrown_only):
+        bonus += 2
+
+    die = weapon.damage_dice
+    dmg = f"{die}{_fmt_mod(bonus)}"
+
+    # Mastery property (capitalize first letter)
+    parts = [dmg]
+    if char.can_use_mastery(weapon) and weapon.mastery:
+        parts.append(weapon.mastery.value.capitalize())
+
+    return f"{weapon.name}({',' .join(parts)})"
+
+
+def _species_traits_display(char: "Character") -> str:
+    """Return a comma-separated string of notable combat species traits."""
+    traits = []
+
+    for key in char.species_traits:
+        if key in _SPECIES_TRAIT_NAMES:
+            name = _SPECIES_TRAIT_NAMES[key]
+            if name:
+                traits.append(name)
+        else:
+            # Unknown trait — format nicely
+            traits.append(key.replace("_", " ").title())
+
+    # Giant Ancestry (Goliath)
+    if char.giant_ancestry:
+        traits.append(_GIANT_ANCESTRY_DISPLAY.get(
+            char.giant_ancestry,
+            f"{char.giant_ancestry.title()} Giant"
+        ))
+
+    # Origin feat
+    if char.origin_feat in _ORIGIN_FEAT_NAMES:
+        traits.append(_ORIGIN_FEAT_NAMES[char.origin_feat])
+
+    return ", ".join(traits)
+
+
+def format_character_sheet(char: "Character") -> tuple[str, str]:
+    """Return (line1, line2) two-line character sheet summary."""
+    ab = char.ability_scores
+
+    # Class/Subclass display
+    sub = _SUBCLASS_NAMES.get(char.subclass, char.subclass.replace("_", " ").title() if char.subclass else "")
+    class_str = char.class_name.title()
+    if sub:
+        class_str = f"{class_str}/{sub}"
+
+    line1 = (
+        f"{char.name} | {class_str} {char.level} | "
+        f"HP:{char.max_hp} AC:{char.ac} | "
+        f"STR:{_fmt_stat(ab.strength)} "
+        f"DEX:{_fmt_stat(ab.dexterity)} "
+        f"CON:{_fmt_stat(ab.constitution)} "
+        f"INT:{_fmt_stat(ab.intelligence)} "
+        f"WIS:{_fmt_stat(ab.wisdom)} "
+        f"CHA:{_fmt_stat(ab.charisma)} "
+        f"PB:{_fmt_mod(char.proficiency_bonus)}"
+    )
+
+    # Weapons
+    weapon_parts = [_weapon_damage_str(char, w) for w in char.weapons]
+    weapons_str = " ".join(weapon_parts)
+
+    # Fighting style
+    fs_label = _FIGHTING_STYLE_DISPLAY.get(char.fighting_style or "", "")
+    if fs_label:
+        weapons_str += f" [{fs_label}]"
+
+    line2_parts = [weapons_str]
+
+    # Maneuvers (Battle Master only)
+    if char.maneuvers:
+        mnames = [_MANEUVER_NAMES.get(m, m.replace("_", " ").title()) for m in char.maneuvers]
+        line2_parts.append(f"Maneuvers: {'/'.join(mnames)}")
+
+    # Species traits & notable feats
+    traits_str = _species_traits_display(char)
+    if traits_str:
+        line2_parts.append(traits_str)
+
+    line2 = "  " + " | ".join(line2_parts)
+
+    return line1, line2
+
+
+# ---------------------------------------------------------------------------
+# Simulation runner
+# ---------------------------------------------------------------------------
 
 @dataclass
 class CombatStats:
@@ -87,6 +301,8 @@ def run_simulations(
 
     results = {
         "n": n,
+        "template_a": template_a,   # Character object for char sheet display
+        "template_b": template_b,
         "combatant_a": {
             "name": template_a.name,
             "class": template_a.class_name,
@@ -119,6 +335,22 @@ def print_results(results: dict) -> None:
     a = results["combatant_a"]
     b = results["combatant_b"]
 
+    # --- Character sheets (before stats divider) ---
+    template_a = results.get("template_a")
+    template_b = results.get("template_b")
+
+    if template_a is not None:
+        l1, l2 = format_character_sheet(template_a)
+        print(l1)
+        print(l2)
+        print()
+    if template_b is not None:
+        l1, l2 = format_character_sheet(template_b)
+        print(l1)
+        print(l2)
+        print()
+
+    # --- Stats table ---
     print("=" * 64)
     print(f"  D&D 2024 Combat Simulator — {n:,} simulations")
     print("=" * 64)

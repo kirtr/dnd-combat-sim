@@ -584,6 +584,65 @@ def try_riposte(defender: Character, attacker: Character, weapon: Weapon, state:
 # Utility actions used by combat.py
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Spell resolution helpers
+# ---------------------------------------------------------------------------
+
+def resolve_spell_attack(
+    caster: Character,
+    target: Character,
+    damage_dice: str,
+    damage_type: DamageType,
+    spell_name: str,
+    state: CombatState,
+) -> bool:
+    """Resolve a spell attack roll. Returns True if hit."""
+    attack_roll = d20() + caster.spell_attack_bonus
+    hit = attack_roll >= target.effective_ac
+    if hit:
+        dmg = eval_dice(damage_dice).total
+        actual = target.take_damage(dmg, damage_type, state)
+        state.log(
+            f"  ACTION: {caster.name} casts {spell_name}: HIT"
+            f" ({attack_roll} vs AC {target.effective_ac}) for {actual} damage"
+        )
+    else:
+        state.log(
+            f"  ACTION: {caster.name} casts {spell_name}: MISS"
+            f" ({attack_roll} vs AC {target.effective_ac})"
+        )
+    return hit
+
+
+def resolve_spell_save(
+    caster: Character,
+    target: Character,
+    damage_dice: str,
+    damage_type: DamageType,
+    spell_name: str,
+    save_ability: str,   # "dex", "str", "con", "wis", "int", "cha"
+    state: CombatState,
+    half_on_save: bool = True,
+) -> int:
+    """Resolve a saving throw spell. Returns actual damage dealt."""
+    dc = caster.spell_save_dc
+    save_mod = getattr(target, f"{save_ability}_mod")
+    save_roll = d20() + save_mod
+    dmg = eval_dice(damage_dice).total
+    if save_roll >= dc:
+        actual_dmg = dmg // 2 if half_on_save else 0
+        result = "saves"
+    else:
+        actual_dmg = dmg
+        result = "fails save"
+    actual = target.take_damage(actual_dmg, damage_type, state)
+    state.log(
+        f"  ACTION: {caster.name} casts {spell_name}: {target.name} {result}"
+        f" ({save_roll} vs DC {dc}), {actual} {damage_type.name.lower()} damage"
+    )
+    return actual
+
+
 def do_second_wind(char: Character, state: CombatState) -> None:
     """Use Second Wind as a bonus action."""
     res = char.resources.get("second_wind")

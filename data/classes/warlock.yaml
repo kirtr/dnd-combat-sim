@@ -1,0 +1,12 @@
+name: warlock
+hit_die: d8
+armor_proficiencies: [light]
+weapon_proficiencies: [simple]
+saving_throw_proficiencies: [wisdom, charisma]
+spellcasting_ability: charisma
+spell_slots_by_level:
+  3: {1: 2}   # Warlock short-rest slots; level 3 = 2 slots (spell level 2)
+features_by_level:
+  1: [eldritch_blast, otherworldly_patron]
+  2: [eldritch_invocations]
+  3: [pact_boon]

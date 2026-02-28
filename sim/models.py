@@ -213,6 +213,7 @@ class Character:
     sneak_attack_dice: str | None = None  # e.g. "1d6"
     sneak_attack_used: bool = False
     martial_arts_die: str | None = None   # e.g. "1d6"
+    subclass: str = ""                    # e.g. "battle_master", "champion"
     crit_threshold: int = 20              # Champion: 19
     superiority_dice: int = 0             # Battle Master: 4 at level 3
     superiority_die_size: str = "1d8"
@@ -226,6 +227,11 @@ class Character:
     giant_ancestry: str = ""  # cloud/fire/frost/hill/stone/storm
     breath_weapon_shape: str = "cone"  # cone or line
     breath_weapon_damage_type: DamageType = DamageType.FIRE
+
+    # --- Spell fields (None / empty if not a spellcaster) ---
+    spellcasting_ability: str | None = None   # "charisma", "wisdom", "intelligence"
+    spell_slots: dict[int, int] = field(default_factory=dict)   # {level: max_slots}
+    concentration_effect: str | None = None   # name of active concentration spell, or None
 
     # --- Per-combat state ---
     current_hp: int = 0
@@ -271,6 +277,14 @@ class Character:
         return self.ability_scores.modifier("wisdom")
 
     @property
+    def cha_mod(self) -> int:
+        return self.ability_scores.modifier("charisma")
+
+    @property
+    def int_mod(self) -> int:
+        return self.ability_scores.modifier("intelligence")
+
+    @property
     def is_raging(self) -> bool:
         return Condition.RAGING in self.conditions
 
@@ -279,11 +293,58 @@ class Character:
         return Condition.DODGING in self.conditions
 
     @property
+    def spellcasting_mod(self) -> int:
+        """Modifier for the character's spellcasting ability."""
+        if self.spellcasting_ability == "charisma":
+            return self.cha_mod
+        elif self.spellcasting_ability == "wisdom":
+            return self.wis_mod
+        elif self.spellcasting_ability == "intelligence":
+            return self.int_mod
+        return 0
+
+    @property
+    def spell_save_dc(self) -> int:
+        return 8 + self.proficiency_bonus + self.spellcasting_mod
+
+    @property
+    def spell_attack_bonus(self) -> int:
+        return self.proficiency_bonus + self.spellcasting_mod
+
+    @property
     def rage_damage(self) -> int:
         for e in self.active_effects:
             if e.rage_damage_bonus:
                 return e.rage_damage_bonus
         return 0
+
+    # --- Spell slot helpers ---
+
+    def spend_spell_slot(self, level: int) -> bool:
+        """Spend a spell slot of the given level. Returns True if successful."""
+        res = self.resources.get(f"spell_slot_{level}")
+        if res and res.available:
+            res.spend()
+            return True
+        return False
+
+    def has_spell_slot(self, level: int) -> bool:
+        res = self.resources.get(f"spell_slot_{level}")
+        return res is not None and res.available
+
+    # --- Concentration helpers ---
+
+    def concentrate(self, spell_name: str) -> None:
+        """Begin concentrating on a spell. Drops any existing concentration."""
+        self.concentration_effect = spell_name
+
+    def break_concentration(self) -> None:
+        self.concentration_effect = None
+
+    def is_concentrating(self, spell_name: str | None = None) -> bool:
+        if spell_name is None:
+            return self.concentration_effect is not None
+        return self.concentration_effect == spell_name
 
     # --- Weapon helpers ---
 
@@ -484,8 +545,19 @@ class Character:
         return total
 
     def take_damage(self, amount: int, damage_type: DamageType, state: Any = None) -> int:
-        """Legacy single-type damage. Delegates to take_attack_damage."""
-        return self.take_attack_damage([(amount, damage_type)], state)
+        """Single-type damage. Delegates to take_attack_damage, then checks concentration."""
+        actual_damage = self.take_attack_damage([(amount, damage_type)], state)
+        # Concentration check if concentrating
+        if self.concentration_effect is not None and state is not None and actual_damage > 0:
+            dc = max(10, actual_damage // 2)
+            from sim.dice import d20 as _d20
+            con_save = _d20() + self.con_mod
+            if con_save < dc:
+                state.log(f"  {self.name} loses concentration on {self.concentration_effect}! (save {con_save} vs DC {dc})")
+                self.break_concentration()
+            else:
+                state.log(f"  {self.name} maintains concentration (save {con_save} vs DC {dc})")
+        return actual_damage
 
     def heal(self, amount: int) -> int:
         actual = min(amount, self.max_hp - self.current_hp)
@@ -512,6 +584,7 @@ class Character:
         self.colossus_slayer_used = False
         self.hunters_mark_active = False
         self.vex_target = None
+        self.concentration_effect = None
         for r in self.resources.values():
             r.restore()
 

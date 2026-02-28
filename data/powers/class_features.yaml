@@ -135,3 +135,45 @@ cunning_action:
   - dash
   - disengage
   - hide
+
+# ---------------------------------------------------------------------------
+# Battle Master Maneuvers (Fighter subclass, level 3+)
+# ---------------------------------------------------------------------------
+# Maneuvers are referenced by string key in build YAML 'maneuvers' lists.
+# Each costs 1 Superiority Die (1d8 at level 3) and triggers on a hit (unless noted).
+battle_master_maneuvers:
+  class: fighter
+  subclass: battle_master
+  resource: superiority_dice
+  die: 1d8
+  maneuvers:
+  - name: Menacing Attack
+    type: maneuver
+    cost: 1 superiority die
+    trigger: on hit with an attack roll
+    effect: >
+      Add the Superiority Die to the attack's damage roll.
+      The target must succeed on a Wisdom saving throw (DC = 8 + your proficiency bonus + your Strength modifier)
+      or have the Frightened condition until the end of your next turn.
+  - name: Precision Attack
+    type: maneuver
+    cost: 1 superiority die
+    trigger: before attack roll
+    effect: >
+      Add the Superiority Die to the attack roll. Can be used before you know if
+      the attack hits or misses.
+  - name: Riposte
+    type: maneuver
+    cost: 1 superiority die
+    trigger: reaction, when a creature misses you with a melee attack
+    effect: >
+      Make one melee weapon attack against the creature. If the attack hits,
+      add the Superiority Die to the damage roll.
+  - name: Trip Attack
+    type: maneuver
+    cost: 1 superiority die
+    trigger: on hit with an attack roll
+    effect: >
+      Add the Superiority Die to the attack's damage roll. If the target is Large
+      or smaller, it must succeed on a Strength saving throw (DC = 8 + your proficiency
+      bonus + your Strength modifier) or have the Prone condition.
