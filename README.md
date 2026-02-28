@@ -16,13 +16,13 @@ Monte Carlo combat simulator for comparing character builds under the 2024 Playe
 **Builds:** 6 pre-built level 2 characters  
 
 ### Combat Model
-- Combatants start 20 ft apart (`starting_distance`, default 20 ft — ensures all common thrown weapons (dagger, hand axe, spear, hammer — all 20/60 ft range) are within normal range for the ranged round; can be set per encounter)
-- **Round 1: ranged only** — melee attacks are blocked by rule, regardless of movement or dashing. Enforced by the `ranged_first_round` flag (default `True`). Gives casters and buffers time to set up.
-- **Round 2+: melee engagement** — combatants who closed distance in round 1 can now attack in melee
-- Movement: 30 ft base speed, Dash for double (Adrenaline Rush etc. still allowed in round 1)
+- Combatants start 20 ft apart (`starting_distance`, default 20 ft — ensures all common thrown weapons (dagger, hand axe, spear, hammer — all 20/60 ft range) are within normal range for the ranged phase; can be set per encounter)
+- **RANGED phase (Round 1):** no movement, no melee attacks — both sides shoot or cast from `starting_distance`. Range/disadvantage checks use `starting_distance`. Managed by the `CombatPhase.RANGED` state.
+- **MELEE phase (Round 2+):** distance resets to 5 ft, normal movement and melee engagement resume. Managed by `CombatPhase.MELEE`.
+- The phase model cleanly separates "what phase is combat in" from "what is the physical distance" via the `CombatPhase` enum in `sim/models.py`.
+- Movement: 30 ft base speed, Dash for double (Adrenaline Rush grants temp HP only in RANGED phase; dash activates in MELEE phase)
 - Fight until one drops to 0 HP (no death saves in v1)
 - No opportunity attacks in v1
-- Both flags can be overridden per encounter: `ranged_first_round=False` for ambushes or close-quarters starts
 
 ### Key 2024 PHB Rules Implemented
 - **Weapon Mastery** (Graze, Vex, Sap, Slow, Topple, Push, Nick, Cleave)

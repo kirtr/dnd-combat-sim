@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from sim.dice import d20, eval_dice, roll
-from sim.models import Character, CombatState, Condition, ActiveEffect, DamageType, MasteryProperty
+from sim.models import Character, CombatState, CombatPhase, Condition, ActiveEffect, DamageType, MasteryProperty
 from sim.actions import resolve_attack, do_second_wind, do_dash, do_dodge
 from sim.effects import apply_rage, apply_bear_totem_rage, apply_reckless_attack
 from sim.tactics import TacticsEngine, TurnAction
@@ -22,15 +22,15 @@ def run_combat(
     *,
     starting_distance: int = 20,
     verbose: bool = False,
-    ranged_first_round: bool = True,
 ) -> CombatState:
     """Run a full 1v1 combat to completion. Returns the final CombatState."""
     state = CombatState(
         combatant_a=a,
         combatant_b=b,
         distance=starting_distance,
+        starting_distance=starting_distance,
         verbose=verbose,
-        ranged_first_round=ranged_first_round,
+        phase=CombatPhase.RANGED,
     )
 
     # Roll initiative
@@ -73,6 +73,12 @@ def run_combat(
                 state.log(f"\n{opponent.name} has fallen! {char.name} wins!")
                 break
 
+        # Transition from ranged phase to melee at end of round 1
+        if state.phase == CombatPhase.RANGED:
+            state.phase = CombatPhase.MELEE
+            state.distance = 5
+            state.log("--- Both sides close to melee range. ---")
+
     return state
 
 
@@ -89,11 +95,11 @@ def _execute_turn(
     decisions = tactics.decide_turn(char, state)
     action_surge_available = False
 
-    # Round 1 ranged-only enforcement
-    is_ranged_only_round = state.ranged_first_round and state.round_number == 1
+    # Ranged phase enforcement
+    is_ranged_phase = state.phase == CombatPhase.RANGED
     _melee_skip_logged = False  # log the skip message at most once per turn
 
-    # Actions blocked in ranged-only round
+    # Actions blocked in ranged phase
     _melee_action_kinds = frozenset({
         "attack", "action_surge", "frenzy_attack", "flurry",
         "martial_arts_strike", "open_hand_flurry", "booming_blade",
@@ -103,12 +109,13 @@ def _execute_turn(
         if not opponent.is_alive:
             break
 
-        # Skip melee actions in round 1 when ranged_first_round is enabled
-        if is_ranged_only_round and action.kind in _melee_action_kinds:
-            if not _melee_skip_logged:
-                state.log(f"  [Round 1: ranged only — {char.name} cannot attack in melee]")
-                _melee_skip_logged = True
-            continue
+        # Skip melee actions in ranged phase
+        if action.kind in _melee_action_kinds:
+            if is_ranged_phase:
+                if not _melee_skip_logged:
+                    state.log(f"  [Ranged phase — {char.name} cannot attack in melee]")
+                    _melee_skip_logged = True
+                continue
 
         if action.kind == "rage":
             _do_rage(char, state)
@@ -117,7 +124,7 @@ def _execute_turn(
             _do_reckless(char, state)
 
         elif action.kind == "ranged_attack":
-            if not char.action_used and state.distance > 5:
+            if not char.action_used:
                 _do_ranged_attack(char, opponent, action, state)
 
         elif action.kind == "move":
@@ -209,6 +216,8 @@ def _do_reckless(char: Character, state: CombatState) -> None:
 
 
 def _do_move(char: Character, opponent: Character, state: CombatState) -> None:
+    if state.phase == CombatPhase.RANGED:
+        return  # No closing movement in ranged phase
     if state.distance <= 5:
         return
     move = min(char.movement_remaining, state.distance - 5)
@@ -226,12 +235,19 @@ def _do_ranged_attack(
     if not weapon:
         return
 
-    # Check range
+    # In melee phase, can't use ranged when adjacent
+    if state.phase == CombatPhase.MELEE and state.distance <= 5:
+        state.log(f"  {char.name} can't use ranged in melee")
+        return
+
+    # Use starting_distance for range checks in ranged phase (combatants haven't moved yet)
+    check_distance = state.starting_distance if state.phase == CombatPhase.RANGED else state.distance
+
     eff_range = weapon.effective_range
     if weapon.is_thrown and weapon.thrown_range_normal:
         eff_range = weapon.thrown_range_normal
-    if state.distance > eff_range:
-        state.log(f"  {char.name} can't reach with {weapon.name} (range {eff_range}, distance {state.distance})")
+    if check_distance > eff_range:
+        state.log(f"  {char.name} can't reach with {weapon.name} (range {eff_range}, distance {check_distance})")
         return
 
     char.action_used = True
@@ -243,7 +259,7 @@ def _do_ranged_attack(
             break
         resolve_attack(char, opponent, weapon, state, is_thrown=is_thrown, attack_label="ACTION")
 
-    # Move remaining distance after ranged attack
+    # Move remaining distance after ranged attack (no-op in ranged phase)
     _do_move(char, opponent, state)
 
 
@@ -400,23 +416,22 @@ def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState
         return
     res.spend()
     char.bonus_action_used = True
-    # Dash
-    char.movement_remaining += char.speed
-    # Temp HP = proficiency bonus (2024 PHB: PB temp HP)
     temp_hp = char.proficiency_bonus
     char.gain_temp_hp(temp_hp)
-    if state.ranged_first_round and state.round_number == 1:
-        state.log(f"  BONUS: {char.name} uses Adrenaline Rush! +{temp_hp} temp HP (holding position — ranged round)")
-    else:
-        state.log(f"  BONUS: {char.name} uses Adrenaline Rush! Dash + {temp_hp} temp HP")
-        # Now move closer
-        if state.distance > 5:
-            move = min(char.movement_remaining, state.distance - 5)
-            if move > 0:
-                state.distance -= move
-                char.movement_remaining -= move
-                char.has_moved = True
-                state.log(f"  {char.name} rushes {move} ft closer (distance: {state.distance} ft)")
+    if state.phase == CombatPhase.RANGED:
+        # Ranged phase: grant temp HP only, no dash/movement
+        state.log(f"  BONUS: {char.name} uses Adrenaline Rush! +{temp_hp} temp HP (holding position — ranged phase)")
+        return
+    # Melee phase: Dash + move closer
+    char.movement_remaining += char.speed
+    state.log(f"  BONUS: {char.name} uses Adrenaline Rush! Dash + {temp_hp} temp HP")
+    if state.distance > 5:
+        move = min(char.movement_remaining, state.distance - 5)
+        if move > 0:
+            state.distance -= move
+            char.movement_remaining -= move
+            char.has_moved = True
+            state.log(f"  {char.name} rushes {move} ft closer (distance: {state.distance} ft)")
 
 
 def _do_hunters_mark(char: Character, state: CombatState) -> None:

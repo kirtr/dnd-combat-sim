@@ -70,6 +70,11 @@ class Condition(Enum):
     DODGING = "dodging"
 
 
+class CombatPhase(Enum):
+    RANGED = auto()   # Round 1: ranged/spells only, no movement, no melee
+    MELEE  = auto()   # Round 2+: normal combat, movement allowed
+
+
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
@@ -525,7 +530,8 @@ class CombatState:
     turn_order: list[Character] = field(default_factory=list)
     combat_log: list[str] = field(default_factory=list)
     verbose: bool = False
-    ranged_first_round: bool = True  # if True, melee attacks are skipped in round 1
+    phase: CombatPhase = field(default_factory=lambda: CombatPhase.RANGED)
+    starting_distance: int = 60  # captured once at combat start for range checks
 
     def opponent_of(self, char: Character) -> Character:
         return self.combatant_b if char is self.combatant_a else self.combatant_a

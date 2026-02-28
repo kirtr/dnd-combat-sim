@@ -11,7 +11,7 @@ import abc
 from dataclasses import dataclass, field
 from typing import Any
 
-from sim.models import Character, CombatState, Condition, MasteryProperty
+from sim.models import Character, CombatState, CombatPhase, Condition, MasteryProperty
 
 
 # ---------------------------------------------------------------------------
@@ -54,7 +54,7 @@ class PriorityTactics(TacticsEngine):
         opponent = state.opponent_of(char)
         actions: list[TurnAction] = []
         distance = state.distance
-        in_melee = distance <= 5
+        in_melee = distance <= 5 and state.phase == CombatPhase.MELEE
         has_ranged = char.best_ranged_weapon() is not None
 
         if self.name == "aggressive":
