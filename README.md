@@ -16,7 +16,7 @@ Monte Carlo combat simulator for comparing character builds under the 2024 Playe
 **Builds:** 6 pre-built level 2 characters  
 
 ### Combat Model
-- Combatants start 60 ft apart (`starting_distance`, default 60 ft — used for range categories and narrative; can be set per encounter)
+- Combatants start 20 ft apart (`starting_distance`, default 20 ft — ensures all common thrown weapons (dagger, hand axe, spear, hammer — all 20/60 ft range) are within normal range for the ranged round; can be set per encounter)
 - **Round 1: ranged only** — melee attacks are blocked by rule, regardless of movement or dashing. Enforced by the `ranged_first_round` flag (default `True`). Gives casters and buffers time to set up.
 - **Round 2+: melee engagement** — combatants who closed distance in round 1 can now attack in melee
 - Movement: 30 ft base speed, Dash for double (Adrenaline Rush etc. still allowed in round 1)

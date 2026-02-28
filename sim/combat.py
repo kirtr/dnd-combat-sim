@@ -20,7 +20,7 @@ def run_combat(
     tactics_a: TacticsEngine,
     tactics_b: TacticsEngine,
     *,
-    starting_distance: int = 60,
+    starting_distance: int = 20,
     verbose: bool = False,
     ranged_first_round: bool = True,
 ) -> CombatState:
