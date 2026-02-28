@@ -17,6 +17,19 @@ def apply_rage(char: Character) -> None:
     ))
 
 
+def apply_bear_totem_rage(char: Character) -> None:
+    """Bear Totem rage — resistance to ALL damage except psychic."""
+    char.conditions.add(Condition.RAGING)
+    all_except_psychic = [dt for dt in DamageType if dt != DamageType.PSYCHIC]
+    char.active_effects.append(ActiveEffect(
+        name="Rage",
+        source="bear_totem",
+        duration=100,
+        damage_resistance=all_except_psychic,
+        rage_damage_bonus=2,
+    ))
+
+
 def apply_reckless_attack(char: Character) -> None:
     """Reckless Attack -- advantage on STR melee attacks, enemies have advantage."""
     char.active_effects.append(ActiveEffect(

@@ -19,6 +19,8 @@ features:
   - weapon_mastery_rogue
   2:
   - cunning_action
+  3:
+  - steady_aim
 phb_ref: pp. 128-129
 notes:
   sneak_attack_2024: 1d6 at levels 1-2. Once per turn. Requires finesse or ranged

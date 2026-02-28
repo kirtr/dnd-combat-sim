@@ -1,0 +1,29 @@
+name: Thief Human
+class: rogue
+subclass: thief
+level: 3
+species: human
+background: criminal
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 12
+  wis: 10
+  cha: 8
+weapons:
+- rapier
+- shortbow
+armor: leather
+shield: false
+tactic: aggressive
+powers:
+- sneak_attack
+- cunning_action
+tags:
+- human
+- level3
+- melee
+- rogue
+- thief

@@ -19,6 +19,8 @@ features:
   - step_of_the_wind
   - unarmored_movement
   - uncanny_metabolism
+  3:
+  - deflect_attacks
 phb_ref: pp. 100-102
 notes:
   martial_arts_2024: 'Use DEX for monk weapons (simple melee + martial light) and

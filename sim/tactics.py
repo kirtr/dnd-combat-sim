@@ -136,19 +136,46 @@ class PriorityTactics(TacticsEngine):
                 if not has_reckless:
                     actions.append(TurnAction(kind="heroic_inspiration"))
 
+        # --- Thief: Fast Hands for advantage (before attack) ---
+        if "fast_hands" in char.features and in_melee:
+            actions.append(TurnAction(kind="fast_hands"))
+
+        # --- Rogue: Steady Aim for advantage (when in melee already) ---
+        if "steady_aim" in char.features and in_melee and "fast_hands" not in char.features:
+            actions.append(TurnAction(kind="steady_aim"))
+
         # --- Melee attack ---
-        # Prefer Nick weapon as main attack to trigger extra offhand attack
-        mw = _pick_melee_weapon(char)
-        if mw:
-            actions.append(TurnAction(kind="attack", weapon=mw.name))
+        # Arcane Trickster: use Booming Blade instead of normal attack
+        if "booming_blade" in char.features and in_melee:
+            actions.append(TurnAction(kind="booming_blade"))
         else:
-            actions.append(TurnAction(kind="attack"))  # unarmed
+            # Prefer Nick weapon as main attack to trigger extra offhand attack
+            mw = _pick_melee_weapon(char)
+            if mw:
+                actions.append(TurnAction(kind="attack", weapon=mw.name))
+            else:
+                actions.append(TurnAction(kind="attack"))  # unarmed
+
+        # --- Berserker: Frenzy attack as bonus action while raging ---
+        if "frenzy" in char.features and char.is_raging and in_melee:
+            actions.append(TurnAction(kind="frenzy_attack"))
 
         # --- Bonus action: Monk Flurry of Blows ---
-        if "flurry_of_blows" in char.features and in_melee:
+        if "open_hand_technique" in char.features and in_melee:
+            res = char.resources.get("focus_points")
+            if res and res.available:
+                actions.append(TurnAction(kind="open_hand_flurry"))
+        elif "flurry_of_blows" in char.features and in_melee:
             res = char.resources.get("focus_points")
             if res and res.available:
                 actions.append(TurnAction(kind="flurry"))
+
+        # --- Shadow Monk: Shadow Arts (cast Darkness for defense) ---
+        if "shadow_arts" in char.features and not any(e.name == "Shadow Darkness" for e in char.active_effects):
+            res = char.resources.get("focus_points")
+            if res and res.current >= 2:
+                # Use shadow arts on first turn for defense
+                actions.append(TurnAction(kind="shadow_arts"))
 
         # --- Bonus action: Monk Martial Arts free unarmed strike ---
         if "martial_arts" in char.features and "flurry_of_blows" not in char.features:
@@ -158,7 +185,7 @@ class PriorityTactics(TacticsEngine):
             actions.append(TurnAction(kind="martial_arts_strike"))
 
         # --- Rogue: Cunning Action Hide for Sneak Attack advantage ---
-        if "cunning_action" in char.features and in_melee:
+        if "cunning_action" in char.features and in_melee and "fast_hands" not in char.features and "steady_aim" not in char.features:
             # In aggressive mode, prefer hiding for sneak attack advantage
             actions.append(TurnAction(kind="cunning_hide"))
 

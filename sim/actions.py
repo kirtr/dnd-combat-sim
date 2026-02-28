@@ -47,6 +47,24 @@ def resolve_attack(
     else:
         attack_bonus = attacker.attack_modifier(weapon)
 
+    # Shield spell reaction: +5 AC until start of next turn
+    if (not defender.reaction_used
+            and "shield_spell" in defender.features):
+        shield_res = defender.resources.get("shield_spell")
+        if shield_res and shield_res.available:
+            # Speculatively check if shield would help (use it when attacked)
+            # In real D&D it's after seeing the roll; here we preemptively add it
+            if not any(e.name == "Shield Spell" for e in defender.active_effects):
+                shield_res.spend()
+                defender.reaction_used = True
+                defender.active_effects.append(ActiveEffect(
+                    name="Shield Spell",
+                    source="arcane_trickster",
+                    end_trigger="start_of_turn",
+                    ac_bonus=5,
+                ))
+                state.log(f"  {defender.name} casts Shield (+5 AC)!")
+
     roll_result = d20(advantage=adv, disadvantage=disadv)
 
     # Halfling Luck: reroll natural 1s on d20 attack rolls
@@ -457,6 +475,9 @@ def _has_disadvantage(attacker: Character, defender: Character) -> bool:
         return True
     # Frightened: disadvantage on attacks while source is visible (always in 1v1)
     if Condition.FRIGHTENED in attacker.conditions:
+        return True
+    # Shadow Darkness: attacks against defender in darkness have disadvantage
+    if any(e.name == "Shadow Darkness" for e in defender.active_effects):
         return True
     # Lucky feat defensive: defender spends luck point to impose disadvantage
     if not defender.reaction_used:

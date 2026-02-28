@@ -1,0 +1,31 @@
+name: Bear Totem TWF Orc
+class: barbarian
+subclass: bear_totem
+level: 3
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 14
+  con: 16
+  int: 8
+  wis: 10
+  cha: 8
+weapons:
+- scimitar
+- shortsword
+- javelin
+armor: unarmored
+shield: false
+tactic: aggressive
+powers:
+- rage
+- reckless_attack
+tags:
+- barbarian
+- bear_totem
+- level3
+- melee
+- orc
+- twf

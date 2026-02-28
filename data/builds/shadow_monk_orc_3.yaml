@@ -1,0 +1,30 @@
+name: Shadow Monk Orc
+class: monk
+subclass: shadow
+level: 3
+species: orc
+background: guard
+origin_feat: savage_attacker
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 10
+  wis: 16
+  cha: 8
+weapons:
+- shortsword
+- dart
+armor: unarmored
+shield: false
+tactic: aggressive
+powers:
+- martial_arts
+- flurry_of_blows
+- patient_defense
+tags:
+- level3
+- melee
+- monk
+- orc
+- shadow

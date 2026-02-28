@@ -1,0 +1,30 @@
+name: Open Hand Human
+class: monk
+subclass: open_hand
+level: 3
+species: human
+background: guard
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 10
+  wis: 16
+  cha: 8
+weapons:
+- shortsword
+- dart
+armor: unarmored
+shield: false
+tactic: aggressive
+powers:
+- martial_arts
+- flurry_of_blows
+- patient_defense
+tags:
+- human
+- level3
+- melee
+- monk
+- open_hand

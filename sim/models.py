@@ -349,6 +349,7 @@ class Character:
     def start_turn(self) -> None:
         self.action_used = False
         self.bonus_action_used = False
+        self.nick_used_this_turn = False
         self.has_moved = False
         self.movement_remaining = self.speed
         self.sneak_attack_used = False
@@ -498,6 +499,7 @@ class Character:
         self.active_effects.clear()
         self.action_used = False
         self.bonus_action_used = False
+        self.nick_used_this_turn = False
         self.reaction_used = False
         self.has_moved = False
         self.movement_remaining = self.speed

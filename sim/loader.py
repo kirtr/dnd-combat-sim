@@ -275,8 +275,10 @@ def load_build(path: str | Path) -> Character:
     # Sneak attack
     sneak_attack_dice = None
     if "sneak_attack" in features:
-        # 1d6 at levels 1-2
-        sneak_attack_dice = "1d6"
+        if level >= 3:
+            sneak_attack_dice = "2d6"
+        else:
+            sneak_attack_dice = "1d6"
 
     # Champion Fighter: Improved Critical (crit on 19-20)
     crit_threshold = 20
@@ -299,6 +301,34 @@ def load_build(path: str | Path) -> Character:
 
     # Hunter Ranger: Colossus Slayer
     has_colossus_slayer = subclass == "hunter" and level >= 3
+
+    # Barbarian subclasses at level 3
+    if class_name == "barbarian" and level >= 3:
+        # Rage uses increase to 3 at level 3
+        if "rage" in resources:
+            resources["rage"] = Resource("Rage", 3, 3, "long_rest")
+        if subclass == "berserker":
+            features.append("frenzy")
+        elif subclass == "bear_totem":
+            features.append("bear_totem_spirit")
+        elif subclass == "wild_heart_sea":
+            features.append("wild_heart_sea")
+
+    # Monk subclasses at level 3
+    if class_name == "monk" and level >= 3:
+        if subclass == "open_hand":
+            features.append("open_hand_technique")
+        elif subclass == "shadow":
+            features.append("shadow_arts")
+
+    # Rogue subclasses at level 3
+    if class_name == "rogue" and level >= 3:
+        if subclass == "thief":
+            features.append("fast_hands")
+        elif subclass == "arcane_trickster":
+            features.append("booming_blade")
+            features.append("shield_spell")
+            resources["shield_spell"] = Resource("Shield Spell", 2, 2, "long_rest")
 
     # Martial Arts
     martial_arts_die = None

@@ -1,0 +1,29 @@
+name: Arcane Trickster Halfling
+class: rogue
+subclass: arcane_trickster
+level: 3
+species: halfling
+background: criminal
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 16
+  con: 14
+  int: 14
+  wis: 10
+  cha: 8
+weapons:
+- rapier
+- shortbow
+armor: leather
+shield: false
+tactic: aggressive
+powers:
+- sneak_attack
+- cunning_action
+tags:
+- arcane_trickster
+- halfling
+- level3
+- melee
+- rogue

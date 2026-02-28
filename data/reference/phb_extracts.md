@@ -47,3 +47,13 @@ Always on the lookout for danger, you gain the following benefits.
 ## Tough (Origin Feat) (PHB p.201)
 
 Your Hit Point maximum increases by an amount equal to twice your character level when you gain this feat. Whenever you gain a level thereafter, your Hit Point maximum increases by an additional 2 Hit Points.
+
+## Nick Mastery Property (PHB p.218)
+
+**Nick.** When you make the extra attack of the Light property, you can make it as part of the Attack action instead of as a Bonus Action. You can make this extra attack only once per turn.
+
+**Key ruling implications for sim:**
+- The extra Light weapon attack is part of the Attack action — it does NOT consume the Bonus Action
+- This frees the Bonus Action for other uses (Rage, Frenzy, Hunter's Mark, Flurry of Blows, etc.)
+- "Only once per turn" means the Nick extra attack must NOT trigger again on Action Surge attacks
+- Bug confirmed: current sim triggers Nick on Action Surge (combat.py ~line 342) — needs a `nick_used_this_turn` flag

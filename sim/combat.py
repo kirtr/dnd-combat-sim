@@ -5,7 +5,7 @@ from __future__ import annotations
 from sim.dice import d20, eval_dice, roll
 from sim.models import Character, CombatState, Condition, ActiveEffect, DamageType, MasteryProperty
 from sim.actions import resolve_attack, do_second_wind, do_dash, do_dodge
-from sim.effects import apply_rage, apply_reckless_attack
+from sim.effects import apply_rage, apply_bear_totem_rage, apply_reckless_attack
 from sim.tactics import TacticsEngine, TurnAction
 
 
@@ -142,6 +142,25 @@ def _execute_turn(
             if not char.action_used:
                 _do_breath_weapon(char, opponent, state)
 
+        elif action.kind == "frenzy_attack":
+            _do_frenzy_attack(char, opponent, state)
+
+        elif action.kind == "open_hand_flurry":
+            _do_open_hand_flurry(char, opponent, state)
+
+        elif action.kind == "shadow_arts":
+            _do_shadow_arts(char, state)
+
+        elif action.kind == "fast_hands":
+            _do_fast_hands(char, state)
+
+        elif action.kind == "steady_aim":
+            _do_steady_aim(char, state)
+
+        elif action.kind == "booming_blade":
+            if not char.action_used:
+                _do_booming_blade(char, opponent, state)
+
     char.end_turn()
 
 
@@ -156,9 +175,13 @@ def _do_rage(char: Character, state: CombatState) -> None:
     if not res or not res.available:
         return
     res.spend()
-    apply_rage(char)
+    if "bear_totem_spirit" in char.features:
+        apply_bear_totem_rage(char)
+        state.log(f"  {char.name} RAGES (Bear Totem — resist all)!")
+    else:
+        apply_rage(char)
+        state.log(f"  {char.name} RAGES!")
     char.bonus_action_used = True
-    state.log(f"  {char.name} RAGES!")
 
 
 def _do_reckless(char: Character, state: CombatState) -> None:
@@ -440,6 +463,109 @@ def _do_breath_weapon(char: Character, opponent: Character, state: CombatState) 
         state.log(f"  {char.name} uses Breath Weapon! {opponent.name} fails save (roll {save_roll} vs DC {dc}), takes {actual} damage")
 
 
+def _do_frenzy_attack(char: Character, opponent: Character, state: CombatState) -> None:
+    """Berserker Frenzy: bonus action weapon attack while raging."""
+    if char.bonus_action_used or not char.is_raging or state.distance > 5:
+        return
+    char.bonus_action_used = True
+    mw = char.best_melee_weapon()
+    if not mw:
+        return
+    state.log(f"  {char.name} makes a Frenzy attack!")
+    resolve_attack(char, opponent, mw, state)
+
+
+def _do_open_hand_flurry(char: Character, opponent: Character, state: CombatState) -> None:
+    """Open Hand Technique: Flurry of Blows with knockdown on hit."""
+    if char.bonus_action_used or state.distance > 5:
+        return
+    res = char.resources.get("focus_points")
+    if not res or not res.available:
+        return
+    res.spend()
+    char.bonus_action_used = True
+    state.log(f"  {char.name} uses Flurry of Blows (Open Hand)!")
+    for i in range(2):
+        if not opponent.is_alive:
+            break
+        result = resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True)
+        if result.hit:
+            # Knock prone (best option for 1v1 — grants advantage)
+            opponent.conditions.add(Condition.PRONE)
+            state.log(f"  Open Hand: {opponent.name} knocked prone!")
+
+
+def _do_shadow_arts(char: Character, state: CombatState) -> None:
+    """Shadow Arts: spend 2 ki, gain obscured (disadvantage on attacks against you)."""
+    if char.bonus_action_used:
+        return
+    # Check if already obscured
+    if any(e.name == "Shadow Darkness" for e in char.active_effects):
+        return
+    res = char.resources.get("focus_points")
+    if not res or res.current < 2:
+        return
+    res.spend(2)
+    char.bonus_action_used = True
+    char.active_effects.append(ActiveEffect(
+        name="Shadow Darkness",
+        source="shadow_arts",
+        duration=10,  # ~1 minute
+    ))
+    state.log(f"  {char.name} casts Darkness (Shadow Arts)!")
+
+
+def _do_fast_hands(char: Character, state: CombatState) -> None:
+    """Thief Fast Hands: bonus action to grant self advantage."""
+    if char.bonus_action_used:
+        return
+    char.bonus_action_used = True
+    char.active_effects.append(ActiveEffect(
+        name="Fast Hands Help",
+        source="fast_hands",
+        end_trigger="start_of_turn",
+        advantage_on_attacks=True,
+    ))
+    state.log(f"  {char.name} uses Fast Hands (self-Help for advantage)!")
+
+
+def _do_steady_aim(char: Character, state: CombatState) -> None:
+    """Steady Aim: bonus action, gain advantage, speed = 0."""
+    if char.bonus_action_used:
+        return
+    char.bonus_action_used = True
+    char.movement_remaining = 0
+    char.active_effects.append(ActiveEffect(
+        name="Steady Aim",
+        source="steady_aim",
+        end_trigger="start_of_turn",
+        advantage_on_attacks=True,
+    ))
+    state.log(f"  {char.name} uses Steady Aim!")
+
+
+def _do_booming_blade(char: Character, opponent: Character, state: CombatState) -> None:
+    """Booming Blade: melee attack + 1d8 thunder if target moves (level 3+: not yet scaled)."""
+    if state.distance > 5:
+        _do_move(char, opponent, state)
+        if state.distance > 5:
+            return
+    mw = char.best_melee_weapon()
+    if not mw:
+        return
+    char.action_used = True
+    state.log(f"  {char.name} uses Booming Blade!")
+    result = resolve_attack(char, opponent, mw, state)
+    if result.hit:
+        # At level 3, booming blade doesn't add extra on-hit damage yet (that's level 5)
+        # But movement damage = 1d8 thunder (assume ~50% chance they move in 1v1)
+        from sim.dice import d20 as _d20
+        if _d20() >= 11:  # 50% chance
+            boom_dmg = eval_dice("1d8").total
+            actual = opponent.take_damage(boom_dmg, DamageType.THUNDER, state)
+            state.log(f"  Booming Blade detonates! {actual} thunder damage ({opponent.current_hp}/{opponent.max_hp} HP)")
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -452,6 +578,8 @@ def _try_nick_extra_attack(
     with a different light weapon. This is part of the Attack action, not bonus action."""
     if not main_weapon.mastery or main_weapon.mastery != MasteryProperty.NICK:
         return
+    if char.nick_used_this_turn:
+        return
     if not char.can_use_mastery(main_weapon):
         return
     # Find a different light melee weapon
@@ -463,6 +591,7 @@ def _try_nick_extra_attack(
             break
     if offhand is None:
         return
+    char.nick_used_this_turn = True
     state.log(f"  Nick mastery: extra attack with {offhand.name}!")
     resolve_attack(char, opponent, offhand, state, is_nick_attack=True)
 
