@@ -9,6 +9,10 @@ from sim.effects import apply_rage, apply_bear_totem_rage, apply_reckless_attack
 from sim.tactics import TacticsEngine, TurnAction
 
 
+def _pad_label(label: str) -> str:
+    return f"{label:<9}"
+
+
 def roll_initiative(char: Character) -> int:
     """Roll initiative for a character."""
     return d20() + char.dex_mod + char.initiative_bonus
@@ -36,7 +40,6 @@ def run_combat(
     # Roll initiative
     init_a = roll_initiative(a)
     init_b = roll_initiative(b)
-    # Tie-break: higher DEX goes first, then random
     if init_a > init_b:
         state.turn_order = [a, b]
     elif init_b > init_a:
@@ -52,7 +55,7 @@ def run_combat(
     state.log(f"Starting distance: {state.distance} ft")
 
     # Combat loop
-    max_rounds = 100  # safety valve
+    max_rounds = 100
     while a.is_alive and b.is_alive and state.round_number < max_rounds:
         state.round_number += 1
         state.log(f"\n=== Round {state.round_number} ===")
@@ -63,7 +66,6 @@ def run_combat(
             opponent = state.opponent_of(char)
             tactics = tactics_a if char is a else tactics_b
 
-            # Reset savage attacker tracking
             if hasattr(char, "_savage_used_this_turn"):
                 char._savage_used_this_turn = False
 
@@ -89,17 +91,17 @@ def _execute_turn(
     state: CombatState,
 ) -> None:
     """Execute a single character's turn."""
+    # Log status changes from start_turn BEFORE calling it
+    _log_start_of_turn_status(char, state)
+
     char.start_turn()
     state.log(f"\n--- {char.name}'s turn (HP: {char.current_hp}/{char.max_hp}) ---")
 
     decisions = tactics.decide_turn(char, state)
-    action_surge_available = False
 
-    # Ranged phase enforcement
     is_ranged_phase = state.phase == CombatPhase.RANGED
-    _melee_skip_logged = False  # log the skip message at most once per turn
+    _melee_skip_logged = False
 
-    # Actions blocked in ranged phase
     _melee_action_kinds = frozenset({
         "attack", "action_surge", "frenzy_attack", "flurry",
         "martial_arts_strike", "open_hand_flurry", "booming_blade",
@@ -109,7 +111,6 @@ def _execute_turn(
         if not opponent.is_alive:
             break
 
-        # Skip melee actions in ranged phase
         if action.kind in _melee_action_kinds:
             if is_ranged_phase:
                 if not _melee_skip_logged:
@@ -119,88 +120,92 @@ def _execute_turn(
 
         if action.kind == "rage":
             _do_rage(char, state)
-
         elif action.kind == "reckless":
             _do_reckless(char, state)
-
         elif action.kind == "ranged_attack":
             if not char.action_used:
                 _do_ranged_attack(char, opponent, action, state)
-
         elif action.kind == "move":
             _do_move(char, opponent, state)
-
         elif action.kind == "attack":
             if not char.action_used:
                 _do_melee_attack(char, opponent, action, state)
-
         elif action.kind == "flurry":
             _do_flurry(char, opponent, state)
-
         elif action.kind == "martial_arts_strike":
             _do_martial_arts_strike(char, opponent, state)
-
         elif action.kind == "cunning_hide":
             _do_cunning_hide(char, state)
-
         elif action.kind == "action_surge":
             _do_action_surge(char, opponent, action, state, decisions)
-
         elif action.kind == "second_wind":
             _do_second_wind_action(char, state)
-
         elif action.kind == "patient_defense":
             _do_patient_defense(char, state)
-
         elif action.kind == "adrenaline_rush":
             _do_adrenaline_rush(char, opponent, state)
-
         elif action.kind == "vow_of_enmity":
             _do_vow_of_enmity(char, state)
-
         elif action.kind == "hunters_mark":
             _do_hunters_mark(char, state)
-
         elif action.kind == "heroic_inspiration":
             _do_heroic_inspiration(char, state)
-
         elif action.kind == "large_form":
             _do_large_form(char, state)
-
         elif action.kind == "eldritch_blast":
             if not char.action_used:
                 _do_eldritch_blast(char, opponent, state)
-
         elif action.kind == "armor_of_agathys":
             _do_armor_of_agathys(char, state)
-
         elif action.kind == "hex":
             _do_hex(char, state)
-
         elif action.kind == "breath_weapon":
             if not char.action_used:
                 _do_breath_weapon(char, opponent, state)
-
         elif action.kind == "frenzy_attack":
             _do_frenzy_attack(char, opponent, state)
-
         elif action.kind == "open_hand_flurry":
             _do_open_hand_flurry(char, opponent, state)
-
         elif action.kind == "shadow_arts":
             _do_shadow_arts(char, state)
-
         elif action.kind == "fast_hands":
             _do_fast_hands(char, state)
-
         elif action.kind == "steady_aim":
             _do_steady_aim(char, state)
-
         elif action.kind == "booming_blade":
             if not char.action_used:
                 _do_booming_blade(char, opponent, state)
 
     char.end_turn()
+
+
+def _log_start_of_turn_status(char: Character, state: CombatState) -> None:
+    """Log STATUS lines for effects that will expire at start of turn."""
+    for e in char.active_effects:
+        if e.end_trigger == "start_of_turn":
+            if e.name == "Frightened":
+                state.log(f"STATUS   {char.name}: frightened expires")
+            elif e.name == "Sapped":
+                state.log(f"STATUS   {char.name}: Sap expires")
+            elif e.name == "Reckless Attack":
+                pass  # Don't log reckless expiry (it's re-applied each turn)
+            elif e.name == "Hidden":
+                pass
+            elif e.name == "Fast Hands Help":
+                pass
+            elif e.name == "Steady Aim":
+                pass
+            elif e.name == "Shield Spell":
+                state.log(f"STATUS   {char.name}: Shield expires")
+            else:
+                state.log(f"STATUS   {char.name}: {e.name} expires")
+        elif e.duration is not None and e.duration <= 1:
+            if e.name == "Rage":
+                pass  # Rage doesn't normally expire mid-combat in our sim
+            elif e.name == "Frightened":
+                state.log(f"STATUS   {char.name}: frightened expires")
+            else:
+                state.log(f"STATUS   {char.name}: {e.name} expires")
 
 
 # ---------------------------------------------------------------------------
@@ -214,23 +219,25 @@ def _do_rage(char: Character, state: CombatState) -> None:
     if not res or not res.available:
         return
     res.spend()
+    label = _pad_label("BONUS")
     if "bear_totem_spirit" in char.features:
         apply_bear_totem_rage(char)
-        state.log(f"  BONUS: {char.name} RAGES (Bear Totem — resist all)!")
+        state.log(f"{label}Rage → active (Bear Totem — resist all)")
     else:
         apply_rage(char)
-        state.log(f"  BONUS: {char.name} RAGES!")
+        state.log(f"{label}Rage → active")
     char.bonus_action_used = True
 
 
 def _do_reckless(char: Character, state: CombatState) -> None:
     apply_reckless_attack(char)
-    state.log(f"  FREE: {char.name} attacks recklessly!")
+    label = _pad_label("FREE")
+    state.log(f"{label}Reckless → adv on attacks, enemies adv vs you")
 
 
 def _do_move(char: Character, opponent: Character, state: CombatState) -> None:
     if state.phase == CombatPhase.RANGED:
-        return  # No closing movement in ranged phase
+        return
     if state.distance <= 5:
         return
     move = min(char.movement_remaining, state.distance - 5)
@@ -248,12 +255,10 @@ def _do_ranged_attack(
     if not weapon:
         return
 
-    # In melee phase, can't use ranged when adjacent
     if state.phase == CombatPhase.MELEE and state.distance <= 5:
         state.log(f"  {char.name} can't use ranged in melee")
         return
 
-    # Use starting_distance for range checks in ranged phase (combatants haven't moved yet)
     check_distance = state.starting_distance if state.phase == CombatPhase.RANGED else state.distance
 
     eff_range = weapon.effective_range
@@ -272,7 +277,6 @@ def _do_ranged_attack(
             break
         resolve_attack(char, opponent, weapon, state, is_thrown=is_thrown, attack_label="ACTION")
 
-    # Move remaining distance after ranged attack (no-op in ranged phase)
     _do_move(char, opponent, state)
 
 
@@ -280,10 +284,8 @@ def _do_melee_attack(
     char: Character, opponent: Character, action: TurnAction, state: CombatState
 ) -> None:
     if state.distance > 5:
-        # Not in melee range — try to close first
         _do_move(char, opponent, state)
         if state.distance > 5:
-            # Still not in melee, try ranged instead
             rw = char.best_ranged_weapon()
             if rw and state.distance <= rw.effective_range:
                 char.action_used = True
@@ -294,7 +296,6 @@ def _do_melee_attack(
     if not weapon:
         weapon = char.best_melee_weapon()
     if not weapon:
-        # Unarmed strike as action
         char.action_used = True
         resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True, attack_label="ACTION")
         return
@@ -309,22 +310,20 @@ def _do_melee_attack(
         if result.hit and char.is_concentrating("Hex"):
             _apply_hex(char, opponent, state)
 
-    # Nick mastery: extra attack with offhand light weapon
     if opponent.is_alive:
         _try_nick_extra_attack(char, opponent, weapon, state)
 
 
 def _do_flurry(char: Character, opponent: Character, state: CombatState) -> None:
-    """Flurry of Blows — 1 Focus Point, 2 unarmed strikes as bonus action."""
     if char.bonus_action_used or state.distance > 5:
         return
     res = char.resources.get("focus_points")
     if not res or not res.available:
-        # Fall back to free martial arts strike
         return
     res.spend()
     char.bonus_action_used = True
-    state.log(f"  BONUS: {char.name} uses Flurry of Blows!")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Flurry of Blows")
     for _ in range(2):
         if not opponent.is_alive:
             break
@@ -332,36 +331,29 @@ def _do_flurry(char: Character, opponent: Character, state: CombatState) -> None
 
 
 def _do_martial_arts_strike(char: Character, opponent: Character, state: CombatState) -> None:
-    """Martial Arts bonus unarmed strike (free, no resource)."""
     if char.bonus_action_used or state.distance > 5:
         return
     char.bonus_action_used = True
-    state.log(f"  BONUS: {char.name} makes a Martial Arts bonus unarmed strike")
     resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True, attack_label="BONUS")
 
 
 def _do_cunning_hide(char: Character, state: CombatState) -> None:
-    """Cunning Action: Hide — gives advantage on next attack (simplified)."""
     if char.bonus_action_used:
         return
-    # In v1, we simplify: Hide grants advantage on next attack via Vex-like mechanic
-    # This is a simplification — in real D&D, hiding requires obscurement
-    # For sim purposes, we give ~50% chance of successful hide
     from sim.dice import d20 as roll_d20
     hide_roll = roll_d20() + char.dex_mod + char.proficiency_bonus
-    # DC is opponent's passive perception (10 + WIS mod)
     dc = 10 + state.opponent_of(char).wis_mod
+    label = _pad_label("BONUS")
     if hide_roll >= dc:
-        # Grant advantage on next attack (using a temp effect)
         char.active_effects.append(ActiveEffect(
             name="Hidden",
             source="cunning_action",
             end_trigger="start_of_turn",
             advantage_on_attacks=True,
         ))
-        state.log(f"  BONUS: {char.name} hides successfully (roll {hide_roll} vs DC {dc})")
+        state.log(f"{label}Hide → success (roll {hide_roll}/DC {dc})")
     else:
-        state.log(f"  BONUS: {char.name} fails to hide (roll {hide_roll} vs DC {dc})")
+        state.log(f"{label}Hide → fail (roll {hide_roll}/DC {dc})")
     char.bonus_action_used = True
 
 
@@ -369,15 +361,14 @@ def _do_action_surge(
     char: Character, opponent: Character, action: TurnAction,
     state: CombatState, decisions: list[TurnAction]
 ) -> None:
-    """Action Surge — take another action."""
     res = char.resources.get("action_surge")
     if not res or not res.available or not char.action_used:
         return
     res.spend()
-    char.action_used = False  # reset to allow another action
-    state.log(f"  SURGE: {char.name} uses ACTION SURGE!")
+    char.action_used = False
+    label = _pad_label("SURGE")
+    state.log(f"{label}Action Surge!")
 
-    # Try to close distance first if not in melee
     if state.distance > 5:
         _do_move(char, opponent, state)
 
@@ -389,7 +380,6 @@ def _do_action_surge(
             if not opponent.is_alive:
                 break
             resolve_attack(char, opponent, mw, state, attack_label="SURGE")
-        # Nick mastery on action surge attacks too
         if opponent.is_alive:
             _try_nick_extra_attack(char, opponent, mw, state)
     else:
@@ -410,7 +400,6 @@ def _do_second_wind_action(char: Character, state: CombatState) -> None:
 
 
 def _do_patient_defense(char: Character, state: CombatState) -> None:
-    """Patient Defense — spend 1 Focus Point for Dodge as bonus action."""
     if char.bonus_action_used:
         return
     res = char.resources.get("focus_points")
@@ -419,11 +408,11 @@ def _do_patient_defense(char: Character, state: CombatState) -> None:
     res.spend()
     char.bonus_action_used = True
     do_dodge(char, state)
-    state.log(f"  BONUS: {char.name} uses Patient Defense!")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Patient Defense (Dodge)")
 
 
 def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState) -> None:
-    """Orc Adrenaline Rush: bonus action Dash + gain temp HP = proficiency bonus."""
     if char.bonus_action_used:
         return
     res = char.resources.get("adrenaline_rush")
@@ -433,13 +422,12 @@ def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState
     char.bonus_action_used = True
     temp_hp = char.proficiency_bonus
     char.gain_temp_hp(temp_hp)
+    label = _pad_label("BONUS")
     if state.phase == CombatPhase.RANGED:
-        # Ranged phase: grant temp HP only, no dash/movement
-        state.log(f"  BONUS: {char.name} uses Adrenaline Rush! +{temp_hp} temp HP (holding position — ranged phase)")
+        state.log(f"{label}Adrenaline Rush → +{temp_hp} temp HP")
         return
-    # Melee phase: Dash + move closer
     char.movement_remaining += char.speed
-    state.log(f"  BONUS: {char.name} uses Adrenaline Rush! Dash + {temp_hp} temp HP")
+    state.log(f"{label}Adrenaline Rush → Dash + {temp_hp} temp HP")
     if state.distance > 5:
         move = min(char.movement_remaining, state.distance - 5)
         if move > 0:
@@ -450,7 +438,6 @@ def _do_adrenaline_rush(char: Character, opponent: Character, state: CombatState
 
 
 def _do_vow_of_enmity(char: Character, state: CombatState) -> None:
-    """Vow of Enmity (Channel Divinity): bonus action, gain advantage on all attacks this combat."""
     if char.bonus_action_used:
         return
     res = char.resources.get("channel_divinity")
@@ -459,13 +446,11 @@ def _do_vow_of_enmity(char: Character, state: CombatState) -> None:
     res.spend()
     char.bonus_action_used = True
     char.vow_of_enmity_active = True
-    state.log(
-        f"  BONUS: {char.name} uses Vow of Enmity! Advantage on all attacks for this combat."
-    )
+    label = _pad_label("BONUS")
+    state.log(f"{label}Vow of Enmity → adv on all attacks")
 
 
 def _do_hunters_mark(char: Character, state: CombatState) -> None:
-    """Activate Hunter's Mark as bonus action (2024: no concentration)."""
     if char.bonus_action_used:
         return
     res = char.resources.get("hunters_mark")
@@ -476,22 +461,21 @@ def _do_hunters_mark(char: Character, state: CombatState) -> None:
     res.spend()
     char.bonus_action_used = True
     char.hunters_mark_active = True
-    state.log(f"  BONUS: {char.name} casts Hunter's Mark!")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Hunter's Mark → active")
 
 
 def _do_heroic_inspiration(char: Character, state: CombatState) -> None:
-    """Mark that Heroic Inspiration should be used on next attack."""
     res = char.resources.get("heroic_inspiration")
     if res and res.available:
         char._use_heroic_inspiration = True
-        state.log(f"  FREE: {char.name} will use Heroic Inspiration on next attack!")
+        label = _pad_label("FREE")
+        state.log(f"{label}Heroic Inspiration → queued for next attack")
 
 
 def _do_large_form(char: Character, state: CombatState) -> None:
-    """Goliath Large Form: bonus action, become Large for PB turns, +10 speed."""
     if char.bonus_action_used:
         return
-    # Check if already in large form
     if any(e.name == "Large Form" for e in char.active_effects):
         return
     char.bonus_action_used = True
@@ -502,15 +486,14 @@ def _do_large_form(char: Character, state: CombatState) -> None:
     ))
     char.speed += 10
     char.movement_remaining += 10
-    state.log(f"  BONUS: {char.name} grows to Large size! (+10 speed for {char.proficiency_bonus} rounds)")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Large Form → +10 speed for {char.proficiency_bonus} rounds")
 
 
 def _do_breath_weapon(char: Character, opponent: Character, state: CombatState) -> None:
-    """Dragonborn Breath Weapon: action, DEX save, 1d10 damage."""
     res = char.resources.get("breath_weapon")
     if not res or not res.available:
         return
-    # Check range: cone 15ft or line 30ft
     shape = getattr(char, "breath_weapon_shape", "cone")
     max_range = 15 if shape == "cone" else 30
     if state.distance > max_range:
@@ -519,31 +502,30 @@ def _do_breath_weapon(char: Character, opponent: Character, state: CombatState) 
     char.action_used = True
     dc = 8 + char.con_mod + char.proficiency_bonus
     save_roll = d20() + opponent.dex_mod
-    damage_roll = eval_dice("1d10").total
+    result = eval_dice("1d10")
+    damage_roll = result.total
     dmg_type = getattr(char, "breath_weapon_damage_type", DamageType.FIRE)
+    label = _pad_label("ACTION")
     if save_roll >= dc:
         damage_roll = damage_roll // 2
         actual = opponent.take_damage(damage_roll, dmg_type, state)
-        state.log(f"  ACTION: {char.name} uses Breath Weapon! {opponent.name} saves (roll {save_roll} vs DC {dc}), takes {actual} half damage")
+        state.log(f"{label}Breath Weapon: {opponent.name} saves ({save_roll}/DC {dc}) · {actual} dmg [{opponent.current_hp}/{opponent.max_hp} HP]")
     else:
         actual = opponent.take_damage(damage_roll, dmg_type, state)
-        state.log(f"  ACTION: {char.name} uses Breath Weapon! {opponent.name} fails save (roll {save_roll} vs DC {dc}), takes {actual} damage")
+        state.log(f"{label}Breath Weapon: {opponent.name} fails ({save_roll}/DC {dc}) · {actual} dmg [{opponent.current_hp}/{opponent.max_hp} HP]")
 
 
 def _do_frenzy_attack(char: Character, opponent: Character, state: CombatState) -> None:
-    """Berserker Frenzy: bonus action weapon attack while raging."""
     if char.bonus_action_used or not char.is_raging or state.distance > 5:
         return
     char.bonus_action_used = True
     mw = char.best_melee_weapon()
     if not mw:
         return
-    state.log(f"  BONUS: {char.name} makes a Frenzy attack!")
     resolve_attack(char, opponent, mw, state, attack_label="BONUS")
 
 
 def _do_open_hand_flurry(char: Character, opponent: Character, state: CombatState) -> None:
-    """Open Hand Technique: Flurry of Blows with knockdown on hit."""
     if char.bonus_action_used or state.distance > 5:
         return
     res = char.resources.get("focus_points")
@@ -551,22 +533,20 @@ def _do_open_hand_flurry(char: Character, opponent: Character, state: CombatStat
         return
     res.spend()
     char.bonus_action_used = True
-    state.log(f"  BONUS: {char.name} uses Flurry of Blows (Open Hand)!")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Flurry of Blows (Open Hand)")
     for i in range(2):
         if not opponent.is_alive:
             break
         result = resolve_attack(char, opponent, _unarmed_weapon(char), state, is_unarmed=True, attack_label="BONUS")
         if result.hit:
-            # Knock prone (best option for 1v1 — grants advantage)
             opponent.conditions.add(Condition.PRONE)
-            state.log(f"  Open Hand: {opponent.name} knocked prone!")
+            state.log(f"STATUS   {opponent.name}: knocked prone (Open Hand)")
 
 
 def _do_shadow_arts(char: Character, state: CombatState) -> None:
-    """Shadow Arts: spend 2 ki, gain obscured (disadvantage on attacks against you)."""
     if char.bonus_action_used:
         return
-    # Check if already obscured
     if any(e.name == "Shadow Darkness" for e in char.active_effects):
         return
     res = char.resources.get("focus_points")
@@ -577,13 +557,13 @@ def _do_shadow_arts(char: Character, state: CombatState) -> None:
     char.active_effects.append(ActiveEffect(
         name="Shadow Darkness",
         source="shadow_arts",
-        duration=10,  # ~1 minute
+        duration=10,
     ))
-    state.log(f"  BONUS: {char.name} casts Darkness (Shadow Arts)!")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Darkness (Shadow Arts) → active")
 
 
 def _do_fast_hands(char: Character, state: CombatState) -> None:
-    """Thief Fast Hands: bonus action to grant self advantage."""
     if char.bonus_action_used:
         return
     char.bonus_action_used = True
@@ -593,11 +573,11 @@ def _do_fast_hands(char: Character, state: CombatState) -> None:
         end_trigger="start_of_turn",
         advantage_on_attacks=True,
     ))
-    state.log(f"  BONUS: {char.name} uses Fast Hands (self-Help for advantage)!")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Fast Hands (Help) → adv on next attack")
 
 
 def _do_steady_aim(char: Character, state: CombatState) -> None:
-    """Steady Aim: bonus action, gain advantage, speed = 0."""
     if char.bonus_action_used:
         return
     char.bonus_action_used = True
@@ -608,11 +588,11 @@ def _do_steady_aim(char: Character, state: CombatState) -> None:
         end_trigger="start_of_turn",
         advantage_on_attacks=True,
     ))
-    state.log(f"  BONUS: {char.name} uses Steady Aim!")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Steady Aim → adv, speed 0")
 
 
 def _do_booming_blade(char: Character, opponent: Character, state: CombatState) -> None:
-    """Booming Blade: melee attack + 1d8 thunder if target moves (level 3+: not yet scaled)."""
     if state.distance > 5:
         _do_move(char, opponent, state)
         if state.distance > 5:
@@ -621,16 +601,14 @@ def _do_booming_blade(char: Character, opponent: Character, state: CombatState) 
     if not mw:
         return
     char.action_used = True
-    state.log(f"  ACTION: {char.name} uses Booming Blade!")
     result = resolve_attack(char, opponent, mw, state, attack_label="ACTION")
     if result.hit:
-        # At level 3, booming blade doesn't add extra on-hit damage yet (that's level 5)
-        # But movement damage = 1d8 thunder (assume ~50% chance they move in 1v1)
         from sim.dice import d20 as _d20
-        if _d20() >= 11:  # 50% chance
-            boom_dmg = eval_dice("1d8").total
-            actual = opponent.take_damage(boom_dmg, DamageType.THUNDER, state)
-            state.log(f"  Booming Blade detonates! {actual} thunder damage ({opponent.current_hp}/{opponent.max_hp} HP)")
+        if _d20() >= 11:
+            boom_result = eval_dice("1d8")
+            actual = opponent.take_damage(boom_result.total, DamageType.THUNDER, state)
+            label = _pad_label("FREE")
+            state.log(f"{label}Booming Blade detonates · [{boom_result.rolls[0]}]={actual} thunder [{opponent.current_hp}/{opponent.max_hp} HP]")
 
 
 # ---------------------------------------------------------------------------
@@ -638,12 +616,10 @@ def _do_booming_blade(char: Character, opponent: Character, state: CombatState) 
 # ---------------------------------------------------------------------------
 
 def _do_eldritch_blast(char: Character, opponent: Character, state: CombatState) -> None:
-    """Eldritch Blast: ranged spell attack, 1d10 (+CHA if Agonizing Blast), force damage."""
     if char.action_used:
         return
     char.action_used = True
     bonus = char.cha_mod if "agonizing_blast" in getattr(char, "invocations", []) else 0
-    # Advantage/disadvantage for spell attacks
     adv = any(e.advantage_on_attacks for e in char.active_effects)
     disadv = (
         Condition.FRIGHTENED in char.conditions
@@ -651,69 +627,74 @@ def _do_eldritch_blast(char: Character, opponent: Character, state: CombatState)
         or any(e.disadvantage_on_attacks for e in char.active_effects)
         or any(e.name == "Shadow Darkness" for e in opponent.active_effects)
     )
-    attack_roll = d20(advantage=adv, disadvantage=disadv) + char.spell_attack_bonus
-    hit = attack_roll >= opponent.effective_ac
+    from sim.dice import d20_detail
+    d20r = d20_detail(advantage=adv, disadvantage=disadv)
+    attack_roll = d20r.chosen + char.spell_attack_bonus
+    target_ac = opponent.effective_ac
+    label = _pad_label("ACTION")
+    d20_str = f"d20={d20r.chosen}"
+    if d20r.advantage and d20r.other is not None:
+        d20_str = f"d20={d20r.chosen}↑{d20r.other}"
+    elif d20r.disadvantage and d20r.other is not None:
+        d20_str = f"d20={d20r.chosen}↓{d20r.other}"
+
+    hit = attack_roll >= target_ac
     if hit:
-        dmg = eval_dice("1d10").total + bonus
+        dmg_result = eval_dice("1d10")
+        dmg = dmg_result.total + bonus
         actual = opponent.take_damage(dmg, DamageType.FORCE, state)
         hex_dmg = _apply_hex(char, opponent, state) if char.is_concentrating("Hex") else 0
+        hex_str = f" +Hex [{hex_dmg}]" if hex_dmg else ""
         state.log(
-            f"  ACTION: {char.name} casts Eldritch Blast: HIT ({attack_roll} vs AC {opponent.effective_ac})"
-            f" for {actual} force{f' +{hex_dmg} hex' if hex_dmg else ''} damage"
-            f" ({opponent.current_hp}/{opponent.max_hp} HP)"
+            f"{label}Eldritch Blast {d20_str} → HIT ({attack_roll}/{target_ac})"
+            f" · [{dmg_result.rolls[0]}]+{bonus}={actual} force{hex_str}"
+            f" [{opponent.current_hp}/{opponent.max_hp} HP]"
         )
     else:
-        state.log(
-            f"  ACTION: {char.name} casts Eldritch Blast: MISS ({attack_roll} vs AC {opponent.effective_ac})"
-        )
+        state.log(f"{label}Eldritch Blast {d20_str} → MISS ({attack_roll}/{target_ac})")
 
 
 def _apply_hex(char: Character, target: Character, state: CombatState) -> int:
-    """Apply Hex bonus necrotic damage on hit. Returns actual damage dealt."""
     if not char.is_concentrating("Hex"):
         return 0
-    dmg = eval_dice("1d6").total
-    actual = target.take_damage(dmg, DamageType.NECROTIC, state)
-    state.log(f"    Hex: {actual} necrotic damage")
+    result = eval_dice("1d6")
+    actual = target.take_damage(result.total, DamageType.NECROTIC, state)
     return actual
 
 
 def _do_armor_of_agathys(char: Character, state: CombatState) -> None:
-    """Armor of Agathys: action, 2nd-level slot, +10 temp HP, 10 cold retaliation on melee hit."""
     if char.action_used:
         return
     if not char.has_spell_slot(2):
         return
     if any(e.name == "Armor of Agathys" for e in char.active_effects):
-        return  # already active
+        return
     char.spend_spell_slot(2)
     char.action_used = True
-    temp_hp = 10  # 2nd-level slot = 10 temp HP
+    temp_hp = 10
     char.gain_temp_hp(temp_hp)
     char.active_effects.append(ActiveEffect(
         name="Armor of Agathys",
         source="armor_of_agathys",
-        duration=99,  # lasts until temp HP depleted
+        duration=99,
     ))
     char.aoa_cold_damage = 10
-    state.log(
-        f"  ACTION: {char.name} casts Armor of Agathys!"
-        f" +{temp_hp} temp HP, {temp_hp} cold retaliation on melee hit"
-    )
+    label = _pad_label("ACTION")
+    state.log(f"{label}Armor of Agathys → +{temp_hp} temp HP, {temp_hp} cold retaliation")
 
 
 def _do_hex(char: Character, state: CombatState) -> None:
-    """Hex: bonus action, 2nd-level slot, concentration, +1d6 necrotic on hit."""
     if char.bonus_action_used:
         return
     if char.is_concentrating():
-        return  # already concentrating on something
+        return
     if not char.has_spell_slot(2):
         return
     char.spend_spell_slot(2)
     char.bonus_action_used = True
     char.concentrate("Hex")
-    state.log(f"  BONUS: {char.name} casts Hex! (+1d6 necrotic on each hit)")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Hex → +1d6 necrotic on each hit")
 
 
 # ---------------------------------------------------------------------------
@@ -724,15 +705,12 @@ def _try_nick_extra_attack(
     char: Character, opponent: Character,
     main_weapon: "Weapon", state: CombatState,
 ) -> None:
-    """If main_weapon has Nick mastery and char can use it, make an extra attack
-    with a different light weapon. This is part of the Attack action, not bonus action."""
     if not main_weapon.mastery or main_weapon.mastery != MasteryProperty.NICK:
         return
     if char.nick_used_this_turn:
         return
     if not char.can_use_mastery(main_weapon):
         return
-    # Find a different light melee weapon
     from sim.models import WeaponProperty
     offhand = None
     for w in char.weapons:
@@ -742,7 +720,6 @@ def _try_nick_extra_attack(
     if offhand is None:
         return
     char.nick_used_this_turn = True
-    state.log(f"  ACTION: Nick mastery: extra attack with {offhand.name}!")
     resolve_attack(char, opponent, offhand, state, is_nick_attack=True, attack_label="ACTION")
 
 
@@ -756,7 +733,6 @@ def _find_weapon(char: Character, name: str | None) -> Weapon | None:
 
 
 def _unarmed_weapon(char: Character) -> "Weapon":
-    """Create a pseudo-weapon for unarmed strikes."""
     from sim.models import Weapon, DamageType, WeaponProperty
     return Weapon(
         name="Unarmed Strike",

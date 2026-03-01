@@ -13,7 +13,7 @@ from sim.models import (
     Condition,
     MasteryProperty,
 )
-from sim.dice import d20, eval_dice, eval_dice_twice_take_best, flush_rolls
+from sim.dice import d20, d20_detail, eval_dice, eval_dice_twice_take_best, flush_rolls, D20Result, DiceResult, SavageResult
 
 
 @dataclass
@@ -26,6 +26,353 @@ class AttackResult:
     target_ac: int
 
 
+@dataclass
+class DamageInfo:
+    """Structured damage info for formatting."""
+    base_rolls: tuple[int, ...]
+    flat_mod: int
+    total: int
+    is_savage: bool = False
+    savage_set1: tuple[int, ...] | None = None
+    savage_set2: tuple[int, ...] | None = None
+    crit_rolls: tuple[int, ...] | None = None
+
+
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
+
+def _fmt_rolls(rolls: tuple[int, ...]) -> str:
+    """Format dice rolls like [6] or [4,3]."""
+    return "[" + ",".join(str(r) for r in rolls) + "]"
+
+
+def _fmt_d20(d20r: D20Result, adv_sources: list[str], disadv_sources: list[str]) -> str:
+    """Format d20 portion: d20=16↑9 (Reckless+prone) or d20=14."""
+    s = f"d20={d20r.chosen}"
+    if d20r.advantage and d20r.other is not None:
+        s += f"↑{d20r.other}"
+        if adv_sources:
+            s += f" ({'+'.join(adv_sources)})"
+    elif d20r.disadvantage and d20r.other is not None:
+        s += f"↓{d20r.other}"
+        if disadv_sources:
+            s += f" ({'+'.join(disadv_sources)})"
+    return s
+
+
+def _fmt_damage(info: DamageInfo) -> str:
+    """Format damage: [6]+3=9 dmg or best([4,5],[2,1])+[3,2]+5=24 dmg."""
+    parts = []
+    if info.is_savage and info.savage_set1 is not None and info.savage_set2 is not None:
+        parts.append(f"best({_fmt_rolls(info.savage_set1)},{_fmt_rolls(info.savage_set2)})")
+        if info.crit_rolls:
+            parts.append(f"+{_fmt_rolls(info.crit_rolls)}")
+    else:
+        parts.append(_fmt_rolls(info.base_rolls))
+        if info.crit_rolls:
+            parts.append(f"+{_fmt_rolls(info.crit_rolls)}")
+
+    if info.flat_mod > 0:
+        parts.append(f"+{info.flat_mod}")
+    elif info.flat_mod < 0:
+        parts.append(str(info.flat_mod))
+
+    return "".join(parts) + f"={info.total} dmg"
+
+
+def _pad_label(label: str) -> str:
+    """Pad attack label to 9 chars for alignment (8 + at least 1 space)."""
+    return f"{label:<9}"
+
+
+# ---------------------------------------------------------------------------
+# Advantage / Disadvantage — with source tracking
+# ---------------------------------------------------------------------------
+
+def _adv_sources(attacker: Character, defender: Character) -> list[str]:
+    """Return list of advantage source names."""
+    sources = []
+    for e in attacker.active_effects:
+        if e.advantage_on_attacks:
+            if e.name == "Reckless Attack":
+                sources.append("Reckless")
+            elif e.name == "Hidden":
+                sources.append("Hidden")
+            elif e.name == "Fast Hands Help":
+                sources.append("Fast Hands")
+            elif e.name == "Steady Aim":
+                sources.append("Steady Aim")
+            else:
+                sources.append(e.name)
+    if attacker.vow_of_enmity_active:
+        sources.append("Vow of Enmity")
+    if attacker.vex_target == defender.name:
+        sources.append("Vex")
+    if any(e.grants_advantage_to_enemies for e in defender.active_effects):
+        sources.append("Reckless")
+    if Condition.PRONE in defender.conditions:
+        sources.append("prone")
+    if hasattr(attacker, '_use_heroic_inspiration') and attacker._use_heroic_inspiration:
+        hi_res = attacker.resources.get("heroic_inspiration")
+        if hi_res and hi_res.available:
+            sources.append("Heroic Inspiration")
+    return sources
+
+
+def _disadv_sources(attacker: Character, defender: Character) -> list[str]:
+    """Return list of disadvantage source names."""
+    sources = []
+    if defender.is_dodging:
+        sources.append("Dodge")
+    for e in attacker.active_effects:
+        if e.disadvantage_on_attacks:
+            if e.name == "Sapped":
+                sources.append("Sap")
+            else:
+                sources.append(e.name)
+    if Condition.FRIGHTENED in attacker.conditions:
+        sources.append("frightened")
+    if any(e.name == "Shadow Darkness" for e in defender.active_effects):
+        sources.append("Darkness")
+    # Lucky defensive
+    if not defender.reaction_used:
+        luck_res = defender.resources.get("luck_points")
+        if luck_res and luck_res.available:
+            sources.append("Lucky")
+    return sources
+
+
+def _has_advantage(attacker: Character, defender: Character) -> bool:
+    """Check all sources of advantage (consuming Vex, Heroic Inspiration)."""
+    if any(e.advantage_on_attacks for e in attacker.active_effects):
+        return True
+    if attacker.vow_of_enmity_active:
+        return True
+    if attacker.vex_target == defender.name:
+        attacker.vex_target = None
+        return True
+    if any(e.grants_advantage_to_enemies for e in defender.active_effects):
+        return True
+    if Condition.PRONE in defender.conditions:
+        return True
+    if hasattr(attacker, '_use_heroic_inspiration') and attacker._use_heroic_inspiration:
+        hi_res = attacker.resources.get("heroic_inspiration")
+        if hi_res and hi_res.available:
+            hi_res.spend()
+            attacker._use_heroic_inspiration = False
+            return True
+    return False
+
+
+def _has_disadvantage(attacker: Character, defender: Character) -> bool:
+    """Check all sources of disadvantage (consuming Lucky defensive)."""
+    if defender.is_dodging:
+        return True
+    if any(e.disadvantage_on_attacks for e in attacker.active_effects):
+        return True
+    if Condition.FRIGHTENED in attacker.conditions:
+        return True
+    if any(e.name == "Shadow Darkness" for e in defender.active_effects):
+        return True
+    if not defender.reaction_used:
+        luck_res = defender.resources.get("luck_points")
+        if luck_res and luck_res.available:
+            luck_res.spend()
+            defender.reaction_used = True
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Damage calculation — returns DamageInfo for formatting
+# ---------------------------------------------------------------------------
+
+def _calc_damage_info(
+    attacker: Character, weapon: Weapon,
+    crit: bool, is_unarmed: bool, is_thrown: bool,
+    is_nick_attack: bool = False,
+) -> DamageInfo:
+    """Calculate damage and return structured info for formatting."""
+    dice_expr = weapon.damage_dice
+    if is_unarmed:
+        dice_expr = attacker.martial_arts_die or "1"
+
+    gwf_min = None
+    if (attacker.fighting_style == "great_weapon_fighting"
+            and (weapon.is_two_handed or weapon.is_versatile)
+            and weapon.is_melee
+            and not is_unarmed):
+        gwf_min = 3
+
+    is_savage = False
+    savage_set1 = None
+    savage_set2 = None
+    if attacker.has_savage_attacker and not getattr(attacker, "_savage_used_this_turn", False):
+        base_result = eval_dice_twice_take_best(dice_expr, minimum=gwf_min)
+        attacker._savage_used_this_turn = True
+        is_savage = True
+        savage_set1 = base_result.set1
+        savage_set2 = base_result.set2
+        base_rolls = base_result.rolls
+        base_total = base_result.total
+    else:
+        base_result = eval_dice(dice_expr, minimum=gwf_min)
+        base_rolls = base_result.rolls
+        base_total = base_result.total
+
+    crit_rolls = None
+    crit_total = 0
+    if crit:
+        crit_result = eval_dice(dice_expr, minimum=gwf_min)
+        crit_rolls = crit_result.rolls
+        crit_total = crit_result.total
+
+    # Flat modifier
+    if is_unarmed:
+        flat_mod = attacker.unarmed_damage_mod()
+        if attacker.is_raging:
+            flat_mod += attacker.rage_damage
+    elif is_nick_attack and attacker.fighting_style != "two_weapon_fighting":
+        flat_mod = weapon.bonus
+    else:
+        flat_mod = attacker.damage_modifier(weapon, is_thrown=is_thrown)
+
+    total = sum(base_rolls) + crit_total + flat_mod
+    total = max(1, total)
+
+    return DamageInfo(
+        base_rolls=base_rolls,
+        flat_mod=flat_mod,
+        total=total,
+        is_savage=is_savage,
+        savage_set1=savage_set1,
+        savage_set2=savage_set2,
+        crit_rolls=crit_rolls,
+    )
+
+
+def _calc_damage(
+    attacker: Character, weapon: Weapon,
+    crit: bool, is_unarmed: bool, is_thrown: bool,
+    is_nick_attack: bool = False,
+) -> int:
+    """Calculate total damage for a hit (legacy wrapper)."""
+    info = _calc_damage_info(attacker, weapon, crit, is_unarmed, is_thrown, is_nick_attack)
+    return info.total
+
+
+# ---------------------------------------------------------------------------
+# Sneak Attack — returns (damage, rolls)
+# ---------------------------------------------------------------------------
+
+def _try_sneak_attack(attacker: Character, is_crit: bool, had_advantage: bool) -> tuple[int, tuple[int, ...]]:
+    """Returns (extra_damage, raw_rolls) if applicable, else (0, ())."""
+    if not attacker.sneak_attack_dice:
+        return 0, ()
+    if attacker.sneak_attack_used:
+        return 0, ()
+    if not had_advantage:
+        return 0, ()
+
+    result = eval_dice(attacker.sneak_attack_dice)
+    rolls = list(result.rolls)
+    total = result.total
+    if is_crit:
+        crit_result = eval_dice(attacker.sneak_attack_dice)
+        rolls.extend(crit_result.rolls)
+        total += crit_result.total
+    attacker.sneak_attack_used = True
+    return total, tuple(rolls)
+
+
+# ---------------------------------------------------------------------------
+# Divine Smite — returns (actual_damage, rolls)
+# ---------------------------------------------------------------------------
+
+def _try_divine_smite(
+    attacker: Character, defender: Character,
+    is_crit: bool, state: CombatState,
+) -> tuple[int, tuple[int, ...]]:
+    """Divine Smite: returns (actual_damage, rolls) or (0, ())."""
+    if "divine_smite" not in attacker.features:
+        return 0, ()
+    if not attacker.has_spell_slot(1):
+        return 0, ()
+    attacker.spend_spell_slot(1)
+    result = eval_dice("2d8")
+    rolls = list(result.rolls)
+    total = result.total
+    if is_crit:
+        crit_result = eval_dice("2d8")
+        rolls.extend(crit_result.rolls)
+        total += crit_result.total
+    actual = defender.take_damage(total, DamageType.RADIANT, state)
+    return actual, tuple(rolls)
+
+
+# ---------------------------------------------------------------------------
+# Battle Master maneuver helpers — return structured data
+# ---------------------------------------------------------------------------
+
+def _try_trip_attack(attacker: Character, defender: Character, state: CombatState) -> tuple[int, str]:
+    """Trip Attack: returns (damage, formatted_segment) or (0, "")."""
+    if "trip" not in attacker.maneuvers:
+        return 0, ""
+    if Condition.PRONE in defender.conditions:
+        return 0, ""
+    sup_res = attacker.resources.get("superiority_dice")
+    if not sup_res or not sup_res.available:
+        return 0, ""
+    sup_res.spend()
+    result = eval_dice(attacker.superiority_die_size)
+    dmg = result.total
+    die_val = result.rolls[0] if result.rolls else dmg
+    dc = 8 + attacker.str_mod + attacker.proficiency_bonus
+    save = d20() + defender.str_mod
+    if save < dc:
+        defender.conditions.add(Condition.PRONE)
+        segment = f"Trip [d8={die_val}] → prone (save {save}/DC {dc})"
+    else:
+        segment = f"Trip [d8={die_val}] → resisted (save {save}/DC {dc})"
+    return dmg, segment
+
+
+def _try_menacing_attack(attacker: Character, defender: Character, state: CombatState) -> tuple[int, str]:
+    """Menacing Attack: returns (damage, formatted_segment) or (0, "")."""
+    if "menacing" not in attacker.maneuvers:
+        return 0, ""
+    if Condition.FRIGHTENED in defender.conditions:
+        return 0, ""
+    sup_res = attacker.resources.get("superiority_dice")
+    if not sup_res or not sup_res.available:
+        return 0, ""
+    if "trip" in attacker.maneuvers:
+        return 0, ""
+    sup_res.spend()
+    result = eval_dice(attacker.superiority_die_size)
+    dmg = result.total
+    die_val = result.rolls[0] if result.rolls else dmg
+    dc = 8 + attacker.str_mod + attacker.proficiency_bonus
+    save_roll = d20() + defender.wis_mod
+    if save_roll < dc:
+        defender.conditions.add(Condition.FRIGHTENED)
+        defender.active_effects.append(ActiveEffect(
+            name="Frightened",
+            source="menacing_attack",
+            duration=1,
+            end_trigger="end_of_turn",
+        ))
+        segment = f"Menacing [d8={die_val}] → frightened (save {save_roll}/DC {dc})"
+    else:
+        segment = f"Menacing [d8={die_val}] → resisted (save {save_roll}/DC {dc})"
+    return dmg, segment
+
+
+# ---------------------------------------------------------------------------
+# Main attack resolution
+# ---------------------------------------------------------------------------
+
 def resolve_attack(
     attacker: Character,
     defender: Character,
@@ -37,8 +384,13 @@ def resolve_attack(
     is_nick_attack: bool = False,
     attack_label: str = "ACTION",
 ) -> AttackResult:
-    """Resolve a single attack, apply damage, log, and return result."""
-    # Determine advantage / disadvantage
+    """Resolve a single attack, apply damage, log single line, return result."""
+
+    # Collect adv/disadv sources BEFORE consuming them
+    adv_src = _adv_sources(attacker, defender)
+    disadv_src = _disadv_sources(attacker, defender)
+
+    # Determine advantage / disadvantage (this consumes Vex, Lucky, etc.)
     adv = _has_advantage(attacker, defender)
     disadv = _has_disadvantage(attacker, defender)
 
@@ -48,13 +400,11 @@ def resolve_attack(
     else:
         attack_bonus = attacker.attack_modifier(weapon)
 
-    # Shield spell reaction: +5 AC until start of next turn
+    # Shield spell reaction
     if (not defender.reaction_used
             and "shield_spell" in defender.features):
         shield_res = defender.resources.get("shield_spell")
         if shield_res and shield_res.available:
-            # Speculatively check if shield would help (use it when attacked)
-            # In real D&D it's after seeing the roll; here we preemptively add it
             if not any(e.name == "Shield Spell" for e in defender.active_effects):
                 shield_res.spend()
                 defender.reaction_used = True
@@ -64,381 +414,328 @@ def resolve_attack(
                     end_trigger="start_of_turn",
                     ac_bonus=5,
                 ))
-                state.log(f"  {defender.name} casts Shield (+5 AC)!")
+                state.log(f"REACTION {defender.name}: Shield → +5 AC")
 
-    roll_result = d20(advantage=adv, disadvantage=disadv)
+    d20r = d20_detail(advantage=adv, disadvantage=disadv)
+    roll_result = d20r.chosen
 
-    # Halfling Luck: reroll natural 1s on d20 attack rolls
+    # Halfling Luck
     if roll_result == 1 and "luck" in attacker.species_traits:
-        reroll = d20()
-        state.log(f"  Halfling Luck: rerolled nat 1 -> {reroll}")
-        roll_result = reroll  # must use new roll
+        d20r2 = d20_detail()
+        roll_result = d20r2.chosen
+        # Update d20r to reflect the reroll for display
+        d20r = d20r2
+        # We don't show the original nat 1 in the new format, just the reroll
 
     is_crit = roll_result >= attacker.crit_threshold
     total = roll_result + attack_bonus
     target_ac = defender.effective_ac
 
-    # Natural 1 auto-miss (but check Graze)
+    # Build the d20 portion
+    d20_str = _fmt_d20(d20r, adv_src, disadv_src)
+
+    # Collect mechanic tags to append
+    tags: list[str] = []
+    if is_nick_attack:
+        tags.append("Nick")
+
+    label = _pad_label(attack_label)
+
+    # Natural 1 auto-miss
     if roll_result == 1:
-        graze_dmg = _try_graze(attacker, weapon, defender, state, attack_label)
+        graze_dmg = _try_graze_new(attacker, weapon, defender, state, label, d20_str, tags, target_ac)
         if graze_dmg == 0:
-            state.log(f"  {attack_label}: {attacker.name} attacks with {weapon.name}: MISS (nat 1)")
-        state.log(f"  Rolls: {flush_rolls()}")
+            tag_str = (" · " + " · ".join(tags)) if tags else ""
+            state.log(f"{label}{weapon.name} {d20_str} → MISS ({total}/{target_ac}){tag_str}")
         return AttackResult(
             hit=False, critical=False, damage=graze_dmg,
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
         )
 
     if is_crit or total >= target_ac:
-        # HIT — build damage packet with all components
-        damage = _calc_damage(attacker, weapon, is_crit, is_unarmed, is_thrown, is_nick_attack)
-
-        # Sneak Attack (same damage type as weapon)
-        sa_dmg = _try_sneak_attack(attacker, is_crit, adv and not disadv)
-        damage += sa_dmg
-
-        # Hunter's Mark: +1d6 per hit
-        hm_dmg = 0
-        if attacker.hunters_mark_active:
-            hm_dmg = eval_dice("1d6").total
-            if is_crit:
-                hm_dmg += eval_dice("1d6").total
-            damage += hm_dmg
-
-        # Colossus Slayer: +1d8 once per turn if target below max HP
-        cs_dmg = 0
-        if (attacker.has_colossus_slayer
-                and not attacker.colossus_slayer_used
-                and defender.current_hp < defender.max_hp):
-            cs_dmg = eval_dice("1d8").total
-            if is_crit:
-                cs_dmg += eval_dice("1d8").total
-            damage += cs_dmg
-            attacker.colossus_slayer_used = True
-
-        # Battle Master: Trip Attack (on hit, add die to damage + prone on STR save fail)
-        trip_dmg = _try_trip_attack(attacker, defender, state)
-        damage += trip_dmg
-
-        # Battle Master: Menacing Attack (on hit, add die to damage + frightened on WIS save fail)
-        menacing_dmg = _try_menacing_attack(attacker, defender, state)
-        damage += menacing_dmg
-
-        # Build damage packet: [(amount, type), ...]
-        damage_packet = [(damage, weapon.damage_type)]
-
-        # Goliath Fire Giant ancestry: +1d10 fire damage on hit
-        fire_extra = 0
-        if attacker.giant_ancestry == "fire":
-            fire_res = attacker.resources.get("fire_giant")
-            if fire_res and fire_res.available:
-                fire_res.spend()
-                fire_extra = eval_dice("1d10").total
-                damage_packet.append((fire_extra, DamageType.FIRE))
-
-        # Frost's Chill (Frost Giant): +1d6 cold on hit + reduce speed
-        frost_extra = 0
-        if attacker.giant_ancestry == "frost":
-            frost_res = attacker.resources.get("frost_giant")
-            if frost_res and frost_res.available:
-                frost_res.spend()
-                frost_extra = eval_dice("1d6").total
-                damage_packet.append((frost_extra, DamageType.COLD))
-                defender.speed = max(0, defender.speed - 10)
-
-        # Apply entire damage packet at once (resistance per type, then reduction on total)
-        pre_temp_hp = defender.temp_hp
-        actual = defender.take_attack_damage(damage_packet, state)
-
-        # Armor of Agathys: retaliation cold damage on melee hit while temp HP remained
-        if not weapon.is_ranged and not is_thrown:
-            _try_aoa_retaliation(attacker, defender, state, pre_temp_hp)
-
-        # Log the hit
-        extras = []
-        if fire_extra:
-            extras.append(f"+{fire_extra} fire")
-        if frost_extra:
-            extras.append(f"+{frost_extra} cold")
-        extra_str = f" ({', '.join(extras)})" if extras else ""
-
-        # Weapon Mastery on hit (post-damage effects)
-        if not is_unarmed and attacker.can_use_mastery(weapon):
-            _apply_mastery_on_hit(attacker, defender, weapon, state)
-
-        # Hill's Tumble (Hill Giant): free Prone on hit vs Large or smaller, no save
-        if attacker.giant_ancestry == "hill":
-            hill_res = attacker.resources.get("hill_giant")
-            if hill_res and hill_res.available:
-                hill_res.spend()
-                defender.conditions.add(Condition.PRONE)
-                state.log(f"  Hill's Tumble: {defender.name} knocked prone!")
-
-        crit_str = " CRIT!" if is_crit else ""
-        sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
-        state.log(
-            f"  {attack_label}: {attacker.name} attacks with {weapon.name}:{crit_str} HIT"
-            f" ({total} vs AC {target_ac}) for {actual} damage{sa_str}{extra_str}"
-            f" ({defender.current_hp}/{defender.max_hp} HP)"
-        )
-        # Divine Smite (Paladin): expend spell slot for extra radiant damage on any hit
-        _try_divine_smite(attacker, defender, is_crit, state)
-        state.log(f"  Rolls: {flush_rolls()}")
-        return AttackResult(
-            hit=True, critical=is_crit, damage=damage,
-            damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
+        return _resolve_hit(
+            attacker, defender, weapon, state,
+            is_crit=is_crit, is_thrown=is_thrown, is_unarmed=is_unarmed,
+            is_nick_attack=is_nick_attack, attack_label=attack_label,
+            adv=adv, disadv=disadv, d20r=d20r, d20_str=d20_str,
+            roll_result=roll_result, total=total, target_ac=target_ac,
+            tags=tags, adv_src=adv_src, disadv_src=disadv_src,
         )
     else:
-        # Battle Master: Precision Attack — add superiority die to attack roll on near-miss
+        # Precision Attack
         if (total < target_ac
                 and "precision" in attacker.maneuvers
                 and not is_unarmed):
             sup_res = attacker.resources.get("superiority_dice")
             if sup_res and sup_res.available:
-                # Use precision if the die could bridge the gap (within d8 range)
                 gap = target_ac - total
-                if gap <= 8:  # max d8 roll
-                    precision_roll = eval_dice(attacker.superiority_die_size).total
+                if gap <= 8:
+                    precision_result = eval_dice(attacker.superiority_die_size)
+                    precision_roll = precision_result.total
+                    precision_die = precision_result.rolls[0] if precision_result.rolls else precision_roll
                     sup_res.spend()
-                    state.log(f"  {attack_label}: Precision Attack: +{precision_roll} to attack roll ({total} -> {total + precision_roll})")
-                    total += precision_roll
-                    if total >= target_ac:
-                        # Now it's a hit!
-                        damage = _calc_damage(attacker, weapon, False, is_unarmed, is_thrown, is_nick_attack)
-                        sa_dmg = _try_sneak_attack(attacker, False, adv and not disadv)
-                        damage += sa_dmg
-                        hm_dmg = 0
-                        if attacker.hunters_mark_active:
-                            hm_dmg = eval_dice("1d6").total
-                            damage += hm_dmg
-                        cs_dmg = 0
-                        if (attacker.has_colossus_slayer
-                                and not attacker.colossus_slayer_used
-                                and defender.current_hp < defender.max_hp):
-                            cs_dmg = eval_dice("1d8").total
-                            damage += cs_dmg
-                            attacker.colossus_slayer_used = True
-                        damage_packet = [(damage, weapon.damage_type)]
-                        if attacker.giant_ancestry == "fire":
-                            fire_res = attacker.resources.get("fire_giant")
-                            if fire_res and fire_res.available:
-                                fire_res.spend()
-                                fire_extra = eval_dice("1d10").total
-                                damage_packet.append((fire_extra, DamageType.FIRE))
-                        pre_temp_hp_p = defender.temp_hp
-                        actual = defender.take_attack_damage(damage_packet, state)
-                        if not weapon.is_ranged and not is_thrown:
-                            _try_aoa_retaliation(attacker, defender, state, pre_temp_hp_p)
-                        if not is_unarmed and attacker.can_use_mastery(weapon):
-                            _apply_mastery_on_hit(attacker, defender, weapon, state)
-                        state.log(
-                            f"  {attack_label}: {attacker.name} attacks with {weapon.name}: HIT (Precision)"
-                            f" ({total} vs AC {target_ac}) for {actual} damage"
-                            f" ({defender.current_hp}/{defender.max_hp} HP)"
-                        )
-                        _try_divine_smite(attacker, defender, False, state)
-                        state.log(f"  Rolls: {flush_rolls()}")
-                        return AttackResult(
-                            hit=True, critical=False, damage=damage,
-                            damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
+                    new_total = total + precision_roll
+                    if new_total >= target_ac:
+                        # Precision turned miss into hit
+                        return _resolve_hit(
+                            attacker, defender, weapon, state,
+                            is_crit=False, is_thrown=is_thrown, is_unarmed=is_unarmed,
+                            is_nick_attack=is_nick_attack, attack_label=attack_label,
+                            adv=adv, disadv=disadv, d20r=d20r, d20_str=d20_str,
+                            roll_result=roll_result, total=new_total, target_ac=target_ac,
+                            tags=tags, adv_src=adv_src, disadv_src=disadv_src,
+                            precision_die=precision_die, precision_bonus=precision_roll,
+                            original_total=total,
                         )
 
-        # Lucky feat: on miss, spend a luck point to reroll
+        # Lucky feat reroll
         luck_res = attacker.resources.get("luck_points")
         if luck_res and luck_res.available:
             luck_res.spend()
-            luck_roll = d20(advantage=adv, disadvantage=disadv)
-            # Halfling Luck on the lucky reroll too
+            d20r_luck = d20_detail(advantage=adv, disadvantage=disadv)
+            luck_roll = d20r_luck.chosen
             if luck_roll == 1 and "luck" in attacker.species_traits:
-                luck_roll = d20()
+                d20r_luck = d20_detail()
+                luck_roll = d20r_luck.chosen
             luck_total = luck_roll + attack_bonus
-            state.log(f"  Lucky feat: rerolled {total} -> {luck_total}")
             if luck_roll >= attacker.crit_threshold or luck_total >= target_ac:
-                # Now it's a hit! Build damage packet
                 is_crit2 = luck_roll >= attacker.crit_threshold
-                damage = _calc_damage(attacker, weapon, is_crit2, is_unarmed, is_thrown, is_nick_attack)
-                sa_dmg = _try_sneak_attack(attacker, is_crit2, adv and not disadv)
-                damage += sa_dmg
-
-                damage_packet = [(damage, weapon.damage_type)]
-                extras = []
-
-                if attacker.giant_ancestry == "fire":
-                    fire_res = attacker.resources.get("fire_giant")
-                    if fire_res and fire_res.available:
-                        fire_res.spend()
-                        fire_extra = eval_dice("1d10").total
-                        damage_packet.append((fire_extra, DamageType.FIRE))
-                        extras.append(f"+{fire_extra} fire")
-
-                if attacker.giant_ancestry == "frost":
-                    frost_res = attacker.resources.get("frost_giant")
-                    if frost_res and frost_res.available:
-                        frost_res.spend()
-                        frost_extra = eval_dice("1d6").total
-                        damage_packet.append((frost_extra, DamageType.COLD))
-                        defender.speed = max(0, defender.speed - 10)
-                        extras.append(f"+{frost_extra} cold")
-
-                pre_temp_hp_l = defender.temp_hp
-                actual = defender.take_attack_damage(damage_packet, state)
-                if not weapon.is_ranged and not is_thrown:
-                    _try_aoa_retaliation(attacker, defender, state, pre_temp_hp_l)
-
-                if not is_unarmed and attacker.can_use_mastery(weapon):
-                    _apply_mastery_on_hit(attacker, defender, weapon, state)
-
-                if attacker.giant_ancestry == "hill":
-                    hill_res = attacker.resources.get("hill_giant")
-                    if hill_res and hill_res.available:
-                        hill_res.spend()
-                        defender.conditions.add(Condition.PRONE)
-                        state.log(f"  Hill's Tumble: {defender.name} knocked prone!")
-
-                extra_str = f" ({', '.join(extras)})" if extras else ""
-                crit_str = " CRIT!" if is_crit2 else ""
-                sa_str = f" (+SA {sa_dmg})" if sa_dmg else ""
-                state.log(
-                    f"  {attack_label}: {attacker.name} attacks with {weapon.name}:{crit_str} HIT (Lucky)"
-                    f" ({luck_total} vs AC {target_ac}) for {actual} damage{sa_str}{extra_str}"
-                    f" ({defender.current_hp}/{defender.max_hp} HP)"
-                )
-                _try_divine_smite(attacker, defender, is_crit2, state)
-                state.log(f"  Rolls: {flush_rolls()}")
-                return AttackResult(
-                    hit=True, critical=is_crit2, damage=damage,
-                    damage_type=weapon.damage_type, attack_roll=luck_total, target_ac=target_ac,
+                tags.append("Lucky")
+                return _resolve_hit(
+                    attacker, defender, weapon, state,
+                    is_crit=is_crit2, is_thrown=is_thrown, is_unarmed=is_unarmed,
+                    is_nick_attack=is_nick_attack, attack_label=attack_label,
+                    adv=adv, disadv=disadv, d20r=d20r_luck,
+                    d20_str=_fmt_d20(d20r_luck, adv_src, disadv_src),
+                    roll_result=luck_roll, total=luck_total, target_ac=target_ac,
+                    tags=tags, adv_src=adv_src, disadv_src=disadv_src,
                 )
 
-        # MISS — check Graze mastery
-        graze_dmg = _try_graze(attacker, weapon, defender, state, attack_label)
+        # MISS
+        graze_dmg = _try_graze_new(attacker, weapon, defender, state, label, d20_str, tags, target_ac)
         if graze_dmg == 0:
-            state.log(
-                f"  {attack_label}: {attacker.name} attacks with {weapon.name}:"
-                f" MISS ({total} vs AC {target_ac})"
-            )
-        # Battle Master Riposte: defender can counter-attack on miss
+            tag_str = (" · " + " · ".join(tags)) if tags else ""
+            state.log(f"{label}{weapon.name} {d20_str} → MISS ({total}/{target_ac}){tag_str}")
+
+        # Riposte on miss
         if not is_unarmed:
             try_riposte(defender, attacker, weapon, state)
-        state.log(f"  Rolls: {flush_rolls()}")
+
         return AttackResult(
             hit=False, critical=False, damage=graze_dmg,
             damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
         )
 
 
-# ---------------------------------------------------------------------------
-# Damage calculation
-# ---------------------------------------------------------------------------
+def _resolve_hit(
+    attacker: Character, defender: Character, weapon: Weapon,
+    state: CombatState, *,
+    is_crit: bool, is_thrown: bool, is_unarmed: bool, is_nick_attack: bool,
+    attack_label: str, adv: bool, disadv: bool,
+    d20r: D20Result, d20_str: str,
+    roll_result: int, total: int, target_ac: int,
+    tags: list[str], adv_src: list[str], disadv_src: list[str],
+    precision_die: int | None = None, precision_bonus: int = 0,
+    original_total: int | None = None,
+) -> AttackResult:
+    """Resolve a confirmed hit, format and log."""
+    label = _pad_label(attack_label)
 
-def _calc_damage(
-    attacker: Character, weapon: Weapon,
-    crit: bool, is_unarmed: bool, is_thrown: bool,
-    is_nick_attack: bool = False,
-) -> int:
-    """Calculate total damage for a hit."""
-    dice_expr = weapon.damage_dice
-    if is_unarmed:
-        dice_expr = attacker.martial_arts_die or "1"
+    # Calculate damage
+    dmg_info = _calc_damage_info(attacker, weapon, is_crit, is_unarmed, is_thrown, is_nick_attack)
+    damage = dmg_info.total
 
-    # GWF: treat 1s and 2s as 3s on damage dice (2024 rules)
-    gwf_min = None
-    if (attacker.fighting_style == "great_weapon_fighting"
-            and (weapon.is_two_handed or weapon.is_versatile)
-            and weapon.is_melee
-            and not is_unarmed):
-        gwf_min = 3
+    # Sneak Attack
+    sa_dmg, sa_rolls = _try_sneak_attack(attacker, is_crit, adv and not disadv)
+    damage += sa_dmg
 
-    # Savage Attacker: roll dice twice, take best (once per turn)
-    if attacker.has_savage_attacker and not getattr(attacker, "_savage_used_this_turn", False):
-        base_result = eval_dice_twice_take_best(dice_expr, minimum=gwf_min)
-        attacker._savage_used_this_turn = True  # type: ignore[attr-defined]
+    # Hunter's Mark
+    hm_dmg = 0
+    hm_rolls: tuple[int, ...] = ()
+    if attacker.hunters_mark_active:
+        hm_result = eval_dice("1d6")
+        hm_rolls = hm_result.rolls
+        hm_dmg = hm_result.total
+        if is_crit:
+            hm_crit = eval_dice("1d6")
+            hm_rolls = hm_rolls + hm_crit.rolls
+            hm_dmg += hm_crit.total
+        damage += hm_dmg
+
+    # Colossus Slayer
+    cs_dmg = 0
+    cs_rolls: tuple[int, ...] = ()
+    if (attacker.has_colossus_slayer
+            and not attacker.colossus_slayer_used
+            and defender.current_hp < defender.max_hp):
+        cs_result = eval_dice("1d8")
+        cs_rolls = cs_result.rolls
+        cs_dmg = cs_result.total
+        if is_crit:
+            cs_crit = eval_dice("1d8")
+            cs_rolls = cs_rolls + cs_crit.rolls
+            cs_dmg += cs_crit.total
+        damage += cs_dmg
+        attacker.colossus_slayer_used = True
+
+    # Trip Attack
+    trip_dmg, trip_seg = _try_trip_attack(attacker, defender, state)
+    damage += trip_dmg
+
+    # Menacing Attack
+    menacing_dmg, menacing_seg = _try_menacing_attack(attacker, defender, state)
+    damage += menacing_dmg
+
+    # Build damage packet
+    damage_packet = [(damage, weapon.damage_type)]
+
+    # Giant ancestry extras
+    fire_extra = 0
+    fire_rolls: tuple[int, ...] = ()
+    if attacker.giant_ancestry == "fire":
+        fire_res = attacker.resources.get("fire_giant")
+        if fire_res and fire_res.available:
+            fire_res.spend()
+            fire_result = eval_dice("1d10")
+            fire_extra = fire_result.total
+            fire_rolls = fire_result.rolls
+            damage_packet.append((fire_extra, DamageType.FIRE))
+
+    frost_extra = 0
+    frost_rolls: tuple[int, ...] = ()
+    if attacker.giant_ancestry == "frost":
+        frost_res = attacker.resources.get("frost_giant")
+        if frost_res and frost_res.available:
+            frost_res.spend()
+            frost_result = eval_dice("1d6")
+            frost_extra = frost_result.total
+            frost_rolls = frost_result.rolls
+            damage_packet.append((frost_extra, DamageType.COLD))
+            defender.speed = max(0, defender.speed - 10)
+
+    # Apply damage
+    pre_temp_hp = defender.temp_hp
+    actual = defender.take_attack_damage(damage_packet, state)
+
+    # AoA retaliation
+    if not weapon.is_ranged and not is_thrown:
+        _try_aoa_retaliation(attacker, defender, state, pre_temp_hp)
+
+    # Weapon mastery on hit
+    mastery_tags: list[str] = []
+    if not is_unarmed and attacker.can_use_mastery(weapon):
+        mastery_tags = _apply_mastery_on_hit_new(attacker, defender, weapon, state)
+
+    # Hill's Tumble
+    if attacker.giant_ancestry == "hill":
+        hill_res = attacker.resources.get("hill_giant")
+        if hill_res and hill_res.available:
+            hill_res.spend()
+            defender.conditions.add(Condition.PRONE)
+            tags.append("Hill's Tumble → prone")
+
+    # Divine Smite
+    smite_actual, smite_rolls = _try_divine_smite(attacker, defender, is_crit, state)
+
+    # --- Build the single log line ---
+    hit_type = "CRIT" if is_crit else "HIT"
+
+    # Precision display
+    if precision_die is not None and original_total is not None:
+        line = f"{label}{weapon.name} {d20_str} → MISS ({original_total}/{target_ac}) · Precision [d8={precision_die}] → HIT ({total}/{target_ac})"
     else:
-        base_result = eval_dice(dice_expr, minimum=gwf_min)
+        line = f"{label}{weapon.name} {d20_str} → {hit_type} ({total}/{target_ac})"
 
-    damage = base_result.total
+    # Tags before damage (Nick, Lucky, Frenzy etc.)
+    for t in tags:
+        line += f" · {t}"
 
-    # Crit: roll damage dice again
-    if crit:
-        crit_result = eval_dice(dice_expr, minimum=gwf_min)
-        damage += crit_result.total
+    # Damage portion
+    line += f" · {_fmt_damage(dmg_info)}"
 
-    # Flat modifier
-    if is_unarmed:
-        damage += attacker.unarmed_damage_mod()
-        if attacker.is_raging:
-            damage += attacker.rage_damage
-    elif is_nick_attack and attacker.fighting_style != "two_weapon_fighting":
-        # Nick extra attack: no ability modifier unless TWF style
-        damage += weapon.bonus  # still add magic weapon bonus
-    else:
-        damage += attacker.damage_modifier(weapon, is_thrown=is_thrown)
+    # Extra damage labels
+    if sa_dmg:
+        line += f" +SA {_fmt_rolls(sa_rolls)}={sa_dmg}"
+    if hm_dmg:
+        line += f" +Hunter's Mark {_fmt_rolls(hm_rolls)}={hm_dmg}" if len(hm_rolls) > 1 else f" +Hunter's Mark [{hm_rolls[0]}]"
+    if cs_dmg:
+        line += f" +Colossus Slayer {_fmt_rolls(cs_rolls)}={cs_dmg}" if len(cs_rolls) > 1 else f" +Colossus Slayer [{cs_rolls[0]}]"
+    if smite_actual:
+        line += f" +Smite {_fmt_rolls(smite_rolls)}={smite_actual} radiant"
+    if fire_extra:
+        line += f" +Fire Giant {_fmt_rolls(fire_rolls)}={fire_extra} fire"
+    if frost_extra:
+        line += f" +Frost Giant {_fmt_rolls(frost_rolls)}={frost_extra} cold"
 
-    return max(1, damage)
+    # Mechanic segments (Trip, Menacing)
+    if trip_seg:
+        line += f" · {trip_seg}"
+    if menacing_seg:
+        line += f" · {menacing_seg}"
 
+    # Mastery condition tags (Vex, Sap, Topple)
+    for mt in mastery_tags:
+        line += f" · {mt}"
 
-# ---------------------------------------------------------------------------
-# Sneak Attack
-# ---------------------------------------------------------------------------
+    # HP
+    line += f" [{defender.current_hp}/{defender.max_hp} HP]"
 
-def _try_sneak_attack(attacker: Character, is_crit: bool, had_advantage: bool) -> int:
-    """Returns extra SA damage if applicable, else 0."""
-    if not attacker.sneak_attack_dice:
-        return 0
-    if attacker.sneak_attack_used:
-        return 0
-    if not had_advantage:
-        return 0  # 1v1: need advantage
+    state.log(line)
 
-    extra = eval_dice(attacker.sneak_attack_dice).total
-    if is_crit:
-        extra += eval_dice(attacker.sneak_attack_dice).total
-    attacker.sneak_attack_used = True
-    return extra
-
-
-# ---------------------------------------------------------------------------
-# Divine Smite
-# ---------------------------------------------------------------------------
-
-def _try_divine_smite(
-    attacker: Character, defender: Character,
-    is_crit: bool, state: CombatState,
-) -> None:
-    """Divine Smite: expend a 1st-level spell slot on a hit for 2d8 radiant damage.
-    On a crit, the smite dice are doubled (extra 2d8).
-    """
-    if "divine_smite" not in attacker.features:
-        return
-    if not attacker.has_spell_slot(1):
-        return
-    attacker.spend_spell_slot(1)
-    smite_dmg = eval_dice("2d8").total
-    if is_crit:
-        smite_dmg += eval_dice("2d8").total  # crit doubles smite dice
-    actual_smite = defender.take_damage(smite_dmg, DamageType.RADIANT, state)
-    state.log(
-        f"  ✦ Divine Smite: {actual_smite} radiant damage!"
-        f" ({defender.current_hp}/{defender.max_hp} HP)"
+    return AttackResult(
+        hit=True, critical=is_crit, damage=damage,
+        damage_type=weapon.damage_type, attack_roll=total, target_ac=target_ac,
     )
 
 
 # ---------------------------------------------------------------------------
-# Weapon Mastery helpers
+# Graze (new format)
 # ---------------------------------------------------------------------------
 
-def _apply_mastery_on_hit(
+def _try_graze_new(
+    attacker: Character, weapon: Weapon,
+    defender: Character, state: CombatState,
+    label: str, d20_str: str, tags: list[str], target_ac: int,
+) -> int:
+    """Apply Graze mastery on a miss. Logs GRAZE line. Returns damage dealt."""
+    if not weapon.mastery or weapon.mastery != MasteryProperty.GRAZE:
+        return 0
+    if not attacker.can_use_mastery(weapon):
+        return 0
+    attack_bonus = attacker.attack_modifier(weapon)
+    graze_dmg = max(0, attacker._attack_ability_mod(weapon))
+    if graze_dmg > 0:
+        actual = defender.take_damage(graze_dmg, weapon.damage_type, state)
+        tag_str = (" · " + " · ".join(tags)) if tags else ""
+        # Reconstruct total for display
+        # We don't have d20r here easily, so compute from d20_str
+        state.log(f"{label}{weapon.name} {d20_str} → GRAZE · {actual} dmg{tag_str} [{defender.current_hp}/{defender.max_hp} HP]")
+        return actual
+    return 0
+
+
+# Legacy graze wrapper (unused but kept for safety)
+def _try_graze(attacker, weapon, defender, state, attack_label="ACTION"):
+    return 0  # Replaced by _try_graze_new
+
+
+# ---------------------------------------------------------------------------
+# Weapon Mastery on hit — returns tags
+# ---------------------------------------------------------------------------
+
+def _apply_mastery_on_hit_new(
     attacker: Character, defender: Character,
     weapon: Weapon, state: CombatState,
-) -> None:
-    """Apply weapon mastery effects after a successful hit."""
+) -> list[str]:
+    """Apply weapon mastery effects after a hit. Returns formatted tag strings."""
     mastery = weapon.mastery
     if mastery is None:
-        return
+        return []
 
+    tags = []
     if mastery == MasteryProperty.VEX:
         attacker.vex_target = defender.name
-        state.log(f"  Vex: advantage on next attack vs {defender.name}")
+        tags.append("Vex → adv next attack")
 
     elif mastery == MasteryProperty.SAP:
         defender.active_effects.append(ActiveEffect(
@@ -447,10 +744,10 @@ def _apply_mastery_on_hit(
             end_trigger="start_of_turn",
             disadvantage_on_attacks=True,
         ))
-        state.log(f"  Sap: {defender.name} has disadvantage on next attack")
+        tags.append("Sap → disadv next attack")
 
     elif mastery == MasteryProperty.SLOW:
-        state.log(f"  Slow: {defender.name}'s speed reduced by 10 ft")
+        tags.append("Slow → -10 speed")
 
     elif mastery == MasteryProperty.TOPPLE:
         ability_mod = attacker._attack_ability_mod(weapon)
@@ -458,20 +755,22 @@ def _apply_mastery_on_hit(
         save_roll = d20() + defender.con_mod
         if save_roll < dc:
             defender.conditions.add(Condition.PRONE)
-            state.log(f"  Topple: {defender.name} falls prone! (save {save_roll} vs DC {dc})")
+            tags.append(f"Topple → prone (save {save_roll}/DC {dc})")
         else:
-            state.log(f"  Topple: {defender.name} resists (save {save_roll} vs DC {dc})")
+            tags.append(f"Topple → resisted (save {save_roll}/DC {dc})")
 
     elif mastery == MasteryProperty.PUSH:
         state.distance = min(120, state.distance + 10)
-        state.log(f"  Push: {defender.name} pushed 10 ft (distance: {state.distance} ft)")
+        tags.append(f"Push → 10 ft (distance: {state.distance} ft)")
+
+    return tags
 
 
 def _try_aoa_retaliation(
     attacker: Character, defender: Character,
     state: CombatState, had_temp_hp: int,
 ) -> None:
-    """Armor of Agathys: deal cold damage to attacker on melee hit while temp HP remains."""
+    """Armor of Agathys retaliation."""
     if had_temp_hp <= 0:
         return
     aoa_dmg = getattr(defender, "aoa_cold_damage", 0)
@@ -482,141 +781,17 @@ def _try_aoa_retaliation(
         return
     actual_aoa = attacker.take_damage(aoa_dmg, DamageType.COLD, state)
     state.log(
-        f"  REACTION: Armor of Agathys retaliates! {attacker.name} takes {actual_aoa} cold damage"
-        f" ({attacker.current_hp}/{attacker.max_hp} HP)"
+        f"REACTION Armor of Agathys: {attacker.name} takes {actual_aoa} cold"
+        f" [{attacker.current_hp}/{attacker.max_hp} HP]"
     )
 
 
-def _try_graze(
-    attacker: Character, weapon: Weapon,
-    defender: Character, state: CombatState,
-    attack_label: str = "ACTION",
-) -> int:
-    """Apply Graze mastery on a miss. Returns damage dealt (0 if no graze)."""
-    if not weapon.mastery or weapon.mastery != MasteryProperty.GRAZE:
-        return 0
-    if not attacker.can_use_mastery(weapon):
-        return 0
-    graze_dmg = max(0, attacker._attack_ability_mod(weapon))
-    if graze_dmg > 0:
-        actual = defender.take_damage(graze_dmg, weapon.damage_type, state)
-        state.log(
-            f"  {attack_label}: {attacker.name} attacks with {weapon.name}: GRAZE for {actual} damage"
-            f" ({defender.current_hp}/{defender.max_hp} HP)"
-        )
-        return actual
-    return 0
-
-
 # ---------------------------------------------------------------------------
-# Advantage / Disadvantage
+# Riposte
 # ---------------------------------------------------------------------------
-
-def _has_advantage(attacker: Character, defender: Character) -> bool:
-    """Check all sources of advantage."""
-    if any(e.advantage_on_attacks for e in attacker.active_effects):
-        return True
-    # Vow of Enmity: Vengeance Paladin gains advantage on all attacks this combat
-    if attacker.vow_of_enmity_active:
-        return True
-    if attacker.vex_target == defender.name:
-        attacker.vex_target = None  # consumed on use
-        return True
-    # Reckless on defender grants us advantage
-    if any(e.grants_advantage_to_enemies for e in defender.active_effects):
-        return True
-    # Prone grants advantage on melee attacks (within 5ft)
-    if Condition.PRONE in defender.conditions:
-        return True
-    # Heroic Inspiration: spend to gain advantage on this attack
-    if hasattr(attacker, '_use_heroic_inspiration') and attacker._use_heroic_inspiration:
-        hi_res = attacker.resources.get("heroic_inspiration")
-        if hi_res and hi_res.available:
-            hi_res.spend()
-            attacker._use_heroic_inspiration = False
-            return True
-    return False
-
-
-def _has_disadvantage(attacker: Character, defender: Character) -> bool:
-    """Check all sources of disadvantage."""
-    if defender.is_dodging:
-        return True
-    if any(e.disadvantage_on_attacks for e in attacker.active_effects):
-        return True
-    # Frightened: disadvantage on attacks while source is visible (always in 1v1)
-    if Condition.FRIGHTENED in attacker.conditions:
-        return True
-    # Shadow Darkness: attacks against defender in darkness have disadvantage
-    if any(e.name == "Shadow Darkness" for e in defender.active_effects):
-        return True
-    # Lucky feat defensive: defender spends luck point to impose disadvantage
-    if not defender.reaction_used:
-        luck_res = defender.resources.get("luck_points")
-        if luck_res and luck_res.available:
-            luck_res.spend()
-            defender.reaction_used = True
-            return True
-    return False
-
-
-# ---------------------------------------------------------------------------
-# Battle Master maneuver helpers
-# ---------------------------------------------------------------------------
-
-def _try_trip_attack(attacker: Character, defender: Character, state: CombatState) -> int:
-    """Trip Attack: add superiority die to damage + prone on failed STR save."""
-    if "trip" not in attacker.maneuvers:
-        return 0
-    if Condition.PRONE in defender.conditions:
-        return 0  # already prone, don't waste
-    sup_res = attacker.resources.get("superiority_dice")
-    if not sup_res or not sup_res.available:
-        return 0
-    sup_res.spend()
-    dmg = eval_dice(attacker.superiority_die_size).total
-    dc = 8 + attacker.str_mod + attacker.proficiency_bonus
-    save = d20() + defender.str_mod
-    if save < dc:
-        defender.conditions.add(Condition.PRONE)
-        state.log(f"  Trip Attack: +{dmg} damage, {defender.name} falls prone! (save {save} vs DC {dc})")
-    else:
-        state.log(f"  Trip Attack: +{dmg} damage, {defender.name} resists prone (save {save} vs DC {dc})")
-    return dmg
-
-
-def _try_menacing_attack(attacker: Character, defender: Character, state: CombatState) -> int:
-    """Menacing Attack: add superiority die to damage + frightened on failed WIS save."""
-    if "menacing" not in attacker.maneuvers:
-        return 0
-    if Condition.FRIGHTENED in defender.conditions:
-        return 0  # already frightened
-    sup_res = attacker.resources.get("superiority_dice")
-    if not sup_res or not sup_res.available:
-        return 0
-    # Don't use menacing if we already used trip this hit (prefer trip first)
-    if "trip" in attacker.maneuvers:
-        return 0  # trip is checked first; menacing is backup
-    sup_res.spend()
-    dmg = eval_dice(attacker.superiority_die_size).total
-    dc = 8 + attacker.str_mod + attacker.proficiency_bonus
-    save = d20() + defender.wis_mod
-    if save < dc:
-        defender.conditions.add(Condition.FRIGHTENED)
-        defender.active_effects.append(ActiveEffect(
-            name="Frightened",
-            source="menacing_attack",
-            duration=1,  # until end of attacker's next turn
-            end_trigger="end_of_turn",
-        ))
-        state.log(f"  Menacing Attack: +{dmg} damage, {defender.name} is frightened! (save {save} vs DC {dc})")
-    else:
-        state.log(f"  Menacing Attack: +{dmg} damage, {defender.name} resists fear (save {save} vs DC {dc})")
-    return dmg
-
 
 def try_riposte(defender: Character, attacker: Character, weapon: Weapon, state: CombatState) -> None:
-    """Riposte: reaction attack when enemy misses, add superiority die to damage."""
+    """Riposte: reaction attack when enemy misses."""
     if "riposte" not in defender.maneuvers:
         return
     if defender.reaction_used:
@@ -624,36 +799,43 @@ def try_riposte(defender: Character, attacker: Character, weapon: Weapon, state:
     sup_res = defender.resources.get("superiority_dice")
     if not sup_res or not sup_res.available:
         return
-    # Make a reaction melee attack
     mw = defender.best_melee_weapon()
     if not mw or state.distance > 5:
         return
     sup_res.spend()
     defender.reaction_used = True
-    state.log(f"  REACTION: Riposte: {defender.name} counter-attacks!")
-    # Simplified: resolve a normal attack + add superiority die damage
+
     attack_bonus = defender.attack_modifier(mw)
-    roll_result = d20()
+    d20r = d20_detail()
+    roll_result = d20r.chosen
     total_roll = roll_result + attack_bonus
     is_crit = roll_result >= defender.crit_threshold
+    target_ac = attacker.effective_ac
+    label = _pad_label("REACTION")
+    d20_str = f"d20={roll_result}"
+
     if roll_result == 1:
-        state.log(f"  REACTION: Riposte: MISS (nat 1)")
-        state.log(f"  Rolls: {flush_rolls()}")
+        state.log(f"{label}{mw.name} {d20_str} → MISS ({total_roll}/{target_ac}) · Riposte")
         return
-    if is_crit or total_roll >= attacker.effective_ac:
-        damage = _calc_damage(defender, mw, is_crit, False, False, False)
-        riposte_dmg = eval_dice(defender.superiority_die_size).total
+
+    if is_crit or total_roll >= target_ac:
+        dmg_info = _calc_damage_info(defender, mw, is_crit, False, False, False)
+        damage = dmg_info.total
+        riposte_result = eval_dice(defender.superiority_die_size)
+        riposte_dmg = riposte_result.total
+        riposte_die = riposte_result.rolls[0] if riposte_result.rolls else riposte_dmg
         damage += riposte_dmg
         actual = attacker.take_attack_damage([(damage, mw.damage_type)], state)
-        state.log(f"  REACTION: Riposte: HIT for {actual} damage (+{riposte_dmg} superiority) ({attacker.current_hp}/{attacker.max_hp} HP)")
+
+        # Rebuild dmg_info total to include riposte
+        hit_type = "CRIT" if is_crit else "HIT"
+        # Format: include riposte die in the damage display
+        dmg_str = _fmt_damage(dmg_info)
+        line = f"{label}{mw.name} {d20_str} → {hit_type} ({total_roll}/{target_ac}) · Riposte · {dmg_str} +Riposte [d8={riposte_die}] [{attacker.current_hp}/{attacker.max_hp} HP]"
+        state.log(line)
     else:
-        state.log(f"  REACTION: Riposte: MISS ({total_roll} vs AC {attacker.effective_ac})")
-    state.log(f"  Rolls: {flush_rolls()}")
+        state.log(f"{label}{mw.name} {d20_str} → MISS ({total_roll}/{target_ac}) · Riposte")
 
-
-# ---------------------------------------------------------------------------
-# Utility actions used by combat.py
-# ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 # Spell resolution helpers
@@ -668,21 +850,22 @@ def resolve_spell_attack(
     state: CombatState,
 ) -> bool:
     """Resolve a spell attack roll. Returns True if hit."""
-    attack_roll = d20() + caster.spell_attack_bonus
-    hit = attack_roll >= target.effective_ac
+    d20r = d20_detail()
+    attack_roll = d20r.chosen + caster.spell_attack_bonus
+    target_ac = target.effective_ac
+    label = _pad_label("ACTION")
+    d20_str = f"d20={d20r.chosen}"
+    hit = attack_roll >= target_ac
     if hit:
-        dmg = eval_dice(damage_dice).total
-        actual = target.take_damage(dmg, damage_type, state)
+        result = eval_dice(damage_dice)
+        actual = target.take_damage(result.total, damage_type, state)
         state.log(
-            f"  ACTION: {caster.name} casts {spell_name}: HIT"
-            f" ({attack_roll} vs AC {target.effective_ac}) for {actual} damage"
+            f"{label}{spell_name} {d20_str} → HIT ({attack_roll}/{target_ac})"
+            f" · {_fmt_rolls(result.rolls)}={actual} {damage_type.name.lower()} dmg"
+            f" [{target.current_hp}/{target.max_hp} HP]"
         )
     else:
-        state.log(
-            f"  ACTION: {caster.name} casts {spell_name}: MISS"
-            f" ({attack_roll} vs AC {target.effective_ac})"
-        )
-    state.log(f"  Rolls: {flush_rolls()}")
+        state.log(f"{label}{spell_name} {d20_str} → MISS ({attack_roll}/{target_ac})")
     return hit
 
 
@@ -692,7 +875,7 @@ def resolve_spell_save(
     damage_dice: str,
     damage_type: DamageType,
     spell_name: str,
-    save_ability: str,   # "dex", "str", "con", "wis", "int", "cha"
+    save_ability: str,
     state: CombatState,
     half_on_save: bool = True,
 ) -> int:
@@ -700,19 +883,21 @@ def resolve_spell_save(
     dc = caster.spell_save_dc
     save_mod = getattr(target, f"{save_ability}_mod")
     save_roll = d20() + save_mod
-    dmg = eval_dice(damage_dice).total
+    result = eval_dice(damage_dice)
+    dmg = result.total
     if save_roll >= dc:
         actual_dmg = dmg // 2 if half_on_save else 0
-        result = "saves"
+        result_str = "saves"
     else:
         actual_dmg = dmg
-        result = "fails save"
+        result_str = "fails"
     actual = target.take_damage(actual_dmg, damage_type, state)
+    label = _pad_label("ACTION")
     state.log(
-        f"  ACTION: {caster.name} casts {spell_name}: {target.name} {result}"
-        f" ({save_roll} vs DC {dc}), {actual} {damage_type.name.lower()} damage"
+        f"{label}{spell_name}: {target.name} {result_str} ({save_roll}/DC {dc})"
+        f" · {_fmt_rolls(result.rolls)}={actual} {damage_type.name.lower()} dmg"
+        f" [{target.current_hp}/{target.max_hp} HP]"
     )
-    state.log(f"  Rolls: {flush_rolls()}")
     return actual
 
 
@@ -723,14 +908,16 @@ def do_second_wind(char: Character, state: CombatState) -> None:
         return
     res.spend()
     char.bonus_action_used = True
-    healing = eval_dice("1d10").total + char.level
+    result = eval_dice("1d10")
+    die_val = result.rolls[0] if result.rolls else result.total
+    healing = result.total + char.level
     actual = char.heal(healing)
-    state.log(f"  BONUS: {char.name} uses Second Wind, heals {actual} HP ({char.current_hp}/{char.max_hp})")
-    state.log(f"  Rolls: {flush_rolls()}")
+    label = _pad_label("BONUS")
+    state.log(f"{label}Second Wind → [1d10={die_val}]+{char.level}={healing} healed [{char.current_hp}/{char.max_hp} HP]")
 
 
 def do_dodge(char: Character, state: CombatState) -> None:
-    """Take the Dodge action (or as part of Patient Defense)."""
+    """Take the Dodge action."""
     char.conditions.add(Condition.DODGING)
 
 

@@ -14,29 +14,17 @@ class DiceResult:
     expression: str
 
 
-# ---------------------------------------------------------------------------
-# Roll log — per-action buffer
-# ---------------------------------------------------------------------------
-_roll_log: list[str] = []
+@dataclass(frozen=True)
+class D20Result:
+    """Result of a d20 roll, with both raw values for adv/disadv display."""
+    chosen: int
+    other: int | None  # second die if adv/disadv, else None
+    advantage: bool
+    disadvantage: bool
 
-
-def push_roll(entry: str) -> None:
-    """Append a formatted roll entry to the current action log."""
-    _roll_log.append(entry)
-
-
-def flush_rolls() -> str:
-    """Return roll log as bracketed array string, then clear it."""
-    global _roll_log
-    out = f"[{', '.join(_roll_log)}]" if _roll_log else "[]"
-    _roll_log = []
-    return out
-
-
-def clear_rolls() -> None:
-    """Clear the roll log without returning it (e.g. before an action starts)."""
-    global _roll_log
-    _roll_log = []
+    @property
+    def value(self) -> int:
+        return self.chosen
 
 
 def roll(n: int, sides: int) -> tuple[int, ...]:
@@ -45,11 +33,7 @@ def roll(n: int, sides: int) -> tuple[int, ...]:
 
 
 def roll_with_minimum(n: int, sides: int, minimum: int = 1) -> tuple[int, ...]:
-    """Roll n dice, treating any result below *minimum* as *minimum*.
-
-    This implements 2024 Great Weapon Fighting: any 1 or 2 on a damage die
-    is treated as a 3 (minimum=3).
-    """
+    """Roll n dice, treating any result below *minimum* as *minimum*."""
     results = []
     for _ in range(n):
         r = random.randint(1, sides)
@@ -58,26 +42,23 @@ def roll_with_minimum(n: int, sides: int, minimum: int = 1) -> tuple[int, ...]:
 
 
 def d20(advantage: bool = False, disadvantage: bool = False) -> int:
-    """Roll a d20 with advantage/disadvantage.  They cancel if both true."""
+    """Roll a d20 with advantage/disadvantage. Returns just the chosen value."""
+    return d20_detail(advantage=advantage, disadvantage=disadvantage).chosen
+
+
+def d20_detail(advantage: bool = False, disadvantage: bool = False) -> D20Result:
+    """Roll a d20, returning full detail including both dice for adv/disadv."""
     if advantage and disadvantage:
         result = random.randint(1, 20)
-        push_roll(f"d20={result}")
-        return result
+        return D20Result(chosen=result, other=None, advantage=False, disadvantage=False)
     if advantage:
         a, b = random.randint(1, 20), random.randint(1, 20)
-        result = max(a, b)
-        other = min(a, b)
-        push_roll(f"d20={result}(adv:{other})")
-        return result
+        return D20Result(chosen=max(a, b), other=min(a, b), advantage=True, disadvantage=False)
     if disadvantage:
         a, b = random.randint(1, 20), random.randint(1, 20)
-        result = min(a, b)
-        other = max(a, b)
-        push_roll(f"d20={result}(dis:{other})")
-        return result
+        return D20Result(chosen=min(a, b), other=max(a, b), advantage=False, disadvantage=True)
     result = random.randint(1, 20)
-    push_roll(f"d20={result}")
-    return result
+    return D20Result(chosen=result, other=None, advantage=False, disadvantage=False)
 
 
 # Simple dice expression parser: "2d6", "1d10+5", "3d8+2d6+3"
@@ -90,12 +71,24 @@ def parse_dice(expr: str) -> list[tuple[int, int]]:
     return [(int(m.group(1)), int(m.group(2))) for m in _DICE_RE.finditer(expr)]
 
 
-def eval_dice(expr: str, minimum: int | None = None) -> DiceResult:
-    """Evaluate a dice expression like '2d6+5'.
+def _calc_flat_mod(expr: str) -> int:
+    """Extract the flat modifier from a dice expression."""
+    flat = 0
+    clean = _DICE_RE.sub("", expr)
+    for match in _MOD_RE.finditer(clean):
+        flat += int(match.group(1))
+    leftover = _DICE_RE.sub("", expr)
+    leftover = _MOD_RE.sub("", leftover).strip().lstrip("+")
+    if leftover:
+        try:
+            flat += int(leftover)
+        except ValueError:
+            pass
+    return flat
 
-    If *minimum* is set, every individual die result below that value is
-    raised to it (used for 2024 GWF where 1s/2s become 3s).
-    """
+
+def eval_dice(expr: str, minimum: int | None = None) -> DiceResult:
+    """Evaluate a dice expression like '2d6+5'."""
     all_rolls: list[int] = []
     total = 0
 
@@ -108,52 +101,25 @@ def eval_dice(expr: str, minimum: int | None = None) -> DiceResult:
         all_rolls.extend(rolls)
         total += sum(rolls)
 
-    # Add flat modifiers
-    clean = _DICE_RE.sub("", expr)
-    for match in _MOD_RE.finditer(clean):
-        total += int(match.group(1))
-
-    # Handle leading number without sign (e.g. the "+5" part handled above,
-    # but also bare "5" if the expression is just a number)
-    leftover = _DICE_RE.sub("", expr)
-    leftover = _MOD_RE.sub("", leftover).strip().lstrip("+")
-    if leftover:
-        try:
-            total += int(leftover)
-        except ValueError:
-            pass
-
-    # Build roll log entry
-    _rolls_str = ",".join(str(r) for r in all_rolls)
-    flat_mod = total - sum(all_rolls)
-    if flat_mod > 0:
-        push_roll(f"{expr.replace(' ', '')}=[{_rolls_str}]+{flat_mod}={total}")
-    elif flat_mod < 0:
-        push_roll(f"{expr.replace(' ', '')}=[{_rolls_str}]{flat_mod}={total}")
-    else:
-        push_roll(f"{expr.replace(' ', '')}=[{_rolls_str}]={total}")
+    total += _calc_flat_mod(expr)
 
     return DiceResult(total=total, rolls=tuple(all_rolls), expression=expr)
 
 
-def eval_dice_twice_take_best(expr: str, minimum: int | None = None) -> DiceResult:
-    """Roll the dice portion of *expr* twice and keep the better set.
+@dataclass(frozen=True)
+class SavageResult:
+    """Result of a Savage Attacker double-roll."""
+    total: int
+    rolls: tuple[int, ...]  # the chosen (best) set
+    set1: tuple[int, ...]
+    set2: tuple[int, ...]
+    expression: str
 
-    Implements 2024 Savage Attacker: 'roll the weapon's damage dice twice
-    and use either roll'.  Flat modifiers are added once.
-    """
+
+def eval_dice_twice_take_best(expr: str, minimum: int | None = None) -> SavageResult:
+    """Roll the dice portion twice and keep the better set (Savage Attacker)."""
     dice_parts = parse_dice(expr)
-    flat = 0
-    clean = _DICE_RE.sub("", expr)
-    for match in _MOD_RE.finditer(clean):
-        flat += int(match.group(1))
-    leftover = _DICE_RE.sub("", expr)
-    leftover = _MOD_RE.sub("", leftover).strip().lstrip("+")
-    if leftover:
-        try:
-            flat += int(leftover)
-        except ValueError:
-            pass
+    flat = _calc_flat_mod(expr)
 
     def _roll_dice():
         rolls: list[int] = []
@@ -167,12 +133,33 @@ def eval_dice_twice_take_best(expr: str, minimum: int | None = None) -> DiceResu
     r1 = _roll_dice()
     r2 = _roll_dice()
     best = r1 if sum(r1) >= sum(r2) else r2
-    r1_str = ",".join(str(r) for r in r1)
-    r2_str = ",".join(str(r) for r in r2)
     total_val = sum(best) + flat
-    push_roll(f"{expr.replace(' ', '')}=best([{r1_str}],[{r2_str}])={total_val}")
-    return DiceResult(
+    return SavageResult(
         total=total_val,
         rolls=best,
+        set1=r1,
+        set2=r2,
         expression=expr,
     )
+
+
+# ---------------------------------------------------------------------------
+# Legacy roll log — kept for backward compatibility but no longer used for display
+# ---------------------------------------------------------------------------
+_roll_log: list[str] = []
+
+
+def push_roll(entry: str) -> None:
+    _roll_log.append(entry)
+
+
+def flush_rolls() -> str:
+    global _roll_log
+    out = f"[{', '.join(_roll_log)}]" if _roll_log else "[]"
+    _roll_log = []
+    return out
+
+
+def clear_rolls() -> None:
+    global _roll_log
+    _roll_log = []
