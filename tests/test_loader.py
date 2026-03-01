@@ -33,7 +33,7 @@ def test_load_weapon_longbow():
 
 
 def test_load_fighter_gwf():
-    path = _DATA_DIR / "builds" / "fighter_gwf_greatsword_2.yaml"
+    path = _DATA_DIR / "builds" / "archive" / "level2" / "fighter_gwf_greatsword_2.yaml"
     char = load_build(path)
     assert char.name == "Fighter (GWF Greatsword)"
     assert char.level == 2
@@ -48,7 +48,7 @@ def test_load_fighter_gwf():
 
 
 def test_load_fighter_dueling():
-    path = _DATA_DIR / "builds" / "fighter_dueling_longsword_2.yaml"
+    path = _DATA_DIR / "builds" / "archive" / "level2" / "fighter_dueling_longsword_2.yaml"
     char = load_build(path)
     assert char.ac == 18  # chain mail 16 + shield 2
     assert char.fighting_style == "dueling"
@@ -56,7 +56,7 @@ def test_load_fighter_dueling():
 
 
 def test_load_barbarian():
-    path = _DATA_DIR / "builds" / "barbarian_greatsword_2.yaml"
+    path = _DATA_DIR / "builds" / "archive" / "level2" / "barbarian_greatsword_2.yaml"
     char = load_build(path)
     assert char.name == "Barbarian (Greatsword)"
     assert char.ac == 15  # 10 + DEX(2) + CON(3)
@@ -67,7 +67,7 @@ def test_load_barbarian():
 
 
 def test_load_monk():
-    path = _DATA_DIR / "builds" / "monk_2.yaml"
+    path = _DATA_DIR / "builds" / "archive" / "level2" / "monk_2.yaml"
     char = load_build(path)
     assert char.ac == 16  # 10 + DEX(3) + WIS(3)
     assert char.max_hp == 17  # 8+2 + 5+2
@@ -78,7 +78,7 @@ def test_load_monk():
 
 
 def test_load_rogue():
-    path = _DATA_DIR / "builds" / "rogue_rapier_2.yaml"
+    path = _DATA_DIR / "builds" / "archive" / "level2" / "rogue_rapier_2.yaml"
     char = load_build(path)
     assert char.ac == 14  # leather 11 + DEX(3)
     assert char.max_hp == 17  # 8+2 + 5+2
@@ -87,7 +87,7 @@ def test_load_rogue():
 
 
 def test_load_archery_fighter():
-    path = _DATA_DIR / "builds" / "fighter_archery_longbow_2.yaml"
+    path = _DATA_DIR / "builds" / "archive" / "level2" / "fighter_archery_longbow_2.yaml"
     char = load_build(path)
     assert char.fighting_style == "archery"
     assert char.ac == 15  # chain shirt 13 + DEX(2 capped)

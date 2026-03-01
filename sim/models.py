@@ -485,6 +485,8 @@ class Character:
                 res.spend()
                 self.reaction_used = True
                 if state:
+                    state.special_triggers["stones_endurance_triggers"] = state.special_triggers.get("stones_endurance_triggers", 0) + 1
+                    state.special_triggers["stones_endurance_reduced"] = state.special_triggers.get("stones_endurance_reduced", 0) + min(stones_reduction, raw_total)
                     state.log(f"  {self.name} uses Stone's Endurance, reducing {raw_total} by {stones_reduction}")
 
         # Distribute Stone's reduction proportionally across damage types,
@@ -543,6 +545,7 @@ class Character:
                 res.spend()
                 self.current_hp = 1
                 if state:
+                    state.special_triggers["relentless_endurance"] = state.special_triggers.get("relentless_endurance", 0) + 1
                     state.log(f"  {self.name} uses Relentless Endurance! Drops to 1 HP instead of 0!")
 
         return total
@@ -608,6 +611,7 @@ class CombatState:
     turn_order: list[Character] = field(default_factory=list)
     combat_log: list[str] = field(default_factory=list)
     verbose: bool = False
+    special_triggers: dict[str, int] = field(default_factory=dict)
     phase: CombatPhase = field(default_factory=lambda: CombatPhase.RANGED)
     starting_distance: int = 60  # captured once at combat start for range checks
 

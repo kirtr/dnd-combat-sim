@@ -264,6 +264,7 @@ def run_simulations(
 
     total_rounds = 0
     draws = 0
+    special_triggers_totals: dict[str, int] = {}
 
     for i in range(n):
         a = template_a.deep_copy()
@@ -281,6 +282,10 @@ def run_simulations(
         stats_b.total_damage_dealt += b_damage_dealt
         stats_a.total_rounds += state.round_number
         stats_b.total_rounds += state.round_number
+
+        # Aggregate special triggers
+        for key, val in state.special_triggers.items():
+            special_triggers_totals[key] = special_triggers_totals.get(key, 0) + val
 
         if a.is_alive and not b.is_alive:
             stats_a.wins += 1
@@ -326,6 +331,7 @@ def run_simulations(
         "draws": draws,
         "avg_rounds": avg_rounds,
         "avg_ttk": avg_rounds,
+        "special_triggers": special_triggers_totals,
     }
     return results
 
@@ -367,6 +373,20 @@ def print_results(results: dict) -> None:
     print(f"  Draws: {results['draws']:,}")
     print(f"  Avg Rounds per Combat: {results['avg_rounds']:.1f}")
     print(f"  Avg Turns to Kill: {results['avg_ttk']:.1f}")
+
+    # Special triggers
+    triggers = results.get("special_triggers", {})
+    if triggers:
+        print()
+        print("  Species Features:")
+        if "relentless_endurance" in triggers:
+            count = triggers["relentless_endurance"]
+            print(f"    Relentless Endurance: {count:,} triggers ({count/n*100:.1f}% of fights)")
+        if "stones_endurance_triggers" in triggers:
+            count = triggers["stones_endurance_triggers"]
+            reduced = triggers.get("stones_endurance_reduced", 0)
+            print(f"    Stone's Endurance: {count:,} triggers ({count/n*100:.1f}% of fights), {reduced/n:.1f} avg damage reduced/fight")
+
     print("=" * 64)
 
 

@@ -1,6 +1,6 @@
-name: Berserker GWF Orc
-class: barbarian
-subclass: berserker
+name: Champion TWF Orc
+class: fighter
+subclass: champion
 level: 3
 species: orc
 background: soldier
@@ -10,21 +10,23 @@ ability_scores:
   dex: 13
   con: 16
   int: 8
-  wis: 10
-  cha: 8
+  wis: 12
+  cha: 10
 weapons:
-- greatsword
+- scimitar
+- shortsword
 - javelin
-armor: unarmored
+armor: chain_mail
 shield: false
+fighting_style: two_weapon_fighting
 tactic: aggressive
 powers:
-- rage
-- reckless_attack
+- second_wind
+- action_surge
 tags:
-- barbarian
-- berserker
-- gwf
+- champion
+- fighter
 - level3
 - melee
 - orc
+- twf

@@ -1,9 +1,9 @@
-name: Champion TWF Fire Goliath
+name: Battle Master S&B Stone Goliath
 class: fighter
-subclass: champion
+subclass: battle_master
 level: 3
 species: goliath
-giant_ancestry: fire
+giant_ancestry: stone
 background: soldier
 origin_feat: savage_attacker
 ability_scores:
@@ -12,23 +12,26 @@ ability_scores:
   con: 16
   int: 8
   wis: 12
-  cha: 8
+  cha: 10
 weapons:
-- scimitar
-- shortsword
+- longsword
 - javelin
 armor: chain_mail
-shield: false
-fighting_style: two_weapon_fighting
+shield: true
+fighting_style: dueling
 tactic: aggressive
+maneuvers:
+- precision
+- trip
+- riposte
 powers:
 - second_wind
 - action_surge
 tags:
-- champion
+- battlemaster
 - fighter
-- fire
 - goliath
 - level3
 - melee
-- twf
+- sb
+- stone
