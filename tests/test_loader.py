@@ -111,6 +111,82 @@ powers: [sneak_attack, cunning_action]
     assert char.sneak_attack_dice == "3d6"
 
 
+def test_load_rogue_level7_features_and_sneak_attack_scaling(tmp_path):
+    path = tmp_path / "rogue_level7.yaml"
+    path.write_text(
+        """
+name: Rogue (Level 7)
+class: rogue
+subclass: thief
+level: 7
+species: human
+ability_scores:
+  str: 10
+  dex: 18
+  con: 14
+  int: 10
+  wis: 10
+  cha: 10
+armor: leather
+weapons: [rapier]
+powers: [sneak_attack, cunning_action]
+""".strip()
+    )
+    char = load_build(path)
+    assert char.sneak_attack_dice == "4d6"
+    assert "evasion" in char.features
+
+
+def test_load_paladin_level6_gets_aura_of_protection(tmp_path):
+    path = tmp_path / "paladin_level6.yaml"
+    path.write_text(
+        """
+name: Paladin (Level 6)
+class: paladin
+subclass: vengeance
+level: 6
+species: human
+ability_scores:
+  str: 16
+  dex: 10
+  con: 14
+  wis: 10
+  cha: 16
+armor: chain_mail
+shield: true
+weapons: [longsword]
+powers: [divine_smite, vow_of_enmity]
+""".strip()
+    )
+    char = load_build(path)
+    assert "aura_of_protection" in char.features
+    assert char.saving_throw_bonus == 3
+
+
+def test_load_barbarian_level6_gets_mindless_rage(tmp_path):
+    path = tmp_path / "barbarian_level6.yaml"
+    path.write_text(
+        """
+name: Barbarian (Level 6)
+class: barbarian
+subclass: berserker
+level: 6
+species: orc
+ability_scores:
+  str: 18
+  dex: 14
+  con: 16
+  wis: 10
+  cha: 10
+armor: unarmored
+weapons: [greatsword]
+powers: [rage, reckless_attack]
+""".strip()
+    )
+    char = load_build(path)
+    assert "mindless_rage" in char.features
+
+
 def test_load_archery_fighter():
     path = _DATA_DIR / "builds" / "archive" / "level2" / "fighter_archery_longbow_2.yaml"
     char = load_build(path)

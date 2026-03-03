@@ -27,6 +27,8 @@ features:
   5:
   - extra_attack
   - fast_movement
+  6:
+  - mindless_rage
 phb_ref: pp. 50-52
 notes:
   rage_2024: '2 uses at levels 1-2 (table p.51). Bonus action to enter. Duration:
@@ -42,3 +44,4 @@ notes:
     only in this chunk).'
   extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
   fast_movement_2024: 'Level 5: speed +10 while not wearing heavy armor.'
+  mindless_rage_2024: 'Level 6: while raging, cannot be charmed or frightened.'

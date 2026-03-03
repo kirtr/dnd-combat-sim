@@ -319,7 +319,7 @@ class Character:
 
     @property
     def saving_throw_bonus(self) -> int:
-        if self.aura_of_protection:
+        if self.aura_of_protection or "aura_of_protection" in self.features:
             return self.cha_mod
         return 0
 

@@ -1,17 +1,20 @@
 """Tests for attack roll resolution and damage calculation."""
 
 import random
+from types import SimpleNamespace
+
 from sim.models import (
     AbilityScores,
     Character,
     CombatState,
+    Condition,
     DamageType,
     MasteryProperty,
     Resource,
     Weapon,
     WeaponProperty,
 )
-from sim.actions import resolve_attack
+from sim.actions import resolve_attack, resolve_spell_save
 
 
 def _make_fighter(name="Fighter", str_score=16, ac=16, hp=20):
@@ -181,3 +184,119 @@ def test_divine_smite_prefers_level2_slot_when_available():
     assert result.hit
     assert attacker.resources["spell_slot_2"].current == 0
     assert attacker.resources["spell_slot_1"].current == 2
+
+
+def test_resolve_spell_save_applies_aura_of_protection(monkeypatch):
+    caster = Character(
+        name="Wizard",
+        level=5,
+        class_name="wizard",
+        ability_scores=AbilityScores(intelligence=16),
+        max_hp=30,
+        ac=12,
+        proficiency_bonus=3,
+        spellcasting_ability="intelligence",
+    )
+    target = Character(
+        name="Paladin",
+        level=6,
+        class_name="paladin",
+        ability_scores=AbilityScores(dexterity=10, charisma=16),
+        max_hp=40,
+        ac=18,
+        proficiency_bonus=3,
+        features=["aura_of_protection"],
+        aura_of_protection=True,
+    )
+    state = CombatState(combatant_a=caster, combatant_b=target, verbose=True)
+
+    monkeypatch.setattr("sim.actions.d20", lambda: 11)
+    monkeypatch.setattr("sim.actions.eval_dice", lambda _: SimpleNamespace(total=12, rolls=(6, 6)))
+
+    actual = resolve_spell_save(caster, target, "2d6", DamageType.FIRE, "Fireball", "dex", state)
+
+    assert actual == 6
+    assert "saves (14/DC 14)" in state.combat_log[-1]
+
+
+def test_resolve_spell_save_evasion_zero_on_success(monkeypatch):
+    caster = Character(
+        name="Wizard",
+        level=5,
+        class_name="wizard",
+        ability_scores=AbilityScores(intelligence=16),
+        max_hp=30,
+        ac=12,
+        proficiency_bonus=3,
+        spellcasting_ability="intelligence",
+    )
+    target = Character(
+        name="Rogue",
+        level=7,
+        class_name="rogue",
+        ability_scores=AbilityScores(dexterity=18),
+        max_hp=35,
+        ac=15,
+        proficiency_bonus=3,
+        features=["evasion"],
+    )
+    state = CombatState(combatant_a=caster, combatant_b=target, verbose=True)
+
+    monkeypatch.setattr("sim.actions.d20", lambda: 10)
+    monkeypatch.setattr("sim.actions.eval_dice", lambda _: SimpleNamespace(total=12, rolls=(6, 6)))
+
+    actual = resolve_spell_save(caster, target, "2d6", DamageType.FIRE, "Fireball", "dexterity", state)
+
+    assert actual == 0
+    assert "Evasion → 0 dmg" in state.combat_log[-1]
+
+
+def test_resolve_spell_save_evasion_half_on_failure(monkeypatch):
+    caster = Character(
+        name="Wizard",
+        level=5,
+        class_name="wizard",
+        ability_scores=AbilityScores(intelligence=16),
+        max_hp=30,
+        ac=12,
+        proficiency_bonus=3,
+        spellcasting_ability="intelligence",
+    )
+    target = Character(
+        name="Rogue",
+        level=7,
+        class_name="rogue",
+        ability_scores=AbilityScores(dexterity=18),
+        max_hp=35,
+        ac=15,
+        proficiency_bonus=3,
+        features=["evasion"],
+    )
+    state = CombatState(combatant_a=caster, combatant_b=target, verbose=True)
+
+    monkeypatch.setattr("sim.actions.d20", lambda: 1)
+    monkeypatch.setattr("sim.actions.eval_dice", lambda _: SimpleNamespace(total=12, rolls=(6, 6)))
+
+    actual = resolve_spell_save(caster, target, "2d6", DamageType.FIRE, "Fireball", "dex", state)
+
+    assert actual == 6
+    assert "Evasion → 6 dmg" in state.combat_log[-1]
+
+
+def test_mindless_rage_blocks_frightened_and_charmed_while_raging():
+    barbarian = Character(
+        name="Barbarian",
+        level=6,
+        class_name="barbarian",
+        ability_scores=AbilityScores(strength=18, constitution=16),
+        max_hp=55,
+        ac=15,
+        proficiency_bonus=3,
+        features=["rage", "mindless_rage"],
+        conditions={Condition.RAGING},
+    )
+
+    assert barbarian.apply_condition(Condition.FRIGHTENED) is False
+    assert barbarian.apply_condition(Condition.CHARMED) is False
+    assert Condition.FRIGHTENED not in barbarian.conditions
+    assert Condition.CHARMED not in barbarian.conditions

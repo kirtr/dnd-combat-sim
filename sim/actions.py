@@ -86,8 +86,43 @@ def _pad_label(label: str) -> str:
     return f"{label:<9}"
 
 
+def _normalize_save_ability(ability: str) -> str:
+    return {
+        "strength": "str",
+        "dexterity": "dex",
+        "constitution": "con",
+        "intelligence": "int",
+        "wisdom": "wis",
+        "charisma": "cha",
+    }.get(ability, ability)
+
+
 def _saving_throw_roll(char: Character, ability: str) -> int:
-    return d20() + char.saving_throw_total(ability)
+    return d20() + char.saving_throw_total(_normalize_save_ability(ability))
+
+
+def resolve_save_damage(
+    target: Character,
+    save_ability: str,
+    save_roll: int,
+    dc: int,
+    damage: int,
+    *,
+    half_on_save: bool = True,
+) -> tuple[int, bool, bool]:
+    """Resolve save-for-damage outcomes, including Evasion."""
+    normalized_ability = _normalize_save_ability(save_ability)
+    has_evasion = "evasion" in target.features and normalized_ability == "dex"
+    save_succeeds = save_roll >= dc
+
+    if has_evasion:
+        actual_damage = 0 if save_succeeds else damage // 2
+    elif save_succeeds:
+        actual_damage = damage // 2 if half_on_save else 0
+    else:
+        actual_damage = damage
+
+    return actual_damage, save_succeeds, has_evasion
 
 
 # ---------------------------------------------------------------------------
@@ -971,28 +1006,23 @@ def resolve_spell_save(
     save_roll = _saving_throw_roll(target, save_ability)
     result = eval_dice(damage_dice)
     dmg = result.total
-    has_evasion = "evasion" in target.features and save_ability in {"dex", "dexterity"}
-    if save_roll >= dc:
-        if has_evasion:
-            actual_dmg = 0
-        else:
-            actual_dmg = dmg // 2 if half_on_save else 0
-        result_str = "saves"
-    else:
-        if has_evasion:
-            actual_dmg = dmg // 2
-        else:
-            actual_dmg = dmg
-        result_str = "fails"
+    actual_dmg, save_succeeds, has_evasion = resolve_save_damage(
+        target,
+        save_ability,
+        save_roll,
+        dc,
+        dmg,
+        half_on_save=half_on_save,
+    )
     actual = target.take_damage(actual_dmg, damage_type, state)
     label = _pad_label("ACTION")
+    result_str = "saves" if save_succeeds else "fails"
     msg = (
         f"{label}{spell_name}: {target.name} {result_str} ({save_roll}/DC {dc})"
         f" · {_fmt_rolls(result.rolls)}={actual} {damage_type.name.lower()} dmg"
     )
     if has_evasion:
-        evasion_damage = 0 if save_roll >= dc else dmg // 2
-        msg += f" · Evasion - {evasion_damage} dmg"
+        msg += f" · Evasion → {actual_dmg} dmg"
     state.log(msg + f" [{target.current_hp}/{target.max_hp} HP]")
     return actual
 

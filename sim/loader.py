@@ -283,7 +283,9 @@ def load_build(path: str | Path) -> Character:
     # Sneak attack
     sneak_attack_dice = None
     if "sneak_attack" in features:
-        if level >= 7:
+        if level >= 9:
+            sneak_attack_dice = "5d6"
+        elif level >= 7:
             sneak_attack_dice = "4d6"
         elif level >= 5:
             sneak_attack_dice = "3d6"

@@ -6,7 +6,15 @@ import re
 
 from sim.dice import d20, eval_dice, roll
 from sim.models import Character, CombatState, CombatPhase, Condition, ActiveEffect, DamageType, MasteryProperty
-from sim.actions import resolve_attack, do_second_wind, do_dash, do_dodge, resolve_spell_attack, resolve_spell_save
+from sim.actions import (
+    resolve_attack,
+    do_second_wind,
+    do_dash,
+    do_dodge,
+    resolve_spell_attack,
+    resolve_spell_save,
+    resolve_save_damage,
+)
 from sim.effects import apply_rage, apply_bear_totem_rage, apply_reckless_attack
 from sim.spells import cantrip_die_count, get_spell
 from sim.tactics import TacticsEngine, TurnAction
@@ -354,22 +362,20 @@ def _resolve_call_lightning_bolt(
     save_roll = _saving_throw_total(opponent, "dex")
     result = eval_dice(dice_str)
     damage = result.total
-    has_evasion = "evasion" in opponent.features
-    if save_roll >= dc:
-        if has_evasion:
-            actual = opponent.take_damage(0, DamageType.LIGHTNING, state)
-        else:
-            actual = opponent.take_damage(damage // 2, DamageType.LIGHTNING, state)
-        outcome = "saves"
-    else:
-        if has_evasion:
-            actual = opponent.take_damage(damage // 2, DamageType.LIGHTNING, state)
-        else:
-            actual = opponent.take_damage(damage, DamageType.LIGHTNING, state)
-        outcome = "fails"
+    resolved_damage, save_succeeds, has_evasion = resolve_save_damage(
+        opponent,
+        "dex",
+        save_roll,
+        dc,
+        damage,
+        half_on_save=True,
+    )
+    actual = opponent.take_damage(resolved_damage, DamageType.LIGHTNING, state)
+    outcome = "saves" if save_succeeds else "fails"
+    evasion_suffix = f" · Evasion → {resolved_damage} dmg" if has_evasion else ""
     state.log(
         f"  [{char.name}] Call Lightning bolt → {actual} lightning"
-        f" ({outcome} {save_roll}/DC {dc}) [{opponent.current_hp}/{opponent.max_hp} HP]"
+        f" ({outcome} {save_roll}/DC {dc}){evasion_suffix} [{opponent.current_hp}/{opponent.max_hp} HP]"
     )
     return actual
 
@@ -796,19 +802,21 @@ def _do_breath_weapon(char: Character, opponent: Character, state: CombatState) 
     damage_roll = result.total
     dmg_type = getattr(char, "breath_weapon_damage_type", DamageType.FIRE)
     label = _pad_label("ACTION")
-    has_evasion = "evasion" in opponent.features
-    if save_roll >= dc:
-        if has_evasion:
-            actual = opponent.take_damage(0, dmg_type, state)
-        else:
-            actual = opponent.take_damage(damage_roll // 2, dmg_type, state)
-        state.log(f"{label}Breath Weapon: {opponent.name} saves ({save_roll}/DC {dc}) · {actual} dmg [{opponent.current_hp}/{opponent.max_hp} HP]")
-    else:
-        if has_evasion:
-            actual = opponent.take_damage(damage_roll // 2, dmg_type, state)
-        else:
-            actual = opponent.take_damage(damage_roll, dmg_type, state)
-        state.log(f"{label}Breath Weapon: {opponent.name} fails ({save_roll}/DC {dc}) · {actual} dmg [{opponent.current_hp}/{opponent.max_hp} HP]")
+    resolved_damage, save_succeeds, has_evasion = resolve_save_damage(
+        opponent,
+        "dex",
+        save_roll,
+        dc,
+        damage_roll,
+        half_on_save=True,
+    )
+    actual = opponent.take_damage(resolved_damage, dmg_type, state)
+    outcome = "saves" if save_succeeds else "fails"
+    evasion_suffix = f" · Evasion → {resolved_damage} dmg" if has_evasion else ""
+    state.log(
+        f"{label}Breath Weapon: {opponent.name} {outcome} ({save_roll}/DC {dc})"
+        f" · {actual} dmg{evasion_suffix} [{opponent.current_hp}/{opponent.max_hp} HP]"
+    )
 
 
 def _do_frenzy_attack(char: Character, opponent: Character, state: CombatState) -> None:
@@ -1006,9 +1014,16 @@ def _apply_start_of_turn_auras(char: Character, opponent: Character, state: Comb
     dc = opponent.spell_save_dc
     save_roll = _saving_throw_total(char, "wis")
     result = eval_dice(dice_str)
-    damage = result.total if save_roll < dc else result.total // 2
+    damage, save_succeeds, _ = resolve_save_damage(
+        char,
+        "wis",
+        save_roll,
+        dc,
+        result.total,
+        half_on_save=True,
+    )
     actual = char.take_damage(damage, spell.damage_type or DamageType.RADIANT, state)
-    outcome = "fail" if save_roll < dc else "save"
+    outcome = "save" if save_succeeds else "fail"
     state.log(f"{opponent.name} Spirit Guardians → {actual} radiant (WIS save {save_roll}/DC {dc} {outcome})")
 
 
