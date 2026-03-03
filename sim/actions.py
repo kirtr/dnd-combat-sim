@@ -169,6 +169,11 @@ def _has_disadvantage(attacker: Character, defender: Character) -> bool:
     """Check all sources of disadvantage (consuming Lucky defensive)."""
     if defender.is_dodging:
         return True
+    # Sap: consume on use (like Vex) — remove the effect when it fires
+    sapped = next((e for e in attacker.active_effects if e.name == "Sapped"), None)
+    if sapped:
+        attacker.active_effects.remove(sapped)
+        return True
     if any(e.disadvantage_on_attacks for e in attacker.active_effects):
         return True
     if Condition.FRIGHTENED in attacker.conditions:
@@ -741,7 +746,6 @@ def _apply_mastery_on_hit_new(
         defender.active_effects.append(ActiveEffect(
             name="Sapped",
             source=weapon.name,
-            end_trigger="start_of_turn",
             disadvantage_on_attacks=True,
         ))
         tags.append("Sap → disadv next attack")
