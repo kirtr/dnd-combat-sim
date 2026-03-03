@@ -182,6 +182,10 @@ def load_build(path: str | Path) -> Character:
         if build.get("armor", "unarmored") == "unarmored":
             speed += 10
 
+    # Barbarian Fast Movement
+    if class_name == "barbarian" and level >= 5:
+        speed += 10
+
     # Features
     features = list(build.get("powers", []))
 
@@ -382,6 +386,11 @@ def load_build(path: str | Path) -> Character:
     from sim.models import DamageType as _DT
     bw_damage_type = _DT[bw_damage_type_str.upper()] if bw_damage_type_str else _DT.FIRE
 
+    # Extra Attack (level 5 martial baseline)
+    extra_attacks = 0
+    if class_name in {"fighter", "barbarian", "ranger", "monk", "paladin"} and level >= 5:
+        extra_attacks = 1
+
     char = Character(
         name=build.get("name", "Unknown"),
         level=level,
@@ -396,7 +405,7 @@ def load_build(path: str | Path) -> Character:
         resources=resources,
         features=features,
         initiative_bonus=init_bonus,
-        extra_attacks=0,  # no extra attack at level 2
+        extra_attacks=extra_attacks,
         fighting_style=fighting_style,
         weapon_mastery_slots=wm_slots,
         weapon_masteries=weapon_masteries,
