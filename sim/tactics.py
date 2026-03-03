@@ -69,21 +69,36 @@ class PriorityTactics(TacticsEngine):
         self, char: Character, opponent: Character,
         state: CombatState, distance: int, in_melee: bool, has_ranged: bool,
     ) -> list[TurnAction]:
+        prefix_actions: list[TurnAction] = []
         actions: list[TurnAction] = []
 
         # --- Full caster logic ---
         if char.spells_known:
             if any(e.name == "SpiritualWeapon" for e in char.active_effects):
-                actions.append(TurnAction(kind="spiritual_weapon_attack"))
+                prefix_actions.append(TurnAction(kind="spiritual_weapon_attack"))
+            if (
+                char.class_name == "druid"
+                and in_melee
+                and "shillelagh" in char.spells_known
+                and not any(e.name == "Shillelagh" for e in char.active_effects)
+                and not char.bonus_action_used
+            ):
+                prefix_actions.append(TurnAction(kind="cast_spell", extra={"spell": "shillelagh", "slot_level": 0}))
             spell_action = _pick_spell_action(char)
             if spell_action:
-                actions.append(spell_action)
-                if spell_action.extra.get("spell") == "spiritual_weapon":
+                prefix_actions.append(spell_action)
+                spell_name = spell_action.extra.get("spell")
+                if spell_name == "spiritual_weapon":
                     cantrip_action = _pick_cantrip_action(char)
                     if cantrip_action:
-                        actions.append(cantrip_action)
-            if spell_action is not None or actions:
-                return actions
+                        prefix_actions.append(cantrip_action)
+                elif spell_name == "healing_word" and char.class_name == "druid":
+                    follow_up_action = _pick_druid_primary_spell_action(char)
+                    if follow_up_action:
+                        prefix_actions.append(follow_up_action)
+                return prefix_actions
+            if prefix_actions:
+                actions.extend(prefix_actions)
 
         # --- Barbarian: Rage on first turn ---
         if (
@@ -310,6 +325,17 @@ def _pick_spell_action(char: Character) -> TurnAction | None:
     """Pick the best spell to cast. Returns TurnAction or None if no spells available."""
     spells = char.spells_known
 
+    if (
+        "healing_word" in spells
+        and char.current_hp < char.max_hp * 0.5
+        and char.has_spell_slot(1)
+        and not char.bonus_action_used
+    ):
+        return TurnAction(kind="cast_spell", extra={"spell": "healing_word", "slot_level": 1})
+
+    if char.class_name == "druid":
+        return _pick_druid_primary_spell_action(char)
+
     if char.class_name == "cleric":
         if char.has_spell_slot(3) and "spirit_guardians" in spells and not char.is_concentrating("spirit_guardians"):
             return TurnAction(kind="cast_spell", extra={"spell": "spirit_guardians", "slot_level": 3})
@@ -351,6 +377,24 @@ def _pick_cantrip_action(char: Character) -> TurnAction | None:
         if cantrip in char.spells_known:
             return TurnAction(kind="cast_spell", extra={"spell": cantrip, "slot_level": 0})
     return None
+
+
+def _pick_druid_primary_spell_action(char: Character) -> TurnAction | None:
+    spells = char.spells_known
+
+    if char.is_concentrating("call_lightning"):
+        return TurnAction(kind="call_lightning_bolt")
+
+    if char.has_spell_slot(3) and "call_lightning" in spells and not char.is_concentrating():
+        return TurnAction(kind="cast_spell", extra={"spell": "call_lightning", "slot_level": 3})
+
+    if "thunderwave" in spells:
+        if char.has_spell_slot(2):
+            return TurnAction(kind="cast_spell", extra={"spell": "thunderwave", "slot_level": 2})
+        if char.has_spell_slot(1):
+            return TurnAction(kind="cast_spell", extra={"spell": "thunderwave", "slot_level": 1})
+
+    return _pick_cantrip_action(char)
 
 
 def _pick_melee_weapon(char: Character):

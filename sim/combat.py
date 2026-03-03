@@ -151,11 +151,18 @@ def _execute_turn(
         elif action.kind == "cast_spell":
             spell_name = action.extra.get("spell", "")
             spell = get_spell(spell_name) if spell_name else None
-            if spell_name and spell and spell.bonus_action:
+            is_bonus_spell = bool(spell and (spell.bonus_action or spell_name == "shillelagh"))
+            if spell_name and spell and is_bonus_spell:
                 if not char.bonus_action_used:
                     _do_cast_spell(char, opponent, spell_name, action.extra.get("slot_level", 0), state)
             elif not char.action_used and spell_name:
                 _do_cast_spell(char, opponent, spell_name, action.extra.get("slot_level", 0), state)
+        elif action.kind == "call_lightning_bolt":
+            if not char.action_used:
+                effect = _find_effect(char, "CallLightning")
+                if effect is not None:
+                    char.action_used = True
+                    _resolve_call_lightning_bolt(char, opponent, int(effect.extra.get("slot_level", 3)), state)
         elif action.kind == "spiritual_weapon_attack":
             _do_spiritual_weapon_attack(char, opponent, state)
         elif action.kind == "flurry":
@@ -332,6 +339,30 @@ def _normalize_save_ability(save_ability: str) -> str:
     }.get(save_ability, save_ability)
 
 
+def _resolve_call_lightning_bolt(
+    char: Character,
+    opponent: Character,
+    slot_level: int,
+    state: CombatState,
+) -> int:
+    dice_str = _add_upcast_dice("3d10", "1d10", max(0, slot_level - 3))
+    dc = char.spell_save_dc
+    save_roll = d20() + opponent.dex_mod
+    result = eval_dice(dice_str)
+    damage = result.total
+    if save_roll >= dc:
+        actual = opponent.take_damage(damage // 2, DamageType.LIGHTNING, state)
+        outcome = "saves"
+    else:
+        actual = opponent.take_damage(damage, DamageType.LIGHTNING, state)
+        outcome = "fails"
+    state.log(
+        f"  [{char.name}] Call Lightning bolt → {actual} lightning"
+        f" ({outcome} {save_roll}/DC {dc}) [{opponent.current_hp}/{opponent.max_hp} HP]"
+    )
+    return actual
+
+
 def _do_cast_spell(
     char: Character,
     opponent: Character,
@@ -351,6 +382,29 @@ def _do_cast_spell(
             state.log(f"{label}{spell_name} — NO SLOT AVAILABLE (level {slot_level})")
             return
 
+    if spell.name == "shillelagh" and slot_level == 0:
+        char.bonus_action_used = True
+        existing = _find_effect(char, "Shillelagh")
+        if existing is not None:
+            char.active_effects.remove(existing)
+        char.active_effects.append(ActiveEffect(
+            name="Shillelagh",
+            source="shillelagh",
+            duration=10,
+            extra={"wis_mod": char.wis_mod},
+        ))
+        state.log(f"  [{char.name}] Shillelagh — quarterstaff empowered (WIS to hit/dmg, 1d8)")
+        return
+
+    if spell.attack_type == "heal":
+        heal_dice = _add_upcast_dice(spell.damage_dice, spell.upcast_dice, max(0, slot_level - spell.level))
+        heal_result = eval_dice(heal_dice)
+        heal_amount = heal_result.total + char.spellcasting_mod
+        char.heal(heal_amount)
+        char.bonus_action_used = True
+        state.log(f"  [{char.name}] Healing Word → +{heal_amount} HP (now {char.current_hp}/{char.max_hp})")
+        return
+
     if spell.name == "spiritual_weapon":
         char.bonus_action_used = True
         existing = _find_effect(char, "SpiritualWeapon")
@@ -366,6 +420,21 @@ def _do_cast_spell(
         return
 
     char.action_used = True
+
+    if spell.name == "call_lightning":
+        char.concentrate("call_lightning")
+        existing = _find_effect(char, "CallLightning")
+        if existing is not None:
+            char.active_effects.remove(existing)
+        char.active_effects.append(ActiveEffect(
+            name="CallLightning",
+            source="call_lightning",
+            duration=10,
+            extra={"slot_level": slot_level},
+        ))
+        state.log(f"{label}{spell_name} → active (slot {slot_level}, concentration)")
+        _resolve_call_lightning_bolt(char, opponent, slot_level, state)
+        return
 
     if spell.name == "spirit_guardians":
         char.concentrate("spirit_guardians")

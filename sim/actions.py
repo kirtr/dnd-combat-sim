@@ -210,7 +210,11 @@ def _calc_damage_info(
     is_nick_attack: bool = False,
 ) -> DamageInfo:
     """Calculate damage and return structured info for formatting."""
+    shillelagh = _get_shillelagh_effect(attacker, weapon, is_unarmed)
+
     dice_expr = weapon.damage_dice
+    if shillelagh is not None:
+        dice_expr = "1d8"
     if is_unarmed:
         dice_expr = attacker.martial_arts_die or "1"
 
@@ -249,6 +253,10 @@ def _calc_damage_info(
         flat_mod = attacker.unarmed_damage_mod()
         if attacker.is_raging:
             flat_mod += attacker.rage_damage
+    elif shillelagh is not None:
+        flat_mod = int(shillelagh.extra.get("wis_mod", attacker.wis_mod)) + weapon.bonus
+        if attacker.fighting_style == "dueling" and weapon.is_melee and not weapon.is_two_handed:
+            flat_mod += 2
     elif is_nick_attack and attacker.fighting_style != "two_weapon_fighting":
         flat_mod = weapon.bonus
     else:
@@ -276,6 +284,14 @@ def _calc_damage(
     """Calculate total damage for a hit (legacy wrapper)."""
     info = _calc_damage_info(attacker, weapon, crit, is_unarmed, is_thrown, is_nick_attack)
     return info.total
+
+
+def _get_shillelagh_effect(attacker: Character, weapon: Weapon, is_unarmed: bool) -> ActiveEffect | None:
+    if is_unarmed:
+        return None
+    if weapon.name.lower() != "quarterstaff":
+        return None
+    return next((e for e in attacker.active_effects if e.name == "Shillelagh"), None)
 
 
 # ---------------------------------------------------------------------------
@@ -448,8 +464,11 @@ def resolve_attack(
     disadv = _has_disadvantage(attacker, defender)
 
     # Attack bonus
+    shillelagh = _get_shillelagh_effect(attacker, weapon, is_unarmed)
     if is_unarmed:
         attack_bonus = attacker.unarmed_attack_mod()
+    elif shillelagh is not None:
+        attack_bonus = attacker.spell_attack_bonus + weapon.bonus
     else:
         attack_bonus = attacker.attack_modifier(weapon)
 
