@@ -2,7 +2,53 @@
 
 ---
 
-# Phase 5: Barbarian Optimization *(current)*
+# Phase 6: Barbarian Species Showdown *(current)*
+
+**Level 3. Sim Parameters:** n=3000 per matchup, 1v1, aggressive tactics.
+**Question:** Orc (Relentless Endurance) vs Fire Goliath (+1d10 fire on hit) on Berserker chassis.
+
+## 🏆 Champion: Berserker Greatsword Fire Goliath (Level 3)
+
+Called on DPS — head-to-head with S&B Longsword Fire Goliath is a coin flip (51.6/48.4),
+but Greatsword outputs 25% more damage (13.89 vs 11.08 DPS at AC 16). Simpler build, higher ceiling.
+
+## Results
+
+```
+Win%   Species        Weapon         Mastery   AC  DPS/16
+──────────────────────────────────────────────────────────
+70%    Fire Goliath   Greatsword     Graze     15   13.89
+70%    Fire Goliath   S&B Longsword  Sap       17   11.08
+55%    Fire Goliath   S&B Battleaxe  Topple    17   11.22
+44%    Orc            S&B Longsword  Sap       17    6.87
+39%    Orc            Greatsword     Graze     15    9.94
+23%    Orc            S&B Battleaxe  Topple    17    7.14
+```
+
+## Key Findings
+
+**Fire Goliath dominates.** +1d10 fire on hit (2 uses/LR, avg 5.5 each = ~11 bonus damage/fight)
+is enough to flip the entire tier list. All 3 Fire builds beat all 3 Orc builds.
+
+**Relentless Endurance can't keep up with burst.** Orc's survive-at-1-HP is good but Fire Goliath
+ends fights before it matters — Fire mirrors average 3-4 rounds vs 6-8 for Orc mirrors.
+
+**Sap fix changed everything for S&B.** After fixing Sap (was expiring before target attacked),
+S&B Longsword went from 50/50 vs Battleaxe to 68/32. Sap cancels Reckless Attack's advantage,
+forcing straight d20 rolls.
+
+**Greatsword vs S&B Longsword (Fire) is a coin flip** — Graze wins on DPS, Sap wins at high AC.
+Call it by playstyle.
+
+## Bug Fixed This Phase
+
+**Sap mastery (all Sap weapons):** `end_trigger="start_of_turn"` was clearing the effect at the
+start of the target's own turn, before they attacked. Disadvantage never applied. Fixed to
+consume-on-use in `_has_disadvantage()`, same pattern as Vex. Committed: b92abfa.
+
+---
+
+# Phase 5: Barbarian Optimization *(level 3)*
 
 **Sim Parameters:** n=500 per matchup, 1v1, aggressive tactics.
 **Goal:** Find best Berserker weapon. Drop Bear Totem (resistances irrelevant in B/P/S melee).
