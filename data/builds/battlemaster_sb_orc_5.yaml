@@ -1,0 +1,35 @@
+name: Battle Master S&B Orc L5
+class: fighter
+subclass: battle_master
+level: 5
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 18
+  dex: 13
+  con: 16
+  int: 8
+  wis: 12
+  cha: 10
+weapons:
+- longsword
+- javelin
+armor: chain_mail
+shield: true
+fighting_style: dueling
+tactic: aggressive
+maneuvers:
+- precision
+- trip
+- riposte
+powers:
+- second_wind
+- action_surge
+tags:
+- battlemaster
+- fighter
+- level5
+- melee
+- orc
+- sb
