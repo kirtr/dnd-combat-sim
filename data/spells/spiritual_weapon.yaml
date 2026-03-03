@@ -1,0 +1,14 @@
+name: spiritual_weapon
+level: 2
+school: evocation
+damage_dice: "1d8"
+damage_type: force
+attack_type: spell_attack
+save_ability: ""
+half_on_save: false
+concentration: false    # does NOT require concentration (unique advantage)
+cantrip_scaling: false
+extra_attacks: 1
+upcast_dice: "1d8"     # +1d8 per 2 slot levels above 2nd
+bonus_action: true      # cast as bonus action; subsequent attacks also bonus action
+description: "Bonus action spell attack, 1d8+WIS force. No concentration. Floats for 1 min, bonus action each turn."

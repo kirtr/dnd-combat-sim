@@ -1,0 +1,15 @@
+name: spirit_guardians
+level: 3
+school: conjuration
+damage_dice: "3d8"
+damage_type: radiant
+attack_type: save
+save_ability: wisdom
+half_on_save: true
+concentration: true
+cantrip_scaling: false
+extra_attacks: 1
+upcast_dice: "1d8"     # +1d8 per slot level above 3rd
+aura: true              # damages enemies at start of their turn (not on caster's action)
+aura_range: 15         # 15-foot radius
+description: "Concentration. 3d8 radiant to enemies that start turn within 15ft (WIS save, half). +1d8/slot above 3rd."

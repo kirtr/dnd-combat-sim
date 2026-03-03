@@ -1,0 +1,36 @@
+name: War Cleric Human 5
+class: cleric
+subclass: war
+level: 5
+species: human
+background: soldier
+origin_feat: tough
+ability_scores:
+  str: 14
+  dex: 10
+  con: 14
+  int: 10
+  wis: 18    # ASI at level 4: +2 WIS
+  cha: 10
+weapons:
+  - longsword
+armor: chain_mail
+shield: true
+spellcasting_ability: wisdom
+spell_slots:
+  1: 4
+  2: 3
+  3: 2
+spells_known:
+  - sacred_flame
+  - toll_the_dead
+  - guiding_bolt
+  - spiritual_weapon
+  - spirit_guardians
+tactic: aggressive
+tags:
+  - cleric
+  - war
+  - level5
+  - caster
+  - human

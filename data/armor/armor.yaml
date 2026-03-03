@@ -103,3 +103,11 @@ unarmored:
   type: none
   base_ac: 10
   dex_cap: null
+
+# --- Special Unarmored Defenses ---
+
+draconic_resilience:
+  name: Draconic Resilience (Sorcerer)
+  type: none
+  base_ac: 13
+  dex_cap: null

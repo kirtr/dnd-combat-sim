@@ -1,0 +1,14 @@
+name: guiding_bolt
+level: 1
+school: evocation
+damage_dice: "4d6"
+damage_type: radiant
+attack_type: spell_attack
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+upcast_dice: "1d6"     # +1d6 per slot level above 1st
+grants_advantage: true  # next attack against target has advantage (until end of next turn)
+description: "Ranged spell attack, 4d6 radiant. Next attack roll against target has advantage. +1d6 per slot above 1st."

@@ -1,0 +1,24 @@
+name: cleric
+hit_die: d8
+hp_base: 8
+armor_proficiencies: [light, medium, heavy, shield]
+weapon_proficiencies: [simple, martial]
+saving_throw_proficiencies: [wisdom, charisma]
+spellcasting_ability: wisdom
+spell_slots_by_level:
+  1: {1: 2}
+  2: {1: 3}
+  3: {1: 4, 2: 2}
+  4: {1: 4, 2: 3}
+  5: {1: 4, 2: 3, 3: 2}
+features:
+  1: [spellcasting, divine_order]
+  2: [channel_divinity]
+  3: [cleric_subclass_feature]
+  4: [ability_score_improvement]
+  5: [smite_undead]
+notes:
+  war_domain: "Guided Strike (channel divinity: +10 to hit), War Priest (bonus action weapon attack using WIS uses)"
+  life_domain: "Disciple of Life (healing +2+spell level), Preserve Life (channel divinity heal)"
+  ability_score_improvement_2024: "Level 4: ASI +2 WIS recommended (16→18)"
+  spirit_guardians: "Level 3 spell: 3d8 radiant/necrotic to adjacent enemies at start of their turn (WIS save half). Concentration."
