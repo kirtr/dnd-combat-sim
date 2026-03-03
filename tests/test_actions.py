@@ -7,6 +7,7 @@ from sim.models import (
     CombatState,
     DamageType,
     MasteryProperty,
+    Resource,
     Weapon,
     WeaponProperty,
 )
@@ -158,3 +159,25 @@ def test_graze_on_miss():
             assert result.damage == 3  # STR mod = +3
             break
     assert graze_damage_seen, "Expected to see Graze damage on at least one miss"
+
+
+def test_divine_smite_prefers_level2_slot_when_available():
+    """Divine Smite should consume a level 2 slot first (level-5 scaling)."""
+    attacker = _make_fighter("Paladin", str_score=16)
+    attacker.level = 5
+    attacker.features = ["divine_smite"]
+    attacker.resources["spell_slot_1"] = Resource("Spell Slot 1", 2, 2, "long_rest")
+    attacker.resources["spell_slot_2"] = Resource("Spell Slot 2", 1, 1, "long_rest")
+
+    defender = _make_fighter("Target", ac=5, hp=200)
+    weapon = _make_greatsword()
+    state = CombatState(combatant_a=attacker, combatant_b=defender)
+
+    random.seed(1)
+    for _ in range(30):
+        result = resolve_attack(attacker, defender, weapon, state)
+        if result.hit:
+            break
+    assert result.hit
+    assert attacker.resources["spell_slot_2"].current == 0
+    assert attacker.resources["spell_slot_1"].current == 2

@@ -302,14 +302,23 @@ def _try_divine_smite(
     """Divine Smite: returns (actual_damage, rolls) or (0, ())."""
     if "divine_smite" not in attacker.features:
         return 0, ()
-    if not attacker.has_spell_slot(1):
+
+    # Use highest available slot in our current abstraction (1st/2nd level support).
+    if attacker.has_spell_slot(2):
+        slot_level = 2
+        smite_dice = "3d8"
+    elif attacker.has_spell_slot(1):
+        slot_level = 1
+        smite_dice = "2d8"
+    else:
         return 0, ()
-    attacker.spend_spell_slot(1)
-    result = eval_dice("2d8")
+
+    attacker.spend_spell_slot(slot_level)
+    result = eval_dice(smite_dice)
     rolls = list(result.rolls)
     total = result.total
     if is_crit:
-        crit_result = eval_dice("2d8")
+        crit_result = eval_dice(smite_dice)
         rolls.extend(crit_result.rolls)
         total += crit_result.total
     actual = defender.take_damage(total, DamageType.RADIANT, state)

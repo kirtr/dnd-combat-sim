@@ -4,13 +4,14 @@ import random
 from sim.models import (
     AbilityScores,
     Character,
+    CombatState,
     DamageType,
     MasteryProperty,
     Resource,
     Weapon,
     WeaponProperty,
 )
-from sim.combat import run_combat
+from sim.combat import run_combat, _do_eldritch_blast
 from sim.tactics import PriorityTactics
 
 
@@ -157,3 +158,28 @@ def test_distance_tracking():
     state = run_combat(a, b, tactics, tactics, starting_distance=60, verbose=True)
     # By end of combat, they should be in melee range
     assert state.distance <= 5 or not (a.is_alive and b.is_alive)
+
+
+def test_eldritch_blast_level5_fires_two_beams():
+    warlock = Character(
+        name="Warlock",
+        level=5,
+        class_name="warlock",
+        ability_scores=AbilityScores(strength=8, dexterity=14, constitution=14, charisma=16),
+        max_hp=38,
+        ac=14,
+        proficiency_bonus=3,
+        speed=30,
+        weapons=[],
+        features=["eldritch_blast", "eldritch_blast_upgrade"],
+        invocations=["agonizing_blast"],
+        spellcasting_ability="charisma",
+    )
+    target = _make_combatant("Dummy", ac=13, hp=80)
+    state = CombatState(combatant_a=warlock, combatant_b=target, verbose=True)
+
+    random.seed(7)
+    _do_eldritch_blast(warlock, target, state)
+
+    beam_logs = [line for line in state.combat_log if "Eldritch Blast (Beam" in line]
+    assert len(beam_logs) == 2

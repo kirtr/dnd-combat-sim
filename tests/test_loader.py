@@ -86,6 +86,31 @@ def test_load_rogue():
     assert "cunning_action" in char.features
 
 
+def test_load_rogue_level5_sneak_attack_scaling(tmp_path):
+    path = tmp_path / "rogue_level5.yaml"
+    path.write_text(
+        """
+name: Rogue (Level 5)
+class: rogue
+subclass: thief
+level: 5
+species: human
+ability_scores:
+  str: 10
+  dex: 16
+  con: 14
+  int: 10
+  wis: 10
+  cha: 10
+armor: leather
+weapons: [rapier]
+powers: [sneak_attack, cunning_action]
+""".strip()
+    )
+    char = load_build(path)
+    assert char.sneak_attack_dice == "3d6"
+
+
 def test_load_archery_fighter():
     path = _DATA_DIR / "builds" / "archive" / "level2" / "fighter_archery_longbow_2.yaml"
     char = load_build(path)

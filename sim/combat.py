@@ -619,39 +619,49 @@ def _do_eldritch_blast(char: Character, opponent: Character, state: CombatState)
     if char.action_used:
         return
     char.action_used = True
-    bonus = char.cha_mod if "agonizing_blast" in getattr(char, "invocations", []) else 0
-    adv = any(e.advantage_on_attacks for e in char.active_effects)
-    disadv = (
-        Condition.FRIGHTENED in char.conditions
-        or opponent.is_dodging
-        or any(e.disadvantage_on_attacks for e in char.active_effects)
-        or any(e.name == "Shadow Darkness" for e in opponent.active_effects)
-    )
-    from sim.dice import d20_detail
-    d20r = d20_detail(advantage=adv, disadvantage=disadv)
-    attack_roll = d20r.chosen + char.spell_attack_bonus
-    target_ac = opponent.effective_ac
-    label = _pad_label("ACTION")
-    d20_str = f"d20={d20r.chosen}"
-    if d20r.advantage and d20r.other is not None:
-        d20_str = f"d20={d20r.chosen}↑{d20r.other}"
-    elif d20r.disadvantage and d20r.other is not None:
-        d20_str = f"d20={d20r.chosen}↓{d20r.other}"
 
-    hit = attack_roll >= target_ac
-    if hit:
-        dmg_result = eval_dice("1d10")
-        dmg = dmg_result.total + bonus
-        actual = opponent.take_damage(dmg, DamageType.FORCE, state)
-        hex_dmg = _apply_hex(char, opponent, state) if char.is_concentrating("Hex") else 0
-        hex_str = f" +Hex [{hex_dmg}]" if hex_dmg else ""
-        state.log(
-            f"{label}Eldritch Blast {d20_str} → HIT ({attack_roll}/{target_ac})"
-            f" · [{dmg_result.rolls[0]}]+{bonus}={actual} force{hex_str}"
-            f" [{opponent.current_hp}/{opponent.max_hp} HP]"
+    bonus = char.cha_mod if "agonizing_blast" in getattr(char, "invocations", []) else 0
+    beam_count = 2 if (char.level >= 5 or "eldritch_blast_upgrade" in char.features) else 1
+
+    for beam_idx in range(beam_count):
+        if not opponent.is_alive:
+            break
+
+        adv = any(e.advantage_on_attacks for e in char.active_effects)
+        disadv = (
+            Condition.FRIGHTENED in char.conditions
+            or opponent.is_dodging
+            or any(e.disadvantage_on_attacks for e in char.active_effects)
+            or any(e.name == "Shadow Darkness" for e in opponent.active_effects)
         )
-    else:
-        state.log(f"{label}Eldritch Blast {d20_str} → MISS ({attack_roll}/{target_ac})")
+
+        from sim.dice import d20_detail
+        d20r = d20_detail(advantage=adv, disadvantage=disadv)
+        attack_roll = d20r.chosen + char.spell_attack_bonus
+        target_ac = opponent.effective_ac
+        label = _pad_label("ACTION")
+        d20_str = f"d20={d20r.chosen}"
+        if d20r.advantage and d20r.other is not None:
+            d20_str = f"d20={d20r.chosen}↑{d20r.other}"
+        elif d20r.disadvantage and d20r.other is not None:
+            d20_str = f"d20={d20r.chosen}↓{d20r.other}"
+
+        beam_label = "Eldritch Blast" if beam_count == 1 else f"Eldritch Blast (Beam {beam_idx + 1})"
+
+        hit = attack_roll >= target_ac
+        if hit:
+            dmg_result = eval_dice("1d10")
+            dmg = dmg_result.total + bonus
+            actual = opponent.take_damage(dmg, DamageType.FORCE, state)
+            hex_dmg = _apply_hex(char, opponent, state) if char.is_concentrating("Hex") else 0
+            hex_str = f" +Hex [{hex_dmg}]" if hex_dmg else ""
+            state.log(
+                f"{label}{beam_label} {d20_str} → HIT ({attack_roll}/{target_ac})"
+                f" · [{dmg_result.rolls[0]}]+{bonus}={actual} force{hex_str}"
+                f" [{opponent.current_hp}/{opponent.max_hp} HP]"
+            )
+        else:
+            state.log(f"{label}{beam_label} {d20_str} → MISS ({attack_roll}/{target_ac})")
 
 
 def _apply_hex(char: Character, target: Character, state: CombatState) -> int:
