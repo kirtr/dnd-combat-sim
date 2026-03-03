@@ -304,3 +304,42 @@ Rank  Build                        Avg Win%   HP   AC
 | fireball | 3 | DEX save | 8d6 fire, half on save |
 | spirit_guardians | 3 | Concentration aura | 3d8/turn to adjacent enemies |
 
+
+---
+
+# Phase 8: Full Caster Rankings (Wizard / Sorcerer / Cleric / Druid) — Level 3 & 5
+
+**Sim Parameters:** n=3000 per matchup, 28 matchups, all 4 caster classes × 2 levels.
+
+## Rankings
+
+```
+Rank  Build                     Win%   HP   AC   Notes
+-------------------------------------------------------
+  1.  Draconic Sorcerer L5      81.3%  32   15   Fireball + Draconic AC
+  2.  Evocation Wizard L5       79.3%  32   12   Fireball + deep slot pool
+  3.  Moon Druid L5             76.4%  48   15   Call Lightning repeating, self-heal
+  4.  War Cleric L5             70.9%  48   18   Spirit Guardians + high AC/HP
+  5.  War Cleric L3             29.9%  30   18   High def, weak offense at low level
+  6.  Moon Druid L3             29.3%  30   15   Thunderwave + shillelagh, limited slots
+  7.  Draconic Sorcerer L3      19.2%  20   15   Scorching ray, no fireball yet
+  8.  Evocation Wizard L3       13.7%  20   12   Squishiest at L3, only 2 L2 slots
+```
+
+## Key Findings
+
+**Druid is a sleeper.** Call Lightning (3d10/turn, DEX save half) fires every turn from L3 slot
+with concentration — effectively 3d10 guaranteed damage per round after turn 1 setup. Plus
+healing_word self-heal at <50% HP extends survivability significantly. Slots in comfortably at #3.
+
+**Cleric's armor paradox.** War Cleric (AC 18, 48 HP) has the best defense in the bracket but
+ranks 4th. In caster-vs-caster duels, Spirit Guardians requires being in melee range and takes
+a turn to set up. Casters kill each other fast — the extra HP barely matters.
+
+**L3 casters are barely viable.** All four L3 builds cluster in the 13-30% range vs L5 builds.
+Fireball/call_lightning are the defining power spike — every L5 caster has a nuke, L3 builds max
+out at scorching_ray/thunderwave.
+
+**Sorcerer edge is shrinking.** Draconic Resilience (AC 15) was decisive at L3; at L5 with
+fireball in every caster's kit, the 3-AC difference matters less than spell selection.
+
