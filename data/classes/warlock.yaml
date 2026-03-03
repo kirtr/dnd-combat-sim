@@ -7,7 +7,14 @@ saving_throw_proficiencies: [wisdom, charisma]
 spellcasting_ability: charisma
 spell_slots_by_level:
   3: {1: 2}   # Warlock short-rest slots; level 3 = 2 slots (spell level 2)
-features_by_level:
+features:
   1: [eldritch_blast, otherworldly_patron]
   2: [eldritch_invocations]
   3: [pact_boon]
+  4: [ability_score_improvement]
+  5: [eldritch_blast_upgrade]
+notes:
+  ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
+    only in this chunk).'
+  eldritch_blast_upgrade_2024: 'Level 5: Eldritch Blast gains a second beam (declaration
+    only in this chunk).'

@@ -21,6 +21,10 @@ features:
   - cunning_action
   3:
   - steady_aim
+  4:
+  - ability_score_improvement
+  5:
+  - uncanny_dodge
 phb_ref: pp. 128-129
 notes:
   sneak_attack_2024: 1d6 at levels 1-2. Once per turn. Requires finesse or ranged
@@ -29,3 +33,7 @@ notes:
   cunning_action_2024: 'Bonus action: Dash, Disengage, or Hide.'
   weapon_mastery: 2 slots at level 1.
   steady_aim_2024: 'Level 3: BA to gain advantage on next attack, speed = 0 for turn.'
+  ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
+    only in this chunk).'
+  uncanny_dodge_2024: 'Level 5: reaction to halve damage from one attacker you can see
+    (declaration only in this chunk).'

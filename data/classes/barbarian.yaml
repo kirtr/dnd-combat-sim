@@ -22,6 +22,11 @@ features:
   - reckless_attack
   3:
   - primal_knowledge
+  4:
+  - ability_score_improvement
+  5:
+  - extra_attack
+  - fast_movement
 phb_ref: pp. 50-52
 notes:
   rage_2024: '2 uses at levels 1-2 (table p.51). Bonus action to enter. Duration:
@@ -33,3 +38,7 @@ notes:
     advantage.'
   danger_sense_2024: Advantage on DEX saves unless Incapacitated.
   weapon_mastery: 2 slots, melee Simple or Martial only. Can change on long rest.
+  ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
+    only in this chunk).'
+  extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
+  fast_movement_2024: 'Level 5: speed +10 while not wearing heavy armor.'

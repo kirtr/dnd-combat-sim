@@ -21,6 +21,12 @@ features:
   - uncanny_metabolism
   3:
   - deflect_attacks
+  4:
+  - ability_score_improvement
+  - slow_fall
+  5:
+  - extra_attack
+  - stunning_strike
 phb_ref: pp. 100-102
 notes:
   martial_arts_2024: 'Use DEX for monk weapons (simple melee + martial light) and
@@ -38,3 +44,10 @@ notes:
   unarmored_movement: +10 ft speed at level 2 when not wearing armor or shield.
   uncanny_metabolism: 'On Initiative roll: regain all Focus Points, heal monk level
     + martial arts die. 1/long rest.'
+  ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
+    only in this chunk).'
+  slow_fall_2024: 'Level 4: reaction to reduce falling damage (declaration only in this
+    chunk).'
+  extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
+  stunning_strike_2024: 'Level 5: spend Focus Point to force CON save; target stunned
+    on failure (declaration only in this chunk).'

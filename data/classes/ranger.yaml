@@ -22,7 +22,14 @@ features:
   - hunters_mark
   3:
   - hunter_subclass
+  4:
+  - ability_score_improvement
+  5:
+  - extra_attack
 phb_ref: pp. 114-119
 notes:
   hunters_mark_2024: "Uses = PB per long rest, NO concentration in 2024. Bonus action to cast, +1d6 per hit."
   colossus_slayer: "Hunter level 3: +1d8 once per turn if target below max HP."
+  ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
+    only in this chunk).'
+  extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
