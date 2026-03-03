@@ -1,0 +1,30 @@
+name: Berserker Maul Orc
+class: barbarian
+subclass: berserker
+level: 3
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 14
+  con: 16
+  int: 8
+  wis: 8
+  cha: 12
+weapons:
+- maul
+- javelin
+armor: unarmored
+shield: false
+tactic: aggressive
+powers:
+- rage
+- reckless_attack
+tags:
+- barbarian
+- berserker
+- level3
+- maul
+- melee
+- orc

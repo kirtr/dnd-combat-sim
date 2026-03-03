@@ -1,0 +1,31 @@
+name: Berserker S&B Battleaxe Orc
+class: barbarian
+subclass: berserker
+level: 3
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 16
+  dex: 14
+  con: 16
+  int: 8
+  wis: 8
+  cha: 12
+weapons:
+- battleaxe
+- javelin
+armor: unarmored
+shield: true
+tactic: aggressive
+powers:
+- rage
+- reckless_attack
+tags:
+- barbarian
+- battleaxe
+- berserker
+- level3
+- melee
+- orc
+- sb

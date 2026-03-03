@@ -2,7 +2,77 @@
 
 ---
 
-# Phase 4: Level 3 Subclasses *(current)*
+# Phase 5: Barbarian Optimization *(current)*
+
+**Sim Parameters:** n=500 per matchup, 1v1, aggressive tactics.
+**Goal:** Find best Berserker weapon. Drop Bear Totem (resistances irrelevant in B/P/S melee).
+
+## Build Spec
+
+All builds: Berserker Orc, Level 3, Soldier background.
+
+| Stat | Value | Mod | Notes |
+|------|-------|-----|-------|
+| STR | 16 | +3 | 14 base +2 bg |
+| DEX | 14 | +2 | Medium armor cap |
+| CON | 16 | +3 | 15 base +1 bg |
+| CHA | 12 | +1 | Saved points — CHA saves vs Banishment/Fear |
+| INT | 8  | -1 | |
+| WIS | 8  | -1 | |
+
+Point buy: 7+7+9+4+0+0 = 27 ✓  HP: 35
+
+**Armor:** Unarmored Defense = 10+DEX+CON = **AC 15**. S&B adds shield: **AC 17**.
+Half plate (750gp) is not starting-gear affordable for a barbarian — unarmored is correct.
+
+## Weapon Mastery Notes
+
+| Weapon | Dice | Mastery | 1v1 Value |
+|--------|------|---------|-----------|
+| Greatsword | 2d6 | Graze — miss deals STR mod dmg | ✅ Reliable |
+| Maul | 2d6 | Topple — hit → CON save or prone | ⚠️ Redundant (Reckless already gives adv) |
+| Greataxe | 1d12 | Cleave — attack 2nd adjacent creature | ❌ Useless in 1v1, no 2nd target |
+| Battleaxe | 1d8 | Topple | ⚠️ Same caveat as Maul |
+| Longsword | 1d8 | Sap — hit → disadv on target's next attack | ✅ Works 1v1 |
+
+## Barbarian Berserker Championship — Level 3
+
+```
+Win%   Weapon           Dice   Mastery    AC   DPS/16
+──────────────────────────────────────────────────────
+71%    Greatsword       2d6    Graze      15    9.91
+60%    Maul             2d6    Topple     15    9.40
+50%    S&B Longsword    1d8    Sap        17    7.06
+49%    S&B Battleaxe    1d8    Topple     17    6.96
+20%    Greataxe         1d12   Cleave†    15    9.19
+──────────────────────────────────────────────────────
+† Cleave = attack a 2nd adjacent creature. Useless in 1v1.
+  20% win rate is accurate — not a sim gap.
+```
+
+## Key Findings
+
+**Greatsword wins.** Graze converts rare misses to STR mod damage — more reliable than Topple since Reckless Attack already grants advantage (Topple's prone is redundant for your own attacks). Scales better at high AC where misses become more frequent.
+
+**Maul is solid second.** Same 2d6 dice, Topple just adds less value in this context.
+
+**S&B nearly ties Maul.** AC 17 vs 15 almost cancels the damage gap. Longsword (Sap) and Battleaxe (Topple) are statistically identical (50/50 head-to-head).
+
+**Greataxe is genuinely bad in 1v1.** 1d12 (avg 6.5) < 2d6 (avg 7.0) AND Cleave does nothing without a second target. The 20% win rate stands.
+
+**Bear Totem dropped.** Rage already gives B/P/S resistance. Bear Totem's extra coverage adds nothing in physical melee — zero benefit vs Berserker's Frenzy bonus action attack.
+
+**Old builds were badly underbuilt.** DEX 13 → 14 and correcting armor (AC 14 → 15) accounts for most of the gap. New Greatsword beats old GWF 68%.
+
+## TODO — Next Steps
+
+- Level 5: Extra Attack doubles all martial output — biggest power spike in the game
+- Goliath Berserker — Stone's Endurance vs Orc's Relentless Endurance
+- Spellcasters: Warlock, Paladin, Cleric (needs spell system)
+
+---
+
+# Phase 4: Level 3 Subclasses
 
 **Sim Parameters:** 500 combats per matchup, 1v1, start at 60ft, aggressive tactics.
 **Active builds:** 21 level 3 builds (level 2 builds archived to `data/builds/archive/level2/`).
