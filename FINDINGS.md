@@ -256,3 +256,51 @@ Strong feat combo: Savage Attacker + Tough (+4 HP). Solid mid-tier pick — dura
 ---
 
 *dnd-combat-sim — updated Phase 4*
+
+---
+
+# Phase 7: Caster Classes — Level 3 & Level 5
+
+**Sim Parameters:** n=3000 per matchup, 1v1 caster vs caster, aggressive tactics.
+**Question:** How do Wizard, Sorcerer, and Cleric stack up against each other at L3 and L5?
+
+## 🏆 Champion: Draconic Sorcerer (Level 5) — 83.1% avg win rate
+
+## Rankings
+
+```
+Rank  Build                        Avg Win%   HP   AC
+------------------------------------------------------
+  1.  Draconic Sorcerer Human 5     83.1%     32   15
+  2.  Evocation Wizard Human 5      79.3%     32   12
+  3.  War Cleric Human 5            71.8%     48   18
+  4.  War Cleric Human              33.0%     30   18
+  5.  Draconic Sorcerer Human       20.1%     20   15
+  6.  Evocation Wizard Human        12.7%     20   12
+```
+
+## Key Findings
+
+**L5 dominates L3 across the board.** Fireball (8d6) + spell slot depth creates a massive power cliff.
+
+**Sorcerer edges Wizard at L5** — identical spells, but Draconic Resilience (AC 15 vs 12) buys enough extra survivability to close out fights the wizard would lose. CHA vs INT doesn't matter — both hit spell_save_dc 15 at L5 with +4 ability mod + prof 3.
+
+**War Cleric underperforms despite AC 18 + 48 HP** — high durability but Spirit Guardians takes a turn to set up, and in a fast caster duel that turn is often lethal. Cleric wins the long game but caster duels are short. Cleric shines vs martials (tested separately — see next phase).
+
+**L3 casters are fragile.** With only L1-L2 slots, a single bad fight can drain all resources. Wizard at L3 (AC 12, 20 HP) is glass cannon territory — loses to almost everyone except other squishies.
+
+## Spells Implemented (Phase 7)
+
+| Spell | Level | Type | Notes |
+|---|---|---|---|
+| fire_bolt | Cantrip | Spell attack | Scales 1d10→2d10 at L5 |
+| toll_the_dead | Cantrip | WIS save | 1d8/1d12 if target missing HP |
+| sacred_flame | Cantrip | DEX save | Radiant, no half |
+| magic_missile | 1 | Auto-hit | 3 darts × 1d4+1 |
+| chromatic_orb | 1 | Spell attack | 3d8 fire |
+| guiding_bolt | 1 | Spell attack | 4d6 + advantage granted |
+| scorching_ray | 2 | Spell attack | 3 rays × 2d6 |
+| spiritual_weapon | 2 | Bonus action | 1d8+WIS, no concentration |
+| fireball | 3 | DEX save | 8d6 fire, half on save |
+| spirit_guardians | 3 | Concentration aura | 3d8/turn to adjacent enemies |
+
