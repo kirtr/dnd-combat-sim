@@ -109,8 +109,13 @@ def _adv_sources(attacker: Character, defender: Character) -> list[str]:
         sources.append("Vow of Enmity")
     if attacker.vex_target == defender.name:
         sources.append("Vex")
-    if any(e.grants_advantage_to_enemies for e in defender.active_effects):
-        sources.append("Reckless")
+    for e in defender.active_effects:
+        if not e.grants_advantage_to_enemies:
+            continue
+        if e.name == "GuidingBoltMarked":
+            sources.append("Guiding Bolt")
+        else:
+            sources.append("Reckless")
     if Condition.PRONE in defender.conditions:
         sources.append("prone")
     if Condition.STUNNED in defender.conditions:
@@ -155,6 +160,8 @@ def _has_advantage(attacker: Character, defender: Character) -> bool:
         attacker.vex_target = None
         return True
     if any(e.grants_advantage_to_enemies for e in defender.active_effects):
+        return True
+    if any(e.name == "GuidingBoltMarked" for e in defender.active_effects):
         return True
     if Condition.PRONE in defender.conditions:
         return True
@@ -898,20 +905,25 @@ def resolve_spell_attack(
     damage_type: DamageType,
     spell_name: str,
     state: CombatState,
+    *,
+    damage_mod: int = 0,
+    attack_label: str = "ACTION",
 ) -> bool:
     """Resolve a spell attack roll. Returns True if hit."""
     d20r = d20_detail()
     attack_roll = d20r.chosen + caster.spell_attack_bonus
     target_ac = target.effective_ac
-    label = _pad_label("ACTION")
+    label = _pad_label(attack_label)
     d20_str = f"d20={d20r.chosen}"
     hit = attack_roll >= target_ac
     if hit:
         result = eval_dice(damage_dice)
-        actual = target.take_attack_damage([(result.total, damage_type)], state, is_attack=True)
+        total_damage = max(1, result.total + damage_mod)
+        actual = target.take_attack_damage([(total_damage, damage_type)], state, is_attack=True)
+        mod_str = f"{damage_mod:+d}" if damage_mod else ""
         state.log(
             f"{label}{spell_name} {d20_str} → HIT ({attack_roll}/{target_ac})"
-            f" · {_fmt_rolls(result.rolls)}={actual} {damage_type.name.lower()} dmg"
+            f" · {_fmt_rolls(result.rolls)}{mod_str}={actual} {damage_type.name.lower()} dmg"
             f" [{target.current_hp}/{target.max_hp} HP]"
         )
     else:

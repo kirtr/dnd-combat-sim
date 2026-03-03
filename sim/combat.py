@@ -16,6 +16,10 @@ def _pad_label(label: str) -> str:
     return f"{label:<9}"
 
 
+def _find_effect(char: Character, name: str) -> ActiveEffect | None:
+    return next((e for e in char.active_effects if e.name == name), None)
+
+
 def roll_initiative(char: Character) -> int:
     """Roll initiative for a character."""
     return d20() + char.dex_mod + char.initiative_bonus
@@ -68,6 +72,11 @@ def run_combat(
                 continue
             opponent = state.opponent_of(char)
             tactics = tactics_a if char is a else tactics_b
+
+            _apply_start_of_turn_auras(char, opponent, state)
+            if not char.is_alive:
+                state.log(f"\n{char.name} has fallen! {opponent.name} wins!")
+                break
 
             if hasattr(char, "_savage_used_this_turn"):
                 char._savage_used_this_turn = False
@@ -140,11 +149,15 @@ def _execute_turn(
             if not char.action_used:
                 _do_melee_attack(char, opponent, action, state)
         elif action.kind == "cast_spell":
-            if not char.action_used:
-                spell_name = action.extra.get("spell", "")
-                slot_level = action.extra.get("slot_level", 0)
-                if spell_name:
-                    _do_cast_spell(char, opponent, spell_name, slot_level, state)
+            spell_name = action.extra.get("spell", "")
+            spell = get_spell(spell_name) if spell_name else None
+            if spell_name and spell and spell.bonus_action:
+                if not char.bonus_action_used:
+                    _do_cast_spell(char, opponent, spell_name, action.extra.get("slot_level", 0), state)
+            elif not char.action_used and spell_name:
+                _do_cast_spell(char, opponent, spell_name, action.extra.get("slot_level", 0), state)
+        elif action.kind == "spiritual_weapon_attack":
+            _do_spiritual_weapon_attack(char, opponent, state)
         elif action.kind == "flurry":
             _do_flurry(char, opponent, state)
         elif action.kind == "martial_arts_strike":
@@ -338,7 +351,35 @@ def _do_cast_spell(
             state.log(f"{label}{spell_name} — NO SLOT AVAILABLE (level {slot_level})")
             return
 
+    if spell.name == "spiritual_weapon":
+        char.bonus_action_used = True
+        existing = _find_effect(char, "SpiritualWeapon")
+        if existing is not None:
+            char.active_effects.remove(existing)
+        char.active_effects.append(ActiveEffect(
+            name="SpiritualWeapon",
+            source="spiritual_weapon",
+            duration=10,
+            extra={"slot_level": slot_level},
+        ))
+        state.log(f"{_pad_label('BONUS')}Spiritual Weapon → active (slot {slot_level})")
+        return
+
     char.action_used = True
+
+    if spell.name == "spirit_guardians":
+        char.concentrate("spirit_guardians")
+        existing = _find_effect(char, "SpiritGuardiansAura")
+        if existing is not None:
+            char.active_effects.remove(existing)
+        char.active_effects.append(ActiveEffect(
+            name="SpiritGuardiansAura",
+            source="spirit_guardians",
+            duration=10,
+            extra={"slot_level": slot_level},
+        ))
+        state.log(f"{label}{spell_name} → active (slot {slot_level}, concentration)")
+        return
 
     if spell.concentration:
         char.concentrate(spell_name)
@@ -367,7 +408,7 @@ def _do_cast_spell(
         for _ in range(attack_count):
             if not opponent.is_alive:
                 break
-            resolve_spell_attack(
+            hit = resolve_spell_attack(
                 char,
                 opponent,
                 dice_str,
@@ -375,6 +416,16 @@ def _do_cast_spell(
                 spell_name,
                 state,
             )
+            if hit and spell.grants_advantage:
+                existing = _find_effect(opponent, "GuidingBoltMarked")
+                if existing is not None:
+                    opponent.active_effects.remove(existing)
+                opponent.active_effects.append(ActiveEffect(
+                    name="GuidingBoltMarked",
+                    source="guiding_bolt",
+                    duration=2,
+                    grants_advantage_to_enemies=True,
+                ))
         return
 
     if spell.attack_type == "save":
@@ -850,6 +901,51 @@ def _do_armor_of_agathys(char: Character, state: CombatState) -> None:
     char.aoa_cold_damage = 10
     label = _pad_label("ACTION")
     state.log(f"{label}Armor of Agathys → +{temp_hp} temp HP, {temp_hp} cold retaliation")
+
+
+def _apply_start_of_turn_auras(char: Character, opponent: Character, state: CombatState) -> None:
+    if not opponent.is_alive or not opponent.is_concentrating("spirit_guardians"):
+        return
+
+    spell = get_spell("spirit_guardians")
+    if spell is None or not spell.aura or state.distance > spell.aura_range:
+        return
+
+    aura = _find_effect(opponent, "SpiritGuardiansAura")
+    slot_level = int(aura.extra.get("slot_level", spell.level)) if aura is not None else spell.level
+    dice_str = spell.damage_dice
+    if slot_level > spell.level and spell.upcast_dice:
+        dice_str = _add_upcast_dice(dice_str, spell.upcast_dice, slot_level - spell.level)
+
+    dc = opponent.spell_save_dc
+    save_roll = d20() + char.wis_mod
+    result = eval_dice(dice_str)
+    damage = result.total if save_roll < dc else result.total // 2
+    actual = char.take_damage(damage, spell.damage_type or DamageType.RADIANT, state)
+    outcome = "fail" if save_roll < dc else "save"
+    state.log(f"{opponent.name} Spirit Guardians → {actual} radiant (WIS save {save_roll}/DC {dc} {outcome})")
+
+
+def _do_spiritual_weapon_attack(char: Character, opponent: Character, state: CombatState) -> None:
+    if char.bonus_action_used:
+        return
+    effect = _find_effect(char, "SpiritualWeapon")
+    if effect is None:
+        return
+
+    slot_level = int(effect.extra.get("slot_level", 2))
+    dice_count = 1 + max(0, (slot_level - 2) // 2)
+    char.bonus_action_used = True
+    resolve_spell_attack(
+        char,
+        opponent,
+        f"{dice_count}d8",
+        DamageType.FORCE,
+        "Spiritual Weapon",
+        state,
+        damage_mod=char.spellcasting_mod,
+        attack_label="BONUS",
+    )
 
 
 def _do_hex(char: Character, state: CombatState) -> None:

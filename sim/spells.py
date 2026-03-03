@@ -26,6 +26,10 @@ class SpellData:
     extra_attacks: int
     upcast_dice: str = ""
     missing_hp_dice: str = ""
+    aura: bool = False
+    aura_range: int = 0
+    bonus_action: bool = False
+    grants_advantage: bool = False
     description: str = ""
 
 
@@ -58,6 +62,10 @@ def load_spell_registry(data_dir: Path) -> dict[str, SpellData]:
             extra_attacks=raw.get("extra_attacks", 1),
             upcast_dice=raw.get("upcast_dice", ""),
             missing_hp_dice=raw.get("missing_hp_dice", ""),
+            aura=raw.get("aura", False),
+            aura_range=raw.get("aura_range", 0),
+            bonus_action=raw.get("bonus_action", False),
+            grants_advantage=raw.get("grants_advantage", False),
             description=raw.get("description", ""),
         )
         registry[spell.name] = spell

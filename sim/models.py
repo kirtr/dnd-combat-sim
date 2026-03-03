@@ -343,6 +343,10 @@ class Character:
         self.concentration_effect = spell_name
 
     def break_concentration(self) -> None:
+        if self.concentration_effect is not None:
+            self.active_effects = [
+                e for e in self.active_effects if e.source != self.concentration_effect
+            ]
         self.concentration_effect = None
 
     def is_concentrating(self, spell_name: str | None = None) -> bool:

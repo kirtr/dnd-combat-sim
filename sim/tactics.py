@@ -73,10 +73,16 @@ class PriorityTactics(TacticsEngine):
 
         # --- Full caster logic ---
         if char.spells_known:
+            if any(e.name == "SpiritualWeapon" for e in char.active_effects):
+                actions.append(TurnAction(kind="spiritual_weapon_attack"))
             spell_action = _pick_spell_action(char)
             if spell_action:
                 actions.append(spell_action)
-            if spell_action is not None:
+                if spell_action.extra.get("spell") == "spiritual_weapon":
+                    cantrip_action = _pick_cantrip_action(char)
+                    if cantrip_action:
+                        actions.append(cantrip_action)
+            if spell_action is not None or actions:
                 return actions
 
         # --- Barbarian: Rage on first turn ---
@@ -304,6 +310,27 @@ def _pick_spell_action(char: Character) -> TurnAction | None:
     """Pick the best spell to cast. Returns TurnAction or None if no spells available."""
     spells = char.spells_known
 
+    if char.class_name == "cleric":
+        if char.has_spell_slot(3) and "spirit_guardians" in spells and not char.is_concentrating("spirit_guardians"):
+            return TurnAction(kind="cast_spell", extra={"spell": "spirit_guardians", "slot_level": 3})
+
+        spiritual_weapon_active = any(e.name == "SpiritualWeapon" for e in char.active_effects)
+        if char.has_spell_slot(2) and "spiritual_weapon" in spells and not spiritual_weapon_active:
+            return TurnAction(kind="cast_spell", extra={"spell": "spiritual_weapon", "slot_level": 2})
+
+        if char.has_spell_slot(2) and "scorching_ray" in spells:
+            return TurnAction(kind="cast_spell", extra={"spell": "scorching_ray", "slot_level": 2})
+
+        if char.has_spell_slot(1):
+            if "guiding_bolt" in spells:
+                return TurnAction(kind="cast_spell", extra={"spell": "guiding_bolt", "slot_level": 1})
+            if "chromatic_orb" in spells:
+                return TurnAction(kind="cast_spell", extra={"spell": "chromatic_orb", "slot_level": 1})
+            if "magic_missile" in spells:
+                return TurnAction(kind="cast_spell", extra={"spell": "magic_missile", "slot_level": 1})
+
+        return _pick_cantrip_action(char)
+
     if char.has_spell_slot(3) and "fireball" in spells:
         return TurnAction(kind="cast_spell", extra={"spell": "fireball", "slot_level": 3})
 
@@ -316,10 +343,13 @@ def _pick_spell_action(char: Character) -> TurnAction | None:
         if "magic_missile" in spells:
             return TurnAction(kind="cast_spell", extra={"spell": "magic_missile", "slot_level": 1})
 
-    for cantrip in ["fire_bolt", "toll_the_dead", "sacred_flame"]:
-        if cantrip in spells:
-            return TurnAction(kind="cast_spell", extra={"spell": cantrip, "slot_level": 0})
+    return _pick_cantrip_action(char)
 
+
+def _pick_cantrip_action(char: Character) -> TurnAction | None:
+    for cantrip in ["toll_the_dead", "sacred_flame", "fire_bolt"]:
+        if cantrip in char.spells_known:
+            return TurnAction(kind="cast_spell", extra={"spell": cantrip, "slot_level": 0})
     return None
 
 
