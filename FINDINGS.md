@@ -436,3 +436,30 @@ Rank  Build                        Win%
 
 **L3 is Orc Berserker territory.** Relentless Endurance + Frenzy at this level is almost unfair. Bear Totem is the only non-Berserker build in the top 6.
 
+
+---
+
+# Phase 11: Casters vs Top Martial (Berserker Fire Goliath L5)
+
+**n=2000 per matchup. All L5 casters vs the #1 martial build.**
+
+```
+Caster                    Win%    Notes
+------------------------------------------
+Draconic Sorcerer L5      10.7%   Fireball round 1 only saves ~10% of the time
+Evocation Wizard L5        9.8%   Lowest AC (12) — dies if barbarian goes first
+War Cleric L5              1.2%   Spirit Guardians wiped out by a single crit
+Moon Druid L5              0.2%   Call Lightning tickles, melee caves instantly
+```
+
+## Key Finding: Casters Cannot Beat Top Martials 1v1
+
+The problem is structural:
+- **HP gap**: 32 (caster) vs 55 (berserker). Casters need 2+ rounds; barbarian needs 1.5.
+- **Rage damage resistance**: Fireball's 8d6 is halved → ~14 avg vs 55 HP. Not enough.
+- **Concentration breaks**: Spirit Guardians and Call Lightning are concentration — one hit often ends it (CON save DC 10 is easy to fail at 29 HP taken).
+- **AC doesn't matter much**: Berserker Reckless gives self-disadvantage anyway; Cleric's AC 18 only marginally helps.
+
+**Casters are balanced for party play**, not 1v1. In a group, Fireball hits multiple targets, Spirit Guardians punishes clustered enemies, and healers/tanks absorb pressure. In 1v1, none of that matters.
+
+**The only viable caster path vs martials**: go first, roll high on Fireball, hope the barbarian doesn't have Javelin range. 10% win rate reflects that coin flip.
