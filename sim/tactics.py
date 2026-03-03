@@ -73,7 +73,7 @@ class PriorityTactics(TacticsEngine):
         actions: list[TurnAction] = []
 
         # --- Full caster logic ---
-        if char.spells_known:
+        if char.spells_known and "eldritch_blast" not in char.features:
             if any(e.name == "SpiritualWeapon" for e in char.active_effects):
                 prefix_actions.append(TurnAction(kind="spiritual_weapon_attack"))
             if (
@@ -141,14 +141,6 @@ class PriorityTactics(TacticsEngine):
             if hm_res and hm_res.available:
                 actions.append(TurnAction(kind="hunters_mark"))
 
-        # --- Orc: Adrenaline Rush when not in melee (close distance) or when hurt ---
-        if "adrenaline_rush" in char.species_traits and not char.bonus_action_used:
-            res = char.resources.get("adrenaline_rush")
-            if res and res.available:
-                hp_pct = char.current_hp / char.max_hp
-                if not in_melee or hp_pct < 0.5:
-                    actions.append(TurnAction(kind="adrenaline_rush"))
-
         # --- Dragonborn: Breath Weapon at range (only if in range and not in melee) ---
         if "breath_weapon" in char.species_traits:
             res = char.resources.get("breath_weapon")
@@ -167,6 +159,14 @@ class PriorityTactics(TacticsEngine):
         if "hex" in char.features and not char.is_concentrating():
             if char.has_spell_slot(2):
                 actions.append(TurnAction(kind="hex"))
+
+        # --- Orc: Adrenaline Rush when not in melee (close distance) or when hurt ---
+        if "adrenaline_rush" in char.species_traits and not char.bonus_action_used:
+            res = char.resources.get("adrenaline_rush")
+            if res and res.available:
+                hp_pct = char.current_hp / char.max_hp
+                if not in_melee or hp_pct < 0.5:
+                    actions.append(TurnAction(kind="adrenaline_rush"))
 
         # --- Warlock: Eldritch Blast as primary action every turn ---
         if "eldritch_blast" in char.features:
