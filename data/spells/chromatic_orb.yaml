@@ -1,0 +1,12 @@
+name: chromatic_orb
+level: 1
+school: evocation
+damage_dice: "3d8"
+damage_type: fire        # default fire; casters can choose element
+attack_type: spell_attack
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+description: "Ranged spell attack, 3d8 damage (fire by default). Choose damage type on cast."

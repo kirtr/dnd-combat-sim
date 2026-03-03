@@ -1,0 +1,12 @@
+name: sacred_flame
+level: 0
+school: evocation
+damage_dice: "1d8"
+damage_type: radiant
+attack_type: save
+save_ability: dexterity
+half_on_save: false
+concentration: false
+cantrip_scaling: true   # 2d8 at level 5, 3d8 at level 11, 4d8 at level 17
+extra_attacks: 1
+description: "DEX save (no half), 1d8 radiant. Scales at level 5."

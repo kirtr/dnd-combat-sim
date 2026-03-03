@@ -1,0 +1,23 @@
+name: wizard
+hit_die: d6
+hp_base: 6
+armor_proficiencies: []
+weapon_proficiencies: [daggers, quarterstaffs, light_crossbows]
+saving_throw_proficiencies: [intelligence, wisdom]
+spellcasting_ability: intelligence
+spell_slots_by_level:
+  1: {1: 2}
+  2: {1: 3}
+  3: {1: 4, 2: 2}
+  4: {1: 4, 2: 3}
+  5: {1: 4, 2: 3, 3: 2}
+features:
+  1: [spellcasting, arcane_recovery]
+  2: [arcane_tradition]
+  3: [arcane_tradition_feature]
+  4: [ability_score_improvement]
+  5: [arcane_tradition_feature_2]
+notes:
+  evocation_subclass: "Sculpt Spells (level 2), Potent Cantrip (level 6)"
+  ability_score_improvement_2024: "Level 4: ASI +2 INT recommended (16→18)"
+  spell_slots_2024: "Standard Wizard progression. Arcane Recovery restores slots on short rest (not modeled in combat sim)."

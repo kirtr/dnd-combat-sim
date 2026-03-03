@@ -1,0 +1,12 @@
+name: fire_bolt
+level: 0
+school: evocation
+damage_dice: "1d10"
+damage_type: fire
+attack_type: spell_attack
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: true   # 2d10 at level 5, 3d10 at level 11, 4d10 at level 17
+extra_attacks: 1
+description: "Ranged spell attack, 1d10 fire (2d10 at level 5+)"

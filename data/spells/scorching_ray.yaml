@@ -1,0 +1,12 @@
+name: scorching_ray
+level: 2
+school: evocation
+damage_dice: "2d6"
+damage_type: fire
+attack_type: spell_attack
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 3         # 3 rays, each is a separate spell attack roll; +1 ray per slot level above 2nd
+description: "3 ranged spell attack rays, each 2d6 fire. +1 ray per slot level above 2nd."

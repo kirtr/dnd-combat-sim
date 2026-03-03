@@ -1,0 +1,34 @@
+name: Evocation Wizard Human
+class: wizard
+subclass: evocation
+level: 3
+species: human
+background: sage
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 14
+  con: 14
+  int: 16
+  wis: 12
+  cha: 10
+weapons:
+  - quarterstaff
+armor: null
+shield: false
+spellcasting_ability: intelligence
+spell_slots:
+  1: 4
+  2: 2
+spells_known:
+  - fire_bolt
+  - chromatic_orb
+  - magic_missile
+  - scorching_ray
+tactic: aggressive
+tags:
+  - wizard
+  - evocation
+  - level3
+  - caster
+  - human

@@ -1,0 +1,13 @@
+name: toll_the_dead
+level: 0
+school: necromancy
+damage_dice: "1d8"
+damage_type: necrotic
+attack_type: save
+save_ability: wisdom
+half_on_save: false
+concentration: false
+cantrip_scaling: true   # 2d8/2d12 at level 5; 1d12 if target missing HP (engine handles this via extra field)
+extra_attacks: 1
+missing_hp_dice: "1d12"   # used if target is below max HP
+description: "WIS save (no half), 1d8 necrotic. 1d12 if target is missing HP. Scales at level 5."

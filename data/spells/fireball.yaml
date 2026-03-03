@@ -1,0 +1,13 @@
+name: fireball
+level: 3
+school: evocation
+damage_dice: "8d6"
+damage_type: fire
+attack_type: save
+save_ability: dexterity
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+upcast_dice: "1d6"       # +1d6 per slot level above 3rd
+description: "DEX save, 8d6 fire (half on save). +1d6 per slot level above 3rd."
