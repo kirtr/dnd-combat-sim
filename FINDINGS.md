@@ -343,3 +343,96 @@ out at scorching_ray/thunderwave.
 **Sorcerer edge is shrinking.** Draconic Resilience (AC 15) was decisive at L3; at L5 with
 fireball in every caster's kit, the 3-AC difference matters less than spell selection.
 
+
+---
+
+# Phase 9: Full Rankings Sweep — Level 5 (All Classes)
+
+**Sim Parameters:** n=3000 per matchup, 1v1, all level-5 builds.
+**30 builds, 435 matchups.**
+
+## 🏆 Champion: Berserker Greatsword Fire Goliath L5 — 85.0%
+
+```
+Rank  Build                                  Win%
+---------------------------------------------------
+  1.  Berserker Greatsword Fire Goliath L5   85.0%
+  2.  Berserker S&B Longsword Fire Goliath   84.8%
+  3.  Berserker Greatsword Orc L5            76.0%
+  4.  Berserker S&B Longsword Orc L5         76.0%
+  5.  Battle Master S&B Stone Goliath L5     73.8%
+  6.  Battle Master GWF Stone Goliath L5     73.7%
+  7.  Battle Master Dueling Orc L5           73.4%
+  8.  Battle Master S&B Fire Goliath L5      70.2%
+  9.  Battle Master GWF Fire Goliath L5      67.7%
+ 10.  Battle Master GWF Orc L5              66.6%
+ 11.  Battle Master S&B Orc L5              66.3%
+ 12.  Champion GWF Stone Goliath L5         57.1%
+ 13.  Champion S&B Stone Goliath L5         55.5%
+ 14.  Vengeance Paladin Orc L5              52.8%
+ 15.  Champion S&B Fire Goliath L5          51.7%
+ 16.  Champion GWF Fire Goliath L5          51.6%
+ 17.  Shadow Monk Orc L5                    51.6%
+ 18.  Open Hand Orc L5                      51.5%
+ 19.  Battle Master TWF Orc L5              51.0%
+ 20.  Champion GWF Orc L5                   43.2%
+ 21.  Champion S&B Orc L5                   42.9%
+ 22.  Hunter Ranger GWF L5                  37.7%
+ 23.  Hunter Ranger TWF L5                  36.2%
+ 24.  Champion TWF Orc L5                   26.1%
+ 25.  Hunter Ranger Archery L5              24.1%
+ 26.  Arcane Trickster Halfling L5          13.9%
+ 27.  Arcane Trickster Human L5             13.4%
+ 28.  Thief Halfling L5                      9.2%
+ 29.  Thief Human L5                         9.0%
+ 30.  Fiend Warlock Orc L5                   6.2%
+```
+
+## Key Findings
+
+**Berserker + Fire Goliath is still king at L5.** HP pool (55) + Frenzy + Giant's Havoc = overwhelming attrition advantage. The S&B variant is nearly tied — extra AC compensates for lower damage output almost exactly.
+
+**Battle Master jumps significantly at L5** (vs L3). Extra Attack doubles their maneuver-to-attack ratio, and d10 dice (at L7, not modeled yet) will push them further.
+
+**Paladin cracks the top 15** at L5 — Divine Smite with 2nd-level slots is a real threat. Vow of Enmity + Extra Attack + 3d8 smite on first crit is a fight-ender.
+
+**Monks are mid-tier** — Shadow and Open Hand cluster around 50%, punching above their weight given 38 HP. Stunning Strike is working: forced CON saves knock opponents out of action.
+
+**Casters not included in this pool** (separate tag). At AC 12-15, they'd lose to nearly every martial at L5. Casters vs martials analysis is a future phase.
+
+**Warlock at the bottom (6.2%)** — EB is solid but Fiend L5 has no Extra Attack, relies purely on 2-beam EB. Pact slots run dry fast against HP-heavy frontliners.
+
+---
+
+# Phase 10: Full Rankings — Level 3
+
+**21 builds, 210 matchups, n=3000.**
+
+```
+Rank  Build                        Win%
+-----------------------------------------
+  1.  Berserker GWF Orc            90.0%
+  2.  Berserker TWF Orc            85.1%
+  3.  Battle Master TWF Orc        78.6%
+  4.  Battle Master Dueling Orc    76.1%
+  5.  Bear Totem GWF Orc           74.7%
+  6.  Bear Totem TWF Orc           74.4%
+  7.  Battle Master GWF Orc        73.7%
+  8.  Hunter Ranger TWF            58.3%
+  9.  Champion TWF Fire Goliath    52.5%
+ 10.  Fighter TWF Orc (L3)         49.4%
+ 11.  Champion GWF Orc             48.5%
+ 12.  Fighter GWF Orc (L3)         45.3%
+ 13.  Hunter Ranger GWF            45.0%
+ 14.  Open Hand Orc                31.9%
+ 15.  Arcane Trickster Halfling    31.6%
+ 16.  Arcane Trickster Human       31.4%
+ 17.  Shadow Monk Orc              29.0%
+ 18.  Open Hand Human              27.8%
+ 19.  Hunter Ranger Archery        20.0%
+ 20.  Thief Halfling               13.4%
+ 21.  Thief Human                  12.8%
+```
+
+**L3 is Orc Berserker territory.** Relentless Endurance + Frenzy at this level is almost unfair. Bear Totem is the only non-Berserker build in the top 6.
+
