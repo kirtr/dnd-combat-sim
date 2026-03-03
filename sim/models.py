@@ -469,7 +469,7 @@ class Character:
                 expired.append(e)
             elif e.duration is not None:
                 e.duration -= 1
-                if e.duration <= 0:
+                if e.duration <= 0 and e.end_trigger != "on_attack":
                     expired.append(e)
         for e in expired:
             self.active_effects.remove(e)
@@ -481,7 +481,10 @@ class Character:
             self.movement_remaining = max(0, self.movement_remaining - self.speed // 2)
 
     def end_turn(self) -> None:
-        expired = [e for e in self.active_effects if e.end_trigger == "end_of_turn"]
+        expired = [
+            e for e in self.active_effects
+            if e.end_trigger == "end_of_turn" or (e.end_trigger == "on_attack" and e.duration is not None and e.duration <= 0)
+        ]
         for e in expired:
             self.active_effects.remove(e)
         self.reaction_used = False
@@ -600,6 +603,15 @@ class Character:
                     state.special_triggers["relentless_endurance"] = state.special_triggers.get("relentless_endurance", 0) + 1
                     state.log(f"  {self.name} uses Relentless Endurance! Drops to 1 HP instead of 0!")
 
+        if total > 0:
+            expired = [e for e in self.active_effects if e.end_trigger == "on_damage"]
+            for e in expired:
+                self.active_effects.remove(e)
+                if e.name == "HypnoticPattern":
+                    self.conditions.discard(Condition.INCAPACITATED)
+                    if state:
+                        state.log(f"STATUS   {self.name}: Hypnotic Pattern breaks on damage")
+
         return total
 
     def take_damage(self, amount: int, damage_type: DamageType, state: Any = None) -> int:
@@ -607,12 +619,24 @@ class Character:
         actual_damage = self.take_attack_damage([(amount, damage_type)], state, is_attack=False)
         # Concentration check if concentrating
         if self.concentration_effect is not None and state is not None and actual_damage > 0:
+            spell_name = self.concentration_effect
             dc = max(10, actual_damage // 2)
             from sim.dice import d20 as _d20
             con_save = _d20() + self.saving_throw_total("con")
             if con_save < dc:
                 state.log(f"  {self.name} loses concentration on {self.concentration_effect}! (save {con_save} vs DC {dc})")
                 self.break_concentration()
+                if spell_name == "hypnotic_pattern":
+                    for target in (getattr(state, "combatant_a", None), getattr(state, "combatant_b", None)):
+                        if target is None:
+                            continue
+                        removed = [e for e in target.active_effects if e.source == "hypnotic_pattern"]
+                        if not removed:
+                            continue
+                        target.active_effects = [e for e in target.active_effects if e.source != "hypnotic_pattern"]
+                        if Condition.INCAPACITATED in target.conditions:
+                            target.conditions.discard(Condition.INCAPACITATED)
+                            state.log(f"STATUS   {target.name}: Hypnotic Pattern ends")
             else:
                 state.log(f"  {self.name} maintains concentration (save {con_save} vs DC {dc})")
         return actual_damage

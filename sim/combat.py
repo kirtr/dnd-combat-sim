@@ -123,6 +123,12 @@ def _execute_turn(
         _tick_stunning_strike_expiry(char, state)
         return
 
+    if Condition.INCAPACITATED in char.conditions:
+        state.log(f"STATUS   {char.name}: incapacitated — skips turn")
+        char.end_turn()
+        _tick_stunning_strike_expiry(char, state)
+        return
+
     decisions = tactics.decide_turn(char, state)
 
     is_ranged_phase = state.phase == CombatPhase.RANGED
@@ -467,6 +473,26 @@ def _do_cast_spell(
         state.log(f"{label}{spell_name} → active (slot {slot_level}, concentration)")
         return
 
+    if spell.name == "hypnotic_pattern":
+        char.concentrate("hypnotic_pattern")
+        dc = char.spell_save_dc
+        save_roll = _saving_throw_total(opponent, "wis")
+        if save_roll < dc:
+            opponent.apply_condition(Condition.INCAPACITATED)
+            existing = _find_effect(opponent, "HypnoticPattern")
+            if existing is not None:
+                opponent.active_effects.remove(existing)
+            opponent.active_effects.append(ActiveEffect(
+                name="HypnoticPattern",
+                source="hypnotic_pattern",
+                duration=10,
+                end_trigger="on_damage",
+            ))
+            state.log(f"  [{char.name}] Hypnotic Pattern — {opponent.name} is INCAPACITATED")
+        else:
+            state.log(f"  [{char.name}] Hypnotic Pattern — {opponent.name} resisted ({save_roll}/DC {dc})")
+        return
+
     if spell.concentration:
         char.concentrate(spell_name)
 
@@ -515,7 +541,7 @@ def _do_cast_spell(
         return
 
     if spell.attack_type == "save":
-        resolve_spell_save(
+        result = resolve_spell_save(
             char,
             opponent,
             dice_str,
@@ -524,7 +550,21 @@ def _do_cast_spell(
             _normalize_save_ability(spell.save_ability),
             state,
             spell.half_on_save,
+            return_details=True,
         )
+        actual, save_succeeds, _, _ = result
+        if spell.name == "vicious_mockery" and not save_succeeds:
+            existing = _find_effect(opponent, "ViciousMockery")
+            if existing is not None:
+                opponent.active_effects.remove(existing)
+            opponent.active_effects.append(ActiveEffect(
+                name="ViciousMockery",
+                source="vicious_mockery",
+                duration=1,
+                disadvantage_on_attacks=True,
+                end_trigger="on_attack",
+            ))
+            state.log(f"  [{char.name}] Vicious Mockery — {opponent.name} has disadvantage on next attack")
         return
 
     if spell.attack_type == "none":

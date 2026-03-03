@@ -219,6 +219,10 @@ def _has_disadvantage(attacker: Character, defender: Character) -> bool:
     """Check all sources of disadvantage (consuming Lucky defensive)."""
     if defender.is_dodging:
         return True
+    vicious_mockery = next((e for e in attacker.active_effects if e.name == "ViciousMockery"), None)
+    if vicious_mockery:
+        attacker.active_effects.remove(vicious_mockery)
+        return True
     # Sap: consume on use (like Vex) — remove the effect when it fires
     sapped = next((e for e in attacker.active_effects if e.name == "Sapped"), None)
     if sapped:
@@ -1000,8 +1004,14 @@ def resolve_spell_save(
     save_ability: str,
     state: CombatState,
     half_on_save: bool = True,
-) -> int:
-    """Resolve a saving throw spell. Returns actual damage dealt."""
+    *,
+    return_details: bool = False,
+) -> int | tuple[int, bool, int, int]:
+    """Resolve a saving throw spell.
+
+    Returns actual damage dealt by default. When return_details=True, returns
+    (actual_damage, save_succeeds, save_roll, dc).
+    """
     dc = caster.spell_save_dc
     save_roll = _saving_throw_roll(target, save_ability)
     result = eval_dice(damage_dice)
@@ -1024,6 +1034,8 @@ def resolve_spell_save(
     if has_evasion:
         msg += f" · Evasion → {actual_dmg} dmg"
     state.log(msg + f" [{target.current_hp}/{target.max_hp} HP]")
+    if return_details:
+        return actual, save_succeeds, save_roll, dc
     return actual
 
 

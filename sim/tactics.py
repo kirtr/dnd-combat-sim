@@ -84,7 +84,7 @@ class PriorityTactics(TacticsEngine):
                 and not char.bonus_action_used
             ):
                 prefix_actions.append(TurnAction(kind="cast_spell", extra={"spell": "shillelagh", "slot_level": 0}))
-            spell_action = _pick_spell_action(char)
+            spell_action = _pick_spell_action(char, opponent)
             if spell_action:
                 prefix_actions.append(spell_action)
                 spell_name = spell_action.extra.get("spell")
@@ -321,7 +321,7 @@ class PriorityTactics(TacticsEngine):
         return actions
 
 
-def _pick_spell_action(char: Character) -> TurnAction | None:
+def _pick_spell_action(char: Character, opponent: Character | None = None) -> TurnAction | None:
     """Pick the best spell to cast. Returns TurnAction or None if no spells available."""
     spells = char.spells_known
 
@@ -357,6 +357,29 @@ def _pick_spell_action(char: Character) -> TurnAction | None:
 
         return _pick_cantrip_action(char)
 
+    if char.class_name == "bard":
+        if (
+            char.has_spell_slot(3)
+            and "hypnotic_pattern" in spells
+            and not char.is_concentrating()
+            and not (opponent and Condition.INCAPACITATED in opponent.conditions)
+        ):
+            return TurnAction(kind="cast_spell", extra={"spell": "hypnotic_pattern", "slot_level": 3})
+
+        if char.has_spell_slot(2):
+            if "scorching_ray" in spells:
+                return TurnAction(kind="cast_spell", extra={"spell": "scorching_ray", "slot_level": 2})
+            if "dissonant_whispers" in spells:
+                return TurnAction(kind="cast_spell", extra={"spell": "dissonant_whispers", "slot_level": 2})
+
+        if char.has_spell_slot(1):
+            if "dissonant_whispers" in spells:
+                return TurnAction(kind="cast_spell", extra={"spell": "dissonant_whispers", "slot_level": 1})
+            if "chromatic_orb" in spells:
+                return TurnAction(kind="cast_spell", extra={"spell": "chromatic_orb", "slot_level": 1})
+
+        return _pick_cantrip_action(char)
+
     if char.has_spell_slot(3) and "fireball" in spells:
         return TurnAction(kind="cast_spell", extra={"spell": "fireball", "slot_level": 3})
 
@@ -373,7 +396,10 @@ def _pick_spell_action(char: Character) -> TurnAction | None:
 
 
 def _pick_cantrip_action(char: Character) -> TurnAction | None:
-    for cantrip in ["toll_the_dead", "sacred_flame", "fire_bolt"]:
+    cantrip_order = ["toll_the_dead", "sacred_flame", "fire_bolt"]
+    if char.class_name == "bard":
+        cantrip_order = ["vicious_mockery", "fire_bolt"]
+    for cantrip in cantrip_order:
         if cantrip in char.spells_known:
             return TurnAction(kind="cast_spell", extra={"spell": cantrip, "slot_level": 0})
     return None
