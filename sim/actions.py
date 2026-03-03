@@ -963,14 +963,21 @@ def resolve_spell_save(
     """Resolve a saving throw spell. Returns actual damage dealt."""
     dc = caster.spell_save_dc
     save_mod = getattr(target, f"{save_ability}_mod")
-    save_roll = d20() + save_mod
+    save_roll = d20() + save_mod + target.saving_throw_bonus
     result = eval_dice(damage_dice)
     dmg = result.total
+    has_evasion = "evasion" in target.features and save_ability in {"dex", "dexterity"}
     if save_roll >= dc:
-        actual_dmg = dmg // 2 if half_on_save else 0
+        if has_evasion:
+            actual_dmg = 0
+        else:
+            actual_dmg = dmg // 2 if half_on_save else 0
         result_str = "saves"
     else:
-        actual_dmg = dmg
+        if has_evasion:
+            actual_dmg = dmg // 2
+        else:
+            actual_dmg = dmg
         result_str = "fails"
     actual = target.take_damage(actual_dmg, damage_type, state)
     label = _pad_label("ACTION")

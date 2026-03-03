@@ -1,0 +1,33 @@
+name: Vengeance Paladin Orc L6
+class: paladin
+subclass: vengeance
+level: 6
+species: orc
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 18
+  dex: 8
+  con: 14
+  int: 10
+  wis: 10
+  cha: 16
+weapons:
+  - longsword
+armor: chain_mail
+shield: true
+fighting_style: dueling
+spellcasting_ability: charisma
+spell_slots:
+  1: 4
+  2: 3
+tactic: aggressive
+powers:
+  - divine_smite
+  - vow_of_enmity
+tags:
+  - paladin
+  - vengeance
+  - level6
+  - melee
+  - orc

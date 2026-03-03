@@ -62,6 +62,7 @@ class MasteryProperty(Enum):
 class Condition(Enum):
     PRONE = "prone"
     GRAPPLED = "grappled"
+    CHARMED = "charmed"
     FRIGHTENED = "frightened"
     POISONED = "poisoned"
     STUNNED = "stunned"
@@ -235,6 +236,7 @@ class Character:
     concentration_effect: str | None = None   # name of active concentration spell, or None
     invocations: list[str] = field(default_factory=list)    # Eldritch Invocations (Warlock)
     aoa_cold_damage: int = 0                  # Armor of Agathys: cold retaliation on melee hit
+    aura_of_protection: bool = False
 
     # --- Per-combat state ---
     current_hp: int = 0
@@ -314,6 +316,30 @@ class Character:
     @property
     def spell_attack_bonus(self) -> int:
         return self.proficiency_bonus + self.spellcasting_mod
+
+    @property
+    def saving_throw_bonus(self) -> int:
+        if self.aura_of_protection:
+            return self.cha_mod
+        return 0
+
+    def saving_throw_total(self, ability: str) -> int:
+        return getattr(self, f"{ability}_mod") + self.saving_throw_bonus
+
+    def is_immune_to_condition(self, condition: Condition) -> bool:
+        if (
+            condition in {Condition.CHARMED, Condition.FRIGHTENED}
+            and "mindless_rage" in self.features
+            and self.is_raging
+        ):
+            return True
+        return False
+
+    def apply_condition(self, condition: Condition) -> bool:
+        if self.is_immune_to_condition(condition):
+            return False
+        self.conditions.add(condition)
+        return True
 
     @property
     def rage_damage(self) -> int:
@@ -575,7 +601,7 @@ class Character:
         if self.concentration_effect is not None and state is not None and actual_damage > 0:
             dc = max(10, actual_damage // 2)
             from sim.dice import d20 as _d20
-            con_save = _d20() + self.con_mod
+            con_save = _d20() + self.saving_throw_total("con")
             if con_save < dc:
                 state.log(f"  {self.name} loses concentration on {self.concentration_effect}! (save {con_save} vs DC {dc})")
                 self.break_concentration()

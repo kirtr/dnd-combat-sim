@@ -339,6 +339,10 @@ def _normalize_save_ability(save_ability: str) -> str:
     }.get(save_ability, save_ability)
 
 
+def _saving_throw_total(char: Character, ability: str) -> int:
+    return d20() + getattr(char, f"{ability}_mod") + char.saving_throw_bonus
+
+
 def _resolve_call_lightning_bolt(
     char: Character,
     opponent: Character,
@@ -347,14 +351,21 @@ def _resolve_call_lightning_bolt(
 ) -> int:
     dice_str = _add_upcast_dice("3d10", "1d10", max(0, slot_level - 3))
     dc = char.spell_save_dc
-    save_roll = d20() + opponent.dex_mod
+    save_roll = _saving_throw_total(opponent, "dex")
     result = eval_dice(dice_str)
     damage = result.total
+    has_evasion = "evasion" in opponent.features
     if save_roll >= dc:
-        actual = opponent.take_damage(damage // 2, DamageType.LIGHTNING, state)
+        if has_evasion:
+            actual = opponent.take_damage(0, DamageType.LIGHTNING, state)
+        else:
+            actual = opponent.take_damage(damage // 2, DamageType.LIGHTNING, state)
         outcome = "saves"
     else:
-        actual = opponent.take_damage(damage, DamageType.LIGHTNING, state)
+        if has_evasion:
+            actual = opponent.take_damage(damage // 2, DamageType.LIGHTNING, state)
+        else:
+            actual = opponent.take_damage(damage, DamageType.LIGHTNING, state)
         outcome = "fails"
     state.log(
         f"  [{char.name}] Call Lightning bolt → {actual} lightning"
@@ -780,17 +791,23 @@ def _do_breath_weapon(char: Character, opponent: Character, state: CombatState) 
     res.spend()
     char.action_used = True
     dc = 8 + char.con_mod + char.proficiency_bonus
-    save_roll = d20() + opponent.dex_mod
+    save_roll = _saving_throw_total(opponent, "dex")
     result = eval_dice("1d10")
     damage_roll = result.total
     dmg_type = getattr(char, "breath_weapon_damage_type", DamageType.FIRE)
     label = _pad_label("ACTION")
+    has_evasion = "evasion" in opponent.features
     if save_roll >= dc:
-        damage_roll = damage_roll // 2
-        actual = opponent.take_damage(damage_roll, dmg_type, state)
+        if has_evasion:
+            actual = opponent.take_damage(0, dmg_type, state)
+        else:
+            actual = opponent.take_damage(damage_roll // 2, dmg_type, state)
         state.log(f"{label}Breath Weapon: {opponent.name} saves ({save_roll}/DC {dc}) · {actual} dmg [{opponent.current_hp}/{opponent.max_hp} HP]")
     else:
-        actual = opponent.take_damage(damage_roll, dmg_type, state)
+        if has_evasion:
+            actual = opponent.take_damage(damage_roll // 2, dmg_type, state)
+        else:
+            actual = opponent.take_damage(damage_roll, dmg_type, state)
         state.log(f"{label}Breath Weapon: {opponent.name} fails ({save_roll}/DC {dc}) · {actual} dmg [{opponent.current_hp}/{opponent.max_hp} HP]")
 
 
@@ -987,7 +1004,7 @@ def _apply_start_of_turn_auras(char: Character, opponent: Character, state: Comb
         dice_str = _add_upcast_dice(dice_str, spell.upcast_dice, slot_level - spell.level)
 
     dc = opponent.spell_save_dc
-    save_roll = d20() + char.wis_mod
+    save_roll = _saving_throw_total(char, "wis")
     result = eval_dice(dice_str)
     damage = result.total if save_roll < dc else result.total // 2
     actual = char.take_damage(damage, spell.damage_type or DamageType.RADIANT, state)

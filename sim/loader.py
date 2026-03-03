@@ -279,7 +279,9 @@ def load_build(path: str | Path) -> Character:
     # Sneak attack
     sneak_attack_dice = None
     if "sneak_attack" in features:
-        if level >= 5:
+        if level >= 7:
+            sneak_attack_dice = "4d6"
+        elif level >= 5:
             sneak_attack_dice = "3d6"
         elif level >= 3:
             sneak_attack_dice = "2d6"
@@ -327,6 +329,8 @@ def load_build(path: str | Path) -> Character:
             resources["rage"] = Resource("Rage", 3, 3, "long_rest")
         if subclass == "berserker":
             features.append("frenzy")
+            if level >= 6 and "mindless_rage" not in features:
+                features.append("mindless_rage")
         elif subclass == "bear_totem":
             features.append("bear_totem_spirit")
         elif subclass == "wild_heart_sea":
@@ -347,6 +351,11 @@ def load_build(path: str | Path) -> Character:
             features.append("booming_blade")
             features.append("shield_spell")
             resources["shield_spell"] = Resource("Shield Spell", 2, 2, "long_rest")
+        if level >= 7 and "evasion" not in features:
+            features.append("evasion")
+
+    if class_name == "paladin" and level >= 6 and "aura_of_protection" not in features:
+        features.append("aura_of_protection")
 
     # Martial Arts
     martial_arts_die = None
