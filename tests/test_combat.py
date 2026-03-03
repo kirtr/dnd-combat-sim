@@ -11,7 +11,8 @@ from sim.models import (
     Weapon,
     WeaponProperty,
 )
-from sim.combat import run_combat, _do_eldritch_blast
+from sim.combat import run_combat, _do_eldritch_blast, _do_hex
+from sim.loader import load_build_by_name
 from sim.tactics import PriorityTactics
 
 
@@ -183,3 +184,43 @@ def test_eldritch_blast_level5_fires_two_beams():
 
     beam_logs = [line for line in state.combat_log if "Eldritch Blast (Beam" in line]
     assert len(beam_logs) == 2
+
+
+def test_warlock_aggressive_tactics_prioritize_hex_and_eldritch_blast():
+    warlock = load_build_by_name("fiend_warlock_orc_5")
+    target = _make_combatant("Dummy", ac=15, hp=55)
+    state = CombatState(combatant_a=warlock, combatant_b=target, verbose=True)
+    tactics = PriorityTactics(name="aggressive")
+
+    actions = tactics.decide_turn(warlock, state)
+
+    action_kinds = [action.kind for action in actions]
+    assert "cast_spell" not in action_kinds
+    assert action_kinds[0] == "hex"
+    assert "eldritch_blast" in action_kinds
+    assert action_kinds.index("hex") < action_kinds.index("adrenaline_rush")
+
+
+def test_hex_uses_highest_available_pact_slot():
+    warlock = Character(
+        name="Warlock",
+        level=5,
+        class_name="warlock",
+        ability_scores=AbilityScores(strength=8, dexterity=14, constitution=14, charisma=16),
+        max_hp=38,
+        ac=14,
+        proficiency_bonus=3,
+        speed=30,
+        weapons=[],
+        features=["hex"],
+        spell_slots={3: 2},
+        resources={"spell_slot_3": Resource("Spell Slot 3", 2, 2, "long_rest")},
+        spellcasting_ability="charisma",
+    )
+    target = _make_combatant("Dummy", ac=13, hp=80)
+    state = CombatState(combatant_a=warlock, combatant_b=target, verbose=True)
+
+    _do_hex(warlock, state)
+
+    assert warlock.resources["spell_slot_3"].current == 1
+    assert warlock.is_concentrating("Hex")

@@ -1019,13 +1019,14 @@ def _apply_hex(char: Character, target: Character, state: CombatState) -> int:
 def _do_armor_of_agathys(char: Character, state: CombatState) -> None:
     if char.action_used:
         return
-    if not char.has_spell_slot(2):
+    slot_level = char.highest_available_spell_slot()
+    if slot_level is None:
         return
     if any(e.name == "Armor of Agathys" for e in char.active_effects):
         return
-    char.spend_spell_slot(2)
+    char.spend_spell_slot(slot_level)
     char.action_used = True
-    temp_hp = 10
+    temp_hp = 5 * slot_level
     char.gain_temp_hp(temp_hp)
     char.active_effects.append(ActiveEffect(
         name="Armor of Agathys",
@@ -1094,9 +1095,10 @@ def _do_hex(char: Character, state: CombatState) -> None:
         return
     if char.is_concentrating():
         return
-    if not char.has_spell_slot(2):
+    slot_level = char.highest_available_spell_slot()
+    if slot_level is None:
         return
-    char.spend_spell_slot(2)
+    char.spend_spell_slot(slot_level)
     char.bonus_action_used = True
     char.concentrate("Hex")
     label = _pad_label("BONUS")

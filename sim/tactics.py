@@ -149,15 +149,9 @@ class PriorityTactics(TacticsEngine):
             if res and res.available and not in_melee and distance <= bw_range:
                 actions.append(TurnAction(kind="breath_weapon"))
 
-        # --- Warlock: Armor of Agathys on first turn as action (defensive setup) ---
-        if "armor_of_agathys" in char.features:
-            if not any(e.name == "Armor of Agathys" for e in char.active_effects):
-                if char.has_spell_slot(2):
-                    actions.append(TurnAction(kind="armor_of_agathys"))
-
         # --- Warlock: Hex as bonus action when not concentrating and have a slot ---
         if "hex" in char.features and not char.is_concentrating():
-            if char.has_spell_slot(2):
+            if char.highest_available_spell_slot():
                 actions.append(TurnAction(kind="hex"))
 
         # --- Orc: Adrenaline Rush when not in melee (close distance) or when hurt ---
@@ -171,6 +165,12 @@ class PriorityTactics(TacticsEngine):
         # --- Warlock: Eldritch Blast as primary action every turn ---
         if "eldritch_blast" in char.features:
             actions.append(TurnAction(kind="eldritch_blast"))
+
+        # --- Warlock: Armor of Agathys when already in melee and exposed ---
+        if "armor_of_agathys" in char.features and in_melee:
+            if not any(e.name == "Armor of Agathys" for e in char.active_effects):
+                if char.highest_available_spell_slot():
+                    actions.append(TurnAction(kind="armor_of_agathys"))
 
         # --- Ranged attack if not in melee and have ranged weapon (non-Warlock) ---
         if not in_melee and has_ranged and "eldritch_blast" not in char.features:

@@ -370,6 +370,17 @@ class Character:
         res = self.resources.get(f"spell_slot_{level}")
         return res is not None and res.available
 
+    def highest_available_spell_slot(self, minimum_level: int = 1) -> int | None:
+        """Return the highest available spell slot at or above the given level."""
+        available_levels = [
+            slot_level
+            for slot_level in self.spell_slots
+            if slot_level >= minimum_level and self.has_spell_slot(slot_level)
+        ]
+        if not available_levels:
+            return None
+        return max(available_levels)
+
     # --- Concentration helpers ---
 
     def concentrate(self, spell_name: str) -> None:
