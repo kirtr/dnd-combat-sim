@@ -463,3 +463,38 @@ The problem is structural:
 **Casters are balanced for party play**, not 1v1. In a group, Fireball hits multiple targets, Spirit Guardians punishes clustered enemies, and healers/tanks absorb pressure. In 1v1, none of that matters.
 
 **The only viable caster path vs martials**: go first, roll high on Fireball, hope the barbarian doesn't have Javelin range. 10% win rate reflects that coin flip.
+
+---
+
+# Phase 12: L6-L7 Martial Rankings
+
+**Sim Parameters:** n=3000 per matchup.
+
+## Level 6 Results
+
+```
+Rank  Build                      Win%   HP   AC
+-------------------------------------------------
+  1.  Berserker Greatsword Orc    80.4%  65   15
+  2.  Vengeance Paladin Orc       52.1%  52   18
+  3.  Champion GWF Orc            17.5%  58   16
+```
+
+**Berserker dominates at L6.** Fast Movement + Frenzy extra attack + rage damage still the highest raw output. Paladin Aura of Protection (+4 CHA to saves) matters a lot vs Paladin's divine smite but the berserker's raw DPS outpaces the aura's defensive value.
+
+**Champion falls hard** — still waiting on Remarkable Athlete (L7), nothing new at L6.
+
+## Level 7 Results
+
+```
+Rank  Build           Win%   HP   AC
+--------------------------------------
+  1.  Thief Human      64.1%  52   16
+  2.  Thief Halfling   35.9%  52   15
+```
+
+Human (+1 AC via Evasion interaction with AC base) edges Halfling. L7 Evasion is strong but the matchup pool is tiny — more builds needed at L7 to get meaningful data.
+
+## Blade Pact Warlock (new, L3+L5)
+
+CHA-based longsword + Hex loop. 45 tests passing. Full cross-ranking pending C13 merge.
