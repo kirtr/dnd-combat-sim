@@ -1,0 +1,37 @@
+name: Battle Master GWF Fire Goliath L5
+class: fighter
+subclass: battle_master
+level: 5
+species: goliath
+giant_ancestry: fire
+background: soldier
+origin_feat: savage_attacker
+ability_scores:
+  str: 18
+  dex: 13
+  con: 16
+  int: 8
+  wis: 12
+  cha: 8
+weapons:
+- greatsword
+- javelin
+armor: chain_mail
+shield: false
+fighting_style: great_weapon_fighting
+tactic: aggressive
+maneuvers:
+- precision
+- trip
+- riposte
+powers:
+- second_wind
+- action_surge
+tags:
+- battlemaster
+- fighter
+- fire
+- goliath
+- gwf
+- level5
+- melee
