@@ -113,6 +113,8 @@ def _adv_sources(attacker: Character, defender: Character) -> list[str]:
         sources.append("Reckless")
     if Condition.PRONE in defender.conditions:
         sources.append("prone")
+    if Condition.STUNNED in defender.conditions:
+        sources.append("stunned")
     if hasattr(attacker, '_use_heroic_inspiration') and attacker._use_heroic_inspiration:
         hi_res = attacker.resources.get("heroic_inspiration")
         if hi_res and hi_res.available:
@@ -155,6 +157,8 @@ def _has_advantage(attacker: Character, defender: Character) -> bool:
     if any(e.grants_advantage_to_enemies for e in defender.active_effects):
         return True
     if Condition.PRONE in defender.conditions:
+        return True
+    if Condition.STUNNED in defender.conditions:
         return True
     if hasattr(attacker, '_use_heroic_inspiration') and attacker._use_heroic_inspiration:
         hi_res = attacker.resources.get("heroic_inspiration")
@@ -323,6 +327,34 @@ def _try_divine_smite(
         total += crit_result.total
     actual = defender.take_damage(total, DamageType.RADIANT, state)
     return actual, tuple(rolls)
+
+
+def _try_stunning_strike(attacker: Character, defender: Character, weapon: Weapon, state: CombatState) -> str:
+    """Monk Stunning Strike: spend 1 FP after melee hit, force CON save."""
+    if "stunning_strike" not in attacker.features:
+        return ""
+    if not weapon.is_melee:
+        return ""
+    res = attacker.resources.get("focus_points")
+    if not res or not res.available:
+        return ""
+
+    res.spend()
+    dc = 8 + attacker.proficiency_bonus + attacker.wis_mod
+    save_roll = d20() + defender.con_mod
+    if save_roll < dc:
+        defender.conditions.add(Condition.STUNNED)
+        existing = next((e for e in defender.active_effects if e.name == "Stunning Strike" and e.extra.get("source") == attacker.name), None)
+        if existing:
+            existing.extra["remaining_source_turn_ends"] = 2
+        else:
+            defender.active_effects.append(ActiveEffect(
+                name="Stunning Strike",
+                source="stunning_strike",
+                extra={"source": attacker.name, "remaining_source_turn_ends": 2},
+            ))
+        return f"Stunning Strike FP-1 · CON save {save_roll}/DC {dc} → STUNNED"
+    return f"Stunning Strike FP-1 · CON save {save_roll}/DC {dc} → resisted"
 
 
 # ---------------------------------------------------------------------------
@@ -629,7 +661,7 @@ def _resolve_hit(
 
     # Apply damage
     pre_temp_hp = defender.temp_hp
-    actual = defender.take_attack_damage(damage_packet, state)
+    actual = defender.take_attack_damage(damage_packet, state, is_attack=True)
 
     # AoA retaliation
     if not weapon.is_ranged and not is_thrown:
@@ -690,6 +722,11 @@ def _resolve_hit(
     # Mastery condition tags (Vex, Sap, Topple)
     for mt in mastery_tags:
         line += f" · {mt}"
+
+    # Stunning Strike (monk)
+    ss_seg = _try_stunning_strike(attacker, defender, weapon, state)
+    if ss_seg:
+        line += f" · {ss_seg}"
 
     # HP
     line += f" [{defender.current_hp}/{defender.max_hp} HP]"
@@ -838,7 +875,7 @@ def try_riposte(defender: Character, attacker: Character, weapon: Weapon, state:
         riposte_dmg = riposte_result.total
         riposte_die = riposte_result.rolls[0] if riposte_result.rolls else riposte_dmg
         damage += riposte_dmg
-        actual = attacker.take_attack_damage([(damage, mw.damage_type)], state)
+        actual = attacker.take_attack_damage([(damage, mw.damage_type)], state, is_attack=True)
 
         # Rebuild dmg_info total to include riposte
         hit_type = "CRIT" if is_crit else "HIT"
@@ -871,7 +908,7 @@ def resolve_spell_attack(
     hit = attack_roll >= target_ac
     if hit:
         result = eval_dice(damage_dice)
-        actual = target.take_damage(result.total, damage_type, state)
+        actual = target.take_attack_damage([(result.total, damage_type)], state, is_attack=True)
         state.log(
             f"{label}{spell_name} {d20_str} → HIT ({attack_roll}/{target_ac})"
             f" · {_fmt_rolls(result.rolls)}={actual} {damage_type.name.lower()} dmg"

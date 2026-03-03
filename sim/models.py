@@ -451,6 +451,8 @@ class Character:
         self,
         damage_components: list[tuple[int, DamageType]],
         state: Any = None,
+        *,
+        is_attack: bool = True,
     ) -> int:
         """Apply all damage from a single attack/effect as one packet.
 
@@ -529,16 +531,27 @@ class Character:
                     if state:
                         state.log(f"  {self.name} Storm's Thunder! {attacker.name} takes {thunder_actual} thunder damage")
 
-        # Step 4: Absorb with temp HP
+        # Step 4: Uncanny Dodge (Rogue 5) — halve damage from attacks only
+        if (is_attack
+                and total > 0
+                and "uncanny_dodge" in self.features
+                and not self.reaction_used):
+            reduced = total // 2
+            if state:
+                state.log(f"REACTION {self.name}: Uncanny Dodge → {total} → {reduced} dmg")
+            total = reduced
+            self.reaction_used = True
+
+        # Step 5: Absorb with temp HP
         if self.temp_hp > 0:
             absorbed = min(self.temp_hp, total)
             self.temp_hp -= absorbed
             total -= absorbed
 
-        # Step 5: Apply to real HP
+        # Step 6: Apply to real HP
         self.current_hp = max(0, self.current_hp - total)
 
-        # Step 6: Relentless Endurance (Orc)
+        # Step 7: Relentless Endurance (Orc)
         if self.current_hp == 0 and "relentless_endurance" in self.resources:
             res = self.resources["relentless_endurance"]
             if res.available:
@@ -552,7 +565,7 @@ class Character:
 
     def take_damage(self, amount: int, damage_type: DamageType, state: Any = None) -> int:
         """Single-type damage. Delegates to take_attack_damage, then checks concentration."""
-        actual_damage = self.take_attack_damage([(amount, damage_type)], state)
+        actual_damage = self.take_attack_damage([(amount, damage_type)], state, is_attack=False)
         # Concentration check if concentrating
         if self.concentration_effect is not None and state is not None and actual_damage > 0:
             dc = max(10, actual_damage // 2)

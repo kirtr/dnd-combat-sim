@@ -97,6 +97,12 @@ def _execute_turn(
     char.start_turn()
     state.log(f"\n--- {char.name}'s turn (HP: {char.current_hp}/{char.max_hp}) ---")
 
+    if Condition.STUNNED in char.conditions:
+        state.log(f"STATUS   {char.name}: stunned — skips turn")
+        char.end_turn()
+        _tick_stunning_strike_expiry(char, state)
+        return
+
     decisions = tactics.decide_turn(char, state)
 
     is_ranged_phase = state.phase == CombatPhase.RANGED
@@ -177,6 +183,7 @@ def _execute_turn(
                 _do_booming_blade(char, opponent, state)
 
     char.end_turn()
+    _tick_stunning_strike_expiry(char, state)
 
 
 def _log_start_of_turn_status(char: Character, state: CombatState) -> None:
@@ -206,6 +213,27 @@ def _log_start_of_turn_status(char: Character, state: CombatState) -> None:
                 state.log(f"STATUS   {char.name}: frightened expires")
             else:
                 state.log(f"STATUS   {char.name}: {e.name} expires")
+
+
+def _tick_stunning_strike_expiry(source_char: Character, state: CombatState) -> None:
+    """Expire Stunning Strike at the end of the source monk's next turn."""
+    for target in (state.combatant_a, state.combatant_b):
+        to_remove = []
+        for e in target.active_effects:
+            if e.name != "Stunning Strike":
+                continue
+            if e.extra.get("source") != source_char.name:
+                continue
+            remaining = int(e.extra.get("remaining_source_turn_ends", 0)) - 1
+            e.extra["remaining_source_turn_ends"] = remaining
+            if remaining <= 0:
+                to_remove.append(e)
+        for e in to_remove:
+            target.active_effects.remove(e)
+            if Condition.STUNNED in target.conditions:
+                target.conditions.discard(Condition.STUNNED)
+                state.log(f"STATUS   {target.name}: stunned expires")
+
 
 
 # ---------------------------------------------------------------------------
@@ -652,7 +680,7 @@ def _do_eldritch_blast(char: Character, opponent: Character, state: CombatState)
         if hit:
             dmg_result = eval_dice("1d10")
             dmg = dmg_result.total + bonus
-            actual = opponent.take_damage(dmg, DamageType.FORCE, state)
+            actual = opponent.take_attack_damage([(dmg, DamageType.FORCE)], state, is_attack=True)
             hex_dmg = _apply_hex(char, opponent, state) if char.is_concentrating("Hex") else 0
             hex_str = f" +Hex [{hex_dmg}]" if hex_dmg else ""
             state.log(
