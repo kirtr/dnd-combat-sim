@@ -1,0 +1,13 @@
+name: hypnotic_pattern
+level: 3
+school: illusion
+damage_dice: ""
+damage_type: null
+attack_type: save
+save_ability: wisdom
+half_on_save: false
+concentration: true
+cantrip_scaling: false
+extra_attacks: 1
+effect: incapacitated   # on fail: incapacitated (can't act) until concentration ends or takes damage
+description: "Concentration. WIS save or incapacitated until spell ends or takes damage. No damage — pure CC."

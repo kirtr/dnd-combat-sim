@@ -1,0 +1,13 @@
+name: dissonant_whispers
+level: 1
+school: enchantment
+damage_dice: "3d6"
+damage_type: psychic
+attack_type: save
+save_ability: wisdom
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+upcast_dice: "1d6"     # +1d6 per slot level above 1st
+description: "WIS save, 3d6 psychic (half on save). On fail: target must use reaction to move away. +1d6/slot above 1st."

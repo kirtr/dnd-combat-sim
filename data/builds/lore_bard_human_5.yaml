@@ -1,0 +1,36 @@
+name: Lore Bard Human 5
+class: bard
+subclass: lore
+level: 5
+species: human
+background: entertainer
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 14
+  con: 14
+  int: 12
+  wis: 10
+  cha: 18    # ASI at level 4: +2 CHA
+weapons:
+  - rapier
+armor: leather
+shield: false
+spellcasting_ability: charisma
+spell_slots:
+  1: 4
+  2: 3
+  3: 2
+spells_known:
+  - vicious_mockery
+  - dissonant_whispers
+  - chromatic_orb
+  - scorching_ray
+  - hypnotic_pattern
+tactic: aggressive
+tags:
+  - bard
+  - lore
+  - level5
+  - caster
+  - human

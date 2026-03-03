@@ -1,0 +1,25 @@
+name: bard
+hit_die: d8
+hp_base: 8
+armor_proficiencies: [light]
+weapon_proficiencies: [simple, hand_crossbows, longswords, rapiers, shortswords]
+saving_throw_proficiencies: [dexterity, charisma]
+spellcasting_ability: charisma
+spell_slots_by_level:
+  1: {1: 2}
+  2: {1: 3}
+  3: {1: 4, 2: 2}
+  4: {1: 4, 2: 3}
+  5: {1: 4, 2: 3, 3: 2}
+features:
+  1: [spellcasting, bardic_inspiration]
+  2: [jack_of_all_trades, song_of_rest]
+  3: [bard_college, expertise]
+  4: [ability_score_improvement]
+  5: [font_of_inspiration]
+notes:
+  lore_college: "Bonus proficiencies, Cutting Words (reaction: -1d6 to enemy attack/damage/ability check)"
+  bardic_inspiration: "Bonus action, CHA mod uses per long rest. +1d6 to ally roll. Not modeled in 1v1 sim."
+  cutting_words: "Reaction: spend Bardic Inspiration to subtract 1d6 from enemy's roll. Defensive."
+  jack_of_all_trades: "Add half PB to non-proficient ability checks. Not combat-relevant in sim."
+  ability_score_improvement_2024: "Level 4: ASI +2 CHA recommended (16→18)"

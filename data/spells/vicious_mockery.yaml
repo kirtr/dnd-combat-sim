@@ -1,0 +1,13 @@
+name: vicious_mockery
+level: 0
+school: enchantment
+damage_dice: "1d4"
+damage_type: psychic
+attack_type: save
+save_ability: wisdom
+half_on_save: false
+concentration: false
+cantrip_scaling: true   # 2d4 at L5, 3d4 at L11, 4d4 at L17
+extra_attacks: 1
+grants_disadvantage: true   # on save fail: target has disadvantage on next attack roll
+description: "WIS save (no half), 1d4 psychic. On fail: target has disadvantage on their next attack roll."
