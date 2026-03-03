@@ -1,0 +1,44 @@
+name: Fiend Warlock Orc L5
+class: warlock
+subclass: fiend
+level: 5
+species: orc
+background: soldier
+origin_feat: tough
+ability_scores:
+  str: 8
+  dex: 14
+  con: 14
+  int: 10
+  wis: 12
+  cha: 18
+weapons:
+  - dagger
+armor: studded_leather
+shield: false
+spellcasting_ability: charisma
+pact_magic_slot_level: 3
+spell_slots:
+  3: 2
+spells_known:
+  - eldritch_blast
+  - hex
+  - armor_of_agathys
+  - misty_step
+  - fireball
+invocations:
+  - agonizing_blast
+  - repelling_blast
+tactic: aggressive
+powers:
+  - eldritch_blast
+  - hex
+  - armor_of_agathys
+  - misty_step
+  - fireball
+tags:
+  - warlock
+  - fiend
+  - level5
+  - ranged
+  - orc
