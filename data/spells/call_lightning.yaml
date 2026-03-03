@@ -1,0 +1,14 @@
+name: call_lightning
+level: 3
+school: conjuration
+damage_dice: "3d10"
+damage_type: lightning
+attack_type: save
+save_ability: dexterity
+half_on_save: true
+concentration: true
+cantrip_scaling: false
+extra_attacks: 1
+upcast_dice: "1d10"    # +1d10 per slot level above 3rd
+repeating: true        # on caster's action each subsequent turn, re-triggers for free (uses action)
+description: "Concentration. On cast and each subsequent action: target makes DEX save, 3d10 lightning (half on save). +1d10/slot above 3rd."

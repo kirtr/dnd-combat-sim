@@ -1,0 +1,14 @@
+name: shillelagh
+level: 0
+school: transmutation
+damage_dice: "1d8"
+damage_type: bludgeoning
+attack_type: melee_spell_attack   # uses spell_attack_bonus instead of STR, WIS-based
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false            # does not scale with level (unlike typical cantrips)
+extra_attacks: 1
+bonus_action: false               # cast as bonus action to empower the weapon
+melee_only: true
+description: "Bonus action cantrip. Club/quarterstaff uses WIS mod + spell attack bonus instead of STR for 1 min. 1d8 damage."

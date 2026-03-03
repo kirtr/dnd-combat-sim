@@ -1,0 +1,25 @@
+name: druid
+hit_die: d8
+hp_base: 8
+armor_proficiencies: [light, medium, shield]
+weapon_proficiencies: [clubs, daggers, quarterstaffs, scimitars, sickles]
+saving_throw_proficiencies: [intelligence, wisdom]
+spellcasting_ability: wisdom
+spell_slots_by_level:
+  1: {1: 2}
+  2: {1: 3}
+  3: {1: 4, 2: 2}
+  4: {1: 4, 2: 3}
+  5: {1: 4, 2: 3, 3: 2}
+features:
+  1: [spellcasting, druidic, primal_order]
+  2: [wild_shape, wild_companion]
+  3: [druid_subclass_feature]
+  4: [ability_score_improvement, wild_shape_improvement]
+  5: [wild_shape_cr1]
+notes:
+  moon_druid: "Circle of the Moon: Wild Shape into CR 1 beasts at L3 (CR 2 at L5). Bonus action transform."
+  land_druid: "Circle of the Land: extra spells, natural recovery (regain L1-L2 slots on short rest)."
+  shillelagh: "Cantrip: bonus action to make quarterstaff use WIS for attacks, deals 1d8."
+  wild_shape: "Not modeled in combat sim — deferred. Complex state machine."
+  ability_score_improvement_2024: "Level 4: ASI +2 WIS recommended (16→18)"

@@ -1,0 +1,14 @@
+name: healing_word
+level: 1
+school: evocation
+damage_dice: "1d4"
+damage_type: null
+attack_type: heal       # heals the caster
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+upcast_dice: "1d4"     # +1d4 per slot level above 1st
+bonus_action: true
+description: "Bonus action. Heal self or ally 1d4+WIS HP. +1d4/slot above 1st. (Sim: druid self-heals when below 50% HP)"

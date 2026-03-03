@@ -1,0 +1,33 @@
+name: Moon Druid Human
+class: druid
+subclass: moon
+level: 3
+species: human
+background: guide
+origin_feat: tough
+ability_scores:
+  str: 10
+  dex: 12
+  con: 14
+  int: 10
+  wis: 16
+  cha: 10
+weapons:
+  - quarterstaff
+armor: hide
+shield: true
+spellcasting_ability: wisdom
+spell_slots:
+  1: 4
+  2: 2
+spells_known:
+  - shillelagh
+  - thunderwave
+  - healing_word
+tactic: aggressive
+tags:
+  - druid
+  - moon
+  - level3
+  - caster
+  - human
