@@ -422,6 +422,8 @@ class Character:
         return bonus
 
     def _attack_ability_mod(self, weapon: Weapon) -> int:
+        if "pact_of_the_blade" in self.features and weapon.is_melee:
+            return self.cha_mod
         if weapon.is_finesse:
             return max(self.str_mod, self.dex_mod)
         if weapon.is_ranged:

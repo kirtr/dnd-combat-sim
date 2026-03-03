@@ -368,6 +368,10 @@ def load_build(path: str | Path) -> Character:
     # Warlock: Invocations
     invocations = build.get("invocations", [])
 
+    pact_boon = build.get("pact_boon", "")
+    if class_name == "warlock" and pact_boon == "blade" and "pact_of_the_blade" not in features:
+        features.append("pact_of_the_blade")
+
     # Spells known: add each to features if not already present (broader handler — c874821 handles hunters_mark; this catches all others)
     for spell in build.get("spells_known", []):
         if spell not in features:
@@ -404,6 +408,8 @@ def load_build(path: str | Path) -> Character:
     # Extra Attack (level 5 martial baseline)
     extra_attacks = 0
     if class_name in {"fighter", "barbarian", "ranger", "monk", "paladin"} and level >= 5:
+        extra_attacks = 1
+    if class_name == "warlock" and pact_boon == "blade" and level >= 5:
         extra_attacks = 1
 
     char = Character(

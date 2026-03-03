@@ -71,9 +71,10 @@ class PriorityTactics(TacticsEngine):
     ) -> list[TurnAction]:
         prefix_actions: list[TurnAction] = []
         actions: list[TurnAction] = []
+        is_blade_pact = "pact_of_the_blade" in char.features
 
         # --- Full caster logic ---
-        if char.spells_known and "eldritch_blast" not in char.features:
+        if char.spells_known and "eldritch_blast" not in char.features and not is_blade_pact:
             if any(e.name == "SpiritualWeapon" for e in char.active_effects):
                 prefix_actions.append(TurnAction(kind="spiritual_weapon_attack"))
             if (
@@ -163,11 +164,11 @@ class PriorityTactics(TacticsEngine):
                     actions.append(TurnAction(kind="adrenaline_rush"))
 
         # --- Warlock: Eldritch Blast as primary action every turn ---
-        if "eldritch_blast" in char.features:
+        if "eldritch_blast" in char.features and not is_blade_pact:
             actions.append(TurnAction(kind="eldritch_blast"))
 
         # --- Warlock: Armor of Agathys when already in melee and exposed ---
-        if "armor_of_agathys" in char.features and in_melee:
+        if "armor_of_agathys" in char.features and in_melee and not is_blade_pact:
             if not any(e.name == "Armor of Agathys" for e in char.active_effects):
                 if char.highest_available_spell_slot():
                     actions.append(TurnAction(kind="armor_of_agathys"))

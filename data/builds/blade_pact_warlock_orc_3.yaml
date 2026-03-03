@@ -1,0 +1,37 @@
+name: Blade Pact Warlock Orc 3
+class: warlock
+subclass: fiend
+level: 3
+species: orc
+background: soldier
+origin_feat: tough
+ability_scores:
+  str: 8
+  dex: 14
+  con: 14
+  int: 10
+  wis: 12
+  cha: 16
+weapons:
+  - longsword
+armor: studded_leather
+shield: false
+pact_boon: blade
+spellcasting_ability: charisma
+pact_magic_slot_level: 2
+spell_slots:
+  2: 2
+spells_known:
+  - eldritch_blast
+  - hex
+  - armor_of_agathys
+invocations:
+  - agonizing_blast
+tactic: aggressive
+tags:
+  - warlock
+  - fiend
+  - level3
+  - melee
+  - orc
+  - blade_pact

@@ -116,16 +116,7 @@ def _weapon_damage_str(char: "Character", weapon: "Weapon") -> str:
     from sim.models import WeaponProperty
 
     # Determine ability modifier used for this weapon
-    if weapon.is_finesse:
-        ability_mod = max(char.str_mod, char.dex_mod)
-    elif weapon.is_ranged:
-        ability_mod = char.dex_mod
-    elif char.martial_arts_die and not weapon.is_heavy:
-        ability_mod = max(char.str_mod, char.dex_mod)
-    else:
-        ability_mod = char.str_mod
-
-    bonus = ability_mod + weapon.bonus
+    bonus = char.damage_modifier(weapon)
 
     # Dueling: +2 for melee one-handed weapons that are not thrown weapons
     is_thrown_only = (weapon.is_thrown and not weapon.is_ranged
@@ -134,7 +125,7 @@ def _weapon_damage_str(char: "Character", weapon: "Weapon") -> str:
             and weapon.is_melee
             and not weapon.is_two_handed
             and not is_thrown_only):
-        bonus += 2
+        bonus -= 2
 
     die = weapon.damage_dice
     dmg = f"{die}{_fmt_mod(bonus)}"
