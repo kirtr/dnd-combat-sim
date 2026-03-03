@@ -71,6 +71,14 @@ class PriorityTactics(TacticsEngine):
     ) -> list[TurnAction]:
         actions: list[TurnAction] = []
 
+        # --- Full caster logic ---
+        if char.spells_known:
+            spell_action = _pick_spell_action(char)
+            if spell_action:
+                actions.append(spell_action)
+            if spell_action is not None:
+                return actions
+
         # --- Barbarian: Rage on first turn ---
         if (
             "rage" in char.features
@@ -290,6 +298,29 @@ class PriorityTactics(TacticsEngine):
                 actions.append(TurnAction(kind="action_surge"))
 
         return actions
+
+
+def _pick_spell_action(char: Character) -> TurnAction | None:
+    """Pick the best spell to cast. Returns TurnAction or None if no spells available."""
+    spells = char.spells_known
+
+    if char.has_spell_slot(3) and "fireball" in spells:
+        return TurnAction(kind="cast_spell", extra={"spell": "fireball", "slot_level": 3})
+
+    if char.has_spell_slot(2) and "scorching_ray" in spells:
+        return TurnAction(kind="cast_spell", extra={"spell": "scorching_ray", "slot_level": 2})
+
+    if char.has_spell_slot(1):
+        if "chromatic_orb" in spells:
+            return TurnAction(kind="cast_spell", extra={"spell": "chromatic_orb", "slot_level": 1})
+        if "magic_missile" in spells:
+            return TurnAction(kind="cast_spell", extra={"spell": "magic_missile", "slot_level": 1})
+
+    for cantrip in ["fire_bolt", "toll_the_dead", "sacred_flame"]:
+        if cantrip in spells:
+            return TurnAction(kind="cast_spell", extra={"spell": cantrip, "slot_level": 0})
+
+    return None
 
 
 def _pick_melee_weapon(char: Character):

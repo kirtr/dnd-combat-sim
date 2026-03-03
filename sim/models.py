@@ -231,6 +231,7 @@ class Character:
     # --- Spell fields (None / empty if not a spellcaster) ---
     spellcasting_ability: str | None = None   # "charisma", "wisdom", "intelligence"
     spell_slots: dict[int, int] = field(default_factory=dict)   # {level: max_slots}
+    spells_known: list[str] = field(default_factory=list)  # spell ids from data/spells/
     concentration_effect: str | None = None   # name of active concentration spell, or None
     invocations: list[str] = field(default_factory=list)    # Eldritch Invocations (Warlock)
     aoa_cold_damage: int = 0                  # Armor of Agathys: cold retaliation on melee hit

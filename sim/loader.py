@@ -374,6 +374,7 @@ def load_build(path: str | Path) -> Character:
         spell_slots = {int(k): int(v) for k, v in spell_slots_raw.items() if int(v) > 0}
     else:
         spell_slots = {}
+    spells_known = build.get("spells_known", [])
     for slot_level, max_slots in spell_slots.items():
         resources[f"spell_slot_{slot_level}"] = Resource(
             f"Spell Slot {slot_level}", max_slots, max_slots, "long_rest"
@@ -427,6 +428,7 @@ def load_build(path: str | Path) -> Character:
         breath_weapon_damage_type=bw_damage_type,
         spellcasting_ability=spellcasting_ability,
         spell_slots=spell_slots,
+        spells_known=spells_known,
         invocations=invocations,
     )
     return char

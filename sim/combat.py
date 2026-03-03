@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import re
+
 from sim.dice import d20, eval_dice, roll
 from sim.models import Character, CombatState, CombatPhase, Condition, ActiveEffect, DamageType, MasteryProperty
-from sim.actions import resolve_attack, do_second_wind, do_dash, do_dodge
+from sim.actions import resolve_attack, do_second_wind, do_dash, do_dodge, resolve_spell_attack, resolve_spell_save
 from sim.effects import apply_rage, apply_bear_totem_rage, apply_reckless_attack
+from sim.spells import cantrip_die_count, get_spell
 from sim.tactics import TacticsEngine, TurnAction
 
 
@@ -136,6 +139,12 @@ def _execute_turn(
         elif action.kind == "attack":
             if not char.action_used:
                 _do_melee_attack(char, opponent, action, state)
+        elif action.kind == "cast_spell":
+            if not char.action_used:
+                spell_name = action.extra.get("spell", "")
+                slot_level = action.extra.get("slot_level", 0)
+                if spell_name:
+                    _do_cast_spell(char, opponent, spell_name, slot_level, state)
         elif action.kind == "flurry":
             _do_flurry(char, opponent, state)
         elif action.kind == "martial_arts_strike":
@@ -274,6 +283,128 @@ def _do_move(char: Character, opponent: Character, state: CombatState) -> None:
         char.movement_remaining -= move
         char.has_moved = True
         state.log(f"  {char.name} moves {move} ft closer (distance: {state.distance} ft)")
+
+
+def _scale_dice_count(dice_str: str, multiplier: int) -> str:
+    match = re.match(r"(\d+)(d\d+.*)", dice_str)
+    if not match:
+        return dice_str
+    return f"{int(match.group(1)) * multiplier}{match.group(2)}"
+
+
+def _add_upcast_dice(base_dice: str, upcast_dice: str, extra_levels: int) -> str:
+    if extra_levels <= 0:
+        return base_dice
+
+    match_base = re.match(r"(\d+)(d\d+)(.*)", base_dice)
+    match_up = re.match(r"(\d+)(d\d+)(.*)", upcast_dice)
+    if not match_base or not match_up:
+        return base_dice
+    if match_base.group(2) != match_up.group(2) or match_base.group(3) or match_up.group(3):
+        return base_dice
+
+    base_count = int(match_base.group(1))
+    up_count = int(match_up.group(1))
+    return f"{base_count + up_count * extra_levels}{match_base.group(2)}"
+
+
+def _normalize_save_ability(save_ability: str) -> str:
+    return {
+        "strength": "str",
+        "dexterity": "dex",
+        "constitution": "con",
+        "intelligence": "int",
+        "wisdom": "wis",
+        "charisma": "cha",
+    }.get(save_ability, save_ability)
+
+
+def _do_cast_spell(
+    char: Character,
+    opponent: Character,
+    spell_name: str,
+    slot_level: int,
+    state: CombatState,
+) -> None:
+    """Resolve a spell cast. slot_level=0 for cantrips."""
+    label = f"  [{char.name}] CAST "
+    spell = get_spell(spell_name)
+    if spell is None:
+        state.log(f"{label}{spell_name} — UNKNOWN SPELL")
+        return
+
+    if slot_level > 0:
+        if not char.spend_spell_slot(slot_level):
+            state.log(f"{label}{spell_name} — NO SLOT AVAILABLE (level {slot_level})")
+            return
+
+    char.action_used = True
+
+    if spell.concentration:
+        char.concentrate(spell_name)
+
+    dice_str = spell.damage_dice
+    if not dice_str:
+        state.log(f"{label}{spell_name} (no damage)")
+        return
+
+    if spell.cantrip_scaling and spell.level == 0:
+        dice_str = _scale_dice_count(dice_str, cantrip_die_count(spell, char.level))
+
+    if slot_level > spell.level and spell.upcast_dice:
+        dice_str = _add_upcast_dice(dice_str, spell.upcast_dice, slot_level - spell.level)
+
+    if spell.name == "toll_the_dead" and spell.missing_hp_dice and opponent.current_hp < opponent.max_hp:
+        count = cantrip_die_count(spell, char.level) if spell.cantrip_scaling else 1
+        match = re.match(r"\d+(d\d+.*)", spell.missing_hp_dice)
+        if match:
+            dice_str = f"{count}{match.group(1)}"
+
+    if spell.attack_type == "spell_attack":
+        attack_count = spell.extra_attacks
+        if spell.name == "scorching_ray" and slot_level > spell.level:
+            attack_count += slot_level - spell.level
+        for _ in range(attack_count):
+            if not opponent.is_alive:
+                break
+            resolve_spell_attack(
+                char,
+                opponent,
+                dice_str,
+                spell.damage_type or DamageType.FORCE,
+                spell_name,
+                state,
+            )
+        return
+
+    if spell.attack_type == "save":
+        resolve_spell_save(
+            char,
+            opponent,
+            dice_str,
+            spell.damage_type or DamageType.FORCE,
+            spell_name,
+            _normalize_save_ability(spell.save_ability),
+            state,
+            spell.half_on_save,
+        )
+        return
+
+    if spell.attack_type == "none":
+        dart_count = spell.extra_attacks + max(0, slot_level - spell.level)
+        damage_type = spell.damage_type or DamageType.FORCE
+        total_damage = 0
+        parts: list[str] = []
+        for _ in range(dart_count):
+            result = eval_dice(dice_str)
+            actual = opponent.take_damage(result.total, damage_type, state)
+            total_damage += actual
+            parts.append(str(actual))
+            if not opponent.is_alive:
+                break
+        slot_str = f" (slot {slot_level})" if slot_level > 0 else " (cantrip)"
+        detail = " · ".join(parts)
+        state.log(f"{label}{spell_name}{slot_str} → {detail} = {total_damage} {damage_type.name.lower()}")
 
 
 def _do_ranged_attack(
