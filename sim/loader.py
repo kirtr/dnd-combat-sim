@@ -212,8 +212,12 @@ def load_build(path: str | Path) -> Character:
     if "action_surge" in features:
         resources["action_surge"] = Resource("Action Surge", 1, 1, "short_rest")
     if "rage" in features:
-        # 2 rages at level 1-2
-        resources["rage"] = Resource("Rage", 2, 2, "long_rest")
+        rage_uses = 2
+        if level >= 6:
+            rage_uses = 4
+        elif level >= 3:
+            rage_uses = 3
+        resources["rage"] = Resource("Rage", rage_uses, rage_uses, "long_rest")
     if "flurry_of_blows" in features or "patient_defense" in features or "step_of_the_wind" in features:
         # Focus Points = monk level
         resources["focus_points"] = Resource("Focus Points", level, level, "short_rest")
@@ -324,9 +328,6 @@ def load_build(path: str | Path) -> Character:
 
     # Barbarian subclasses at level 3
     if class_name == "barbarian" and level >= 3:
-        # Rage uses increase to 3 at level 3
-        if "rage" in resources:
-            resources["rage"] = Resource("Rage", 3, 3, "long_rest")
         if subclass == "berserker":
             features.append("frenzy")
             if level >= 6 and "mindless_rage" not in features:
@@ -439,6 +440,7 @@ def load_build(path: str | Path) -> Character:
         spell_slots=spell_slots,
         spells_known=spells_known,
         invocations=invocations,
+        aura_of_protection="aura_of_protection" in features,
     )
     return char
 

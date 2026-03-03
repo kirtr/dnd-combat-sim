@@ -86,6 +86,10 @@ def _pad_label(label: str) -> str:
     return f"{label:<9}"
 
 
+def _saving_throw_roll(char: Character, ability: str) -> int:
+    return d20() + char.saving_throw_total(ability)
+
+
 # ---------------------------------------------------------------------------
 # Advantage / Disadvantage — with source tracking
 # ---------------------------------------------------------------------------
@@ -364,9 +368,9 @@ def _try_stunning_strike(attacker: Character, defender: Character, weapon: Weapo
 
     res.spend()
     dc = 8 + attacker.proficiency_bonus + attacker.wis_mod
-    save_roll = d20() + defender.con_mod
+    save_roll = _saving_throw_roll(defender, "con")
     if save_roll < dc:
-        defender.conditions.add(Condition.STUNNED)
+        defender.apply_condition(Condition.STUNNED)
         existing = next((e for e in defender.active_effects if e.name == "Stunning Strike" and e.extra.get("source") == attacker.name), None)
         if existing:
             existing.extra["remaining_source_turn_ends"] = 2
@@ -398,9 +402,9 @@ def _try_trip_attack(attacker: Character, defender: Character, state: CombatStat
     dmg = result.total
     die_val = result.rolls[0] if result.rolls else dmg
     dc = 8 + attacker.str_mod + attacker.proficiency_bonus
-    save = d20() + defender.str_mod
+    save = _saving_throw_roll(defender, "str")
     if save < dc:
-        defender.conditions.add(Condition.PRONE)
+        defender.apply_condition(Condition.PRONE)
         segment = f"Trip [d8={die_val}] → prone (save {save}/DC {dc})"
     else:
         segment = f"Trip [d8={die_val}] → resisted (save {save}/DC {dc})"
@@ -423,16 +427,18 @@ def _try_menacing_attack(attacker: Character, defender: Character, state: Combat
     dmg = result.total
     die_val = result.rolls[0] if result.rolls else dmg
     dc = 8 + attacker.str_mod + attacker.proficiency_bonus
-    save_roll = d20() + defender.wis_mod
+    save_roll = _saving_throw_roll(defender, "wis")
     if save_roll < dc:
-        defender.conditions.add(Condition.FRIGHTENED)
-        defender.active_effects.append(ActiveEffect(
-            name="Frightened",
-            source="menacing_attack",
-            duration=1,
-            end_trigger="end_of_turn",
-        ))
-        segment = f"Menacing [d8={die_val}] → frightened (save {save_roll}/DC {dc})"
+        if defender.apply_condition(Condition.FRIGHTENED):
+            defender.active_effects.append(ActiveEffect(
+                name="Frightened",
+                source="menacing_attack",
+                duration=1,
+                end_trigger="end_of_turn",
+            ))
+            segment = f"Menacing [d8={die_val}] → frightened (save {save_roll}/DC {dc})"
+        else:
+            segment = f"Menacing [d8={die_val}] → immune (save {save_roll}/DC {dc})"
     else:
         segment = f"Menacing [d8={die_val}] → resisted (save {save_roll}/DC {dc})"
     return dmg, segment
@@ -828,9 +834,9 @@ def _apply_mastery_on_hit_new(
     elif mastery == MasteryProperty.TOPPLE:
         ability_mod = attacker._attack_ability_mod(weapon)
         dc = 8 + ability_mod + attacker.proficiency_bonus
-        save_roll = d20() + defender.con_mod
+        save_roll = _saving_throw_roll(defender, "con")
         if save_roll < dc:
-            defender.conditions.add(Condition.PRONE)
+            defender.apply_condition(Condition.PRONE)
             tags.append(f"Topple → prone (save {save_roll}/DC {dc})")
         else:
             tags.append(f"Topple → resisted (save {save_roll}/DC {dc})")
@@ -962,8 +968,7 @@ def resolve_spell_save(
 ) -> int:
     """Resolve a saving throw spell. Returns actual damage dealt."""
     dc = caster.spell_save_dc
-    save_mod = getattr(target, f"{save_ability}_mod")
-    save_roll = d20() + save_mod + target.saving_throw_bonus
+    save_roll = _saving_throw_roll(target, save_ability)
     result = eval_dice(damage_dice)
     dmg = result.total
     has_evasion = "evasion" in target.features and save_ability in {"dex", "dexterity"}
@@ -981,11 +986,14 @@ def resolve_spell_save(
         result_str = "fails"
     actual = target.take_damage(actual_dmg, damage_type, state)
     label = _pad_label("ACTION")
-    state.log(
+    msg = (
         f"{label}{spell_name}: {target.name} {result_str} ({save_roll}/DC {dc})"
         f" · {_fmt_rolls(result.rolls)}={actual} {damage_type.name.lower()} dmg"
-        f" [{target.current_hp}/{target.max_hp} HP]"
     )
+    if has_evasion:
+        evasion_damage = 0 if save_roll >= dc else dmg // 2
+        msg += f" · Evasion - {evasion_damage} dmg"
+    state.log(msg + f" [{target.current_hp}/{target.max_hp} HP]")
     return actual
 
 

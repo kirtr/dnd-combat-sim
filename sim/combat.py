@@ -340,7 +340,7 @@ def _normalize_save_ability(save_ability: str) -> str:
 
 
 def _saving_throw_total(char: Character, ability: str) -> int:
-    return d20() + getattr(char, f"{ability}_mod") + char.saving_throw_bonus
+    return d20() + char.saving_throw_total(ability)
 
 
 def _resolve_call_lightning_bolt(

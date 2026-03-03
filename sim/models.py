@@ -324,6 +324,14 @@ class Character:
         return 0
 
     def saving_throw_total(self, ability: str) -> int:
+        ability = {
+            "strength": "str",
+            "dexterity": "dex",
+            "constitution": "con",
+            "intelligence": "int",
+            "wisdom": "wis",
+            "charisma": "cha",
+        }.get(ability, ability)
         return getattr(self, f"{ability}_mod") + self.saving_throw_bonus
 
     def is_immune_to_condition(self, condition: Condition) -> bool:

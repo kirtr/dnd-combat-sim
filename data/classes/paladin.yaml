@@ -13,7 +13,9 @@ features:
   3: [channel_divinity, sacred_weapon, vow_of_enmity]
   4: [ability_score_improvement]
   5: [extra_attack]
+  6: [aura_of_protection]
 notes:
   ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
     only in this chunk).'
   extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
+  aura_of_protection_2024: 'Level 6: Add Charisma modifier to saving throws.'
