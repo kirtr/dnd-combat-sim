@@ -1,0 +1,44 @@
+name: Hexblade Warlock Orc L5
+class: warlock
+subclass: hexblade
+level: 5
+species: orc
+background: soldier
+origin_feat: tough
+ability_scores:
+  str: 14
+  dex: 14
+  con: 16
+  int: 8
+  wis: 10
+  cha: 18
+weapons:
+  - longsword
+  - pact_weapon_longsword
+armor: chain_shirt   # medium armor via hexblade proficiency
+shield: true
+spellcasting_ability: charisma
+pact_magic_slot_level: 3
+spell_slots:
+  3: 2
+spells_known:
+  - eldritch_blast
+  - hex
+  - armor_of_agathys
+  - misty_step
+  - fireball
+invocations:
+  - agonizing_blast
+  - thirsting_blade
+tactic: aggressive
+powers:
+  - hexblade_curse
+  - eldritch_blast
+  - hex
+  - pact_of_the_blade
+tags:
+  - warlock
+  - hexblade
+  - level5
+  - melee
+  - orc

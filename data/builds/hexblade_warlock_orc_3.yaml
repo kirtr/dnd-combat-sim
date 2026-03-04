@@ -1,0 +1,40 @@
+name: Hexblade Warlock Orc L3
+class: warlock
+subclass: hexblade
+level: 3
+species: orc
+background: soldier
+origin_feat: tough
+ability_scores:
+  str: 14
+  dex: 14
+  con: 16
+  int: 8
+  wis: 10
+  cha: 18
+weapons:
+  - longsword
+armor: chain_shirt   # medium armor via hexblade proficiency
+shield: true
+spellcasting_ability: charisma
+pact_magic_slot_level: 2
+spell_slots:
+  2: 2
+spells_known:
+  - eldritch_blast
+  - hex
+  - armor_of_agathys
+  - misty_step
+invocations:
+  - agonizing_blast
+  - armor_of_shadows
+tactic: aggressive
+powers:
+  - hexblade_curse
+  - eldritch_blast
+tags:
+  - warlock
+  - hexblade
+  - level3
+  - melee
+  - orc

@@ -1,0 +1,42 @@
+name: Eldritch Knight Human L7
+class: fighter
+subclass: eldritch_knight
+level: 7
+species: human
+background: soldier
+origin_feat: tough
+ability_scores:
+  str: 20   # ASI at level 4: STR 18→20
+  dex: 14
+  con: 16
+  int: 14
+  wis: 8
+  cha: 8
+weapons:
+  - longsword
+armor: chain_mail
+shield: true
+fighting_style: dueling
+spellcasting_ability: intelligence
+spell_slots:
+  1: 4
+  2: 2
+spells_known:
+  - booming_blade
+  - fire_bolt
+  - shield
+  - thunderwave
+  - misty_step
+tactic: aggressive
+powers:
+  - second_wind
+  - action_surge
+  - weapon_bond
+  - extra_attack
+  - war_magic
+tags:
+  - fighter
+  - eldritch_knight
+  - level7
+  - melee
+  - human

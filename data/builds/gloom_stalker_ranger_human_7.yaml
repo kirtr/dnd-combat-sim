@@ -1,0 +1,33 @@
+name: Gloom Stalker Ranger Human L7
+class: ranger
+subclass: gloom_stalker
+level: 7
+species: human
+background: soldier
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 20   # ASI at level 4: DEX 18→20
+  con: 14
+  int: 10
+  wis: 14
+  cha: 8
+weapons:
+  - longbow
+  - shortsword
+armor: studded_leather
+shield: false
+fighting_style: archery
+tactic: aggressive
+powers:
+  - dread_ambusher
+  - hunters_mark
+  - extra_attack
+  - iron_mind
+  - roving
+tags:
+  - ranger
+  - gloom_stalker
+  - level7
+  - ranged
+  - human
