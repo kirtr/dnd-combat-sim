@@ -60,10 +60,14 @@ def run_combat(
     elif init_b > init_a:
         state.turn_order = [b, a]
     else:
-        if a.dex_mod >= b.dex_mod:
+        # Tiebreak: higher DEX wins; if still tied, flip a coin
+        if a.dex_mod > b.dex_mod:
             state.turn_order = [a, b]
-        else:
+        elif b.dex_mod > a.dex_mod:
             state.turn_order = [b, a]
+        else:
+            import random
+            state.turn_order = [a, b] if random.random() < 0.5 else [b, a]
 
     state.log(f"Initiative: {a.name}={init_a}, {b.name}={init_b}")
     state.log(f"Turn order: {state.turn_order[0].name} → {state.turn_order[1].name}")
