@@ -17,7 +17,48 @@ features:
   3: [arcane_tradition_feature]
   4: [ability_score_improvement]
   5: [arcane_tradition_feature_2]
+subclasses:
+  evocation:
+    features:
+      2:
+      - sculpt_spells
+      6:
+      - potent_cantrip
+      10:
+      - empowered_evocation
+      14:
+      - overchannel
+  bladesinger:
+    armor_proficiencies_added: [light]
+    weapon_proficiencies_added: [one_handed_melee]
+    features:
+      3:
+      - training_in_war_and_song
+      - bladesong
+      6:
+      - extra_attack_bladesinger
+      10:
+      - song_of_defense
+      14:
+      - song_of_victory
 notes:
   evocation_subclass: "Sculpt Spells (level 2), Potent Cantrip (level 6)"
   ability_score_improvement_2024: "Level 4: ASI +2 INT recommended (16→18)"
   spell_slots_2024: "Standard Wizard progression. Arcane Recovery restores slots on short rest (not modeled in combat sim)."
+  potent_cantrip_2024: 'Evocation L6: targets of your evocation cantrips that succeed
+    on a saving throw take half damage instead of no damage.'
+  training_in_war_and_song_2024: 'Bladesinger L3: proficiency with light armor and
+    one type of one-handed melee weapon of your choice (e.g. rapier).'
+  bladesong_2024: 'Bladesinger L3: BA to activate Bladesong for 1 minute (or until
+    you wear medium/heavy armor, use a shield, or become incapacitated). While active:
+    +INT mod to AC (if wearing no armor or light armor); +10 walking speed; advantage
+    on Acrobatics checks; +INT mod to concentration saving throws. Uses = PB per
+    long rest.'
+  extra_attack_bladesinger_2024: 'Bladesinger L6: when you take the Attack action,
+    you can make one extra weapon attack. However, if you use this extra attack, you
+    can cast at most one spell this turn (and only a cantrip, not a leveled spell, if
+    you also attack with the extra attack).'
+  song_of_defense_2024: 'Bladesinger L10: reaction when you take damage while Bladesong
+    is active: expend a spell slot to reduce damage by 5 × spell slot level.'
+  song_of_victory_2024: 'Bladesinger L14: while Bladesong is active, add INT mod to
+    melee weapon attack damage rolls.'

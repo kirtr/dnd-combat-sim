@@ -17,9 +17,71 @@ features:
   3: [bard_college, expertise]
   4: [ability_score_improvement]
   5: [font_of_inspiration]
+  6: [font_of_bardic_inspiration]
+subclasses:
+  lore:
+    features:
+      3:
+      - bonus_proficiencies_lore
+      - cutting_words
+      6:
+      - bonus_magical_secrets
+      14:
+      - peerless_skill
+  college_of_swords:
+    armor_proficiencies_added: [medium]
+    weapon_proficiencies_added: [scimitar]
+    features:
+      3:
+      - bonus_proficiencies_swords
+      - fighting_style_swords
+      - blade_flourish
+      6:
+      - extra_attack
+      14:
+      - masters_flourish
+  college_of_valor:
+    armor_proficiencies_added: [medium, shield]
+    weapon_proficiencies_added: [martial]
+    features:
+      3:
+      - bonus_proficiencies_valor
+      - combat_inspiration
+      6:
+      - extra_attack
+      14:
+      - battle_magic
 notes:
   lore_college: "Bonus proficiencies, Cutting Words (reaction: -1d6 to enemy attack/damage/ability check)"
   bardic_inspiration: "Bonus action, CHA mod uses per long rest. +1d6 to ally roll. Not modeled in 1v1 sim."
   cutting_words: "Reaction: spend Bardic Inspiration to subtract 1d6 from enemy's roll. Defensive."
   jack_of_all_trades: "Add half PB to non-proficient ability checks. Not combat-relevant in sim."
   ability_score_improvement_2024: "Level 4: ASI +2 CHA recommended (16→18)"
+  font_of_bardic_inspiration_2024: 'Level 6: regain all expended uses of Bardic Inspiration
+    whenever you finish a short or long rest (previously long rest only until Level 5).'
+  bonus_magical_secrets_2024: 'Lore Bard L6: learn 2 spells from any class''s spell
+    list. They count as bard spells for you.'
+  bonus_proficiencies_swords_2024: 'Swords Bard L3: proficiency with medium armor
+    and scimitar.'
+  fighting_style_swords_2024: 'Swords Bard L3: choose Two-Weapon Fighting or Dueling
+    (only these two options available).'
+  blade_flourish_2024: 'Swords Bard L3: when you take the Attack action, your speed
+    increases by 10ft this turn. In addition, one of your attacks can become a Blade
+    Flourish (expend one use of Bardic Inspiration die):
+    - Defensive Flourish: add the die result to your attack damage AND to your AC
+      until the start of your next turn.
+    - Slashing Flourish: add the die result to your attack damage; also deal that
+      damage to another creature within 5ft of the original target.
+    - Mobile Flourish: add the die result to your attack damage; push the target up
+      to 5+die feet away; you can move up to 5ft toward it as a reaction.'
+  extra_attack_swords_2024: 'Swords/Valor Bard L6: one extra attack when you take
+    the Attack action.'
+  masters_flourish_2024: 'Swords Bard L14: once per turn, you can use Blade Flourish
+    without expending a use of Bardic Inspiration (roll a d6 for the die result).'
+  bonus_proficiencies_valor_2024: 'Valor Bard L3: proficiency with medium armor,
+    shields, and martial weapons.'
+  combat_inspiration_2024: 'Valor Bard L3: a creature that receives your Bardic
+    Inspiration can add the die to one weapon damage roll, OR use it as a reaction
+    when hit to add the die to their AC against that attack.'
+  battle_magic_2024: 'Valor Bard L14: when you use your action to cast a bard spell,
+    you can make one weapon attack as a bonus action.'

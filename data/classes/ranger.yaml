@@ -26,6 +26,32 @@ features:
   - ability_score_improvement
   5:
   - extra_attack
+  6:
+  - roving
+  7:
+  - tireless
+subclasses:
+  hunter:
+    features:
+      3:
+      - hunters_prey
+      6:
+      - defensive_tactics
+      11:
+      - multiattack_hunter
+      15:
+      - superior_hunters_defense
+  gloom_stalker:
+    features:
+      3:
+      - dread_ambusher
+      - umbral_sight
+      7:
+      - iron_mind
+      11:
+      - stalkers_flurry
+      15:
+      - shadowy_dodge
 phb_ref: pp. 114-119
 notes:
   hunters_mark_2024: "Uses = PB per long rest, NO concentration in 2024. Bonus action to cast, +1d6 per hit."
@@ -33,3 +59,20 @@ notes:
   ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
     only in this chunk).'
   extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
+  roving_2024: 'Level 6: +10 walking speed; gain climb and swim speed equal to walking
+    speed.'
+  tireless_2024: 'Level 7: as an action, regain PB temporary HP; uses = WIS mod per
+    long rest. Long rests also reduce exhaustion by 2 instead of 1.'
+  dread_ambusher_2024: 'Gloom Stalker L3: in first round of combat, +PB to Initiative;
+    speed +10ft; first weapon attack deals +1d8 extra piercing damage; make one extra
+    attack as part of the Attack action on first turn only.'
+  umbral_sight_2024: 'Gloom Stalker L3: darkvision 60ft (or +30ft if already have it);
+    while in dim light or darkness, invisible to creatures that rely on darkvision.'
+  iron_mind_2024: 'Gloom Stalker L7: proficiency in Wisdom saving throws (if not already
+    proficient).'
+  stalkers_flurry_2024: 'Gloom Stalker L11: once per turn when you miss with a weapon
+    attack, you can make an extra weapon attack as part of the same action.'
+  defensive_tactics_2024: 'Hunter L6: choose one — Escape the Horde (opportunity attacks
+    have disadvantage against you), Multiattack Defense (+4 AC vs further attacks
+    from creature that attacked you twice), or Steel Will (advantage on WIS saves
+    against frightened).'

@@ -29,6 +29,30 @@ features:
   - fast_movement
   6:
   - mindless_rage
+  7:
+  - feral_instinct
+subclasses:
+  berserker:
+    features:
+      3:
+      - frenzy
+      6:
+      - mindless_rage
+      10:
+      - intimidating_presence
+      14:
+      - retaliation
+  bear_totem:
+    features:
+      3:
+      - spirit_seeker
+      - totem_spirit_bear
+      6:
+      - totem_spirit_bear_l6
+      10:
+      - spirit_walker
+      14:
+      - totemic_attunement_bear
 phb_ref: pp. 50-52
 notes:
   rage_2024: '2 uses at levels 1-2 (table p.51). Bonus action to enter. Duration:
@@ -45,3 +69,8 @@ notes:
   extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
   fast_movement_2024: 'Level 5: speed +10 while not wearing heavy armor.'
   mindless_rage_2024: 'Level 6: while raging, cannot be charmed or frightened.'
+  feral_instinct_2024: 'Level 7: advantage on Initiative rolls. If surprised at start
+    of combat, you can act normally on your first turn as long as you enter a Rage
+    at the start of that turn.'
+  totem_spirit_bear_l6_2024: 'Bear Totem L6 (Aspect of the Bear): your carrying
+    capacity doubles; advantage on Strength checks and Strength saving throws.'

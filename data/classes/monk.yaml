@@ -27,6 +27,31 @@ features:
   5:
   - extra_attack
   - stunning_strike
+  6:
+  - empowered_strikes
+  7:
+  - evasion
+subclasses:
+  open_hand:
+    features:
+      3:
+      - open_hand_technique
+      6:
+      - wholeness_of_body
+      11:
+      - tranquility
+      17:
+      - quivering_palm
+  shadow:
+    features:
+      3:
+      - shadow_arts
+      6:
+      - shadow_step
+      11:
+      - cloak_of_shadows
+      17:
+      - opportunist
 phb_ref: pp. 100-102
 notes:
   martial_arts_2024: 'Use DEX for monk weapons (simple melee + martial light) and
@@ -51,3 +76,12 @@ notes:
   extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
   stunning_strike_2024: 'Level 5: spend Focus Point to force CON save; target stunned
     on failure (declaration only in this chunk).'
+  empowered_strikes_2024: 'Level 6: your unarmed strikes count as magical for the
+    purpose of overcoming resistance and immunity to nonmagical attacks and damage.'
+  evasion_2024: 'Level 7: when you are subjected to an effect that allows a DEX save
+    for half damage, you take no damage on a success and half damage on a failure.'
+  wholeness_of_body_2024: 'Open Hand L6: BA, expend 3 Focus Points to heal yourself
+    for 3 × your Monk level hit points.'
+  shadow_step_2024: 'Shadow Monk L6: BA to teleport from one area of dim light or
+    darkness to another unoccupied space within 60ft that you can see that is also
+    dim light or darkness. Your next melee attack before end of turn has advantage.'

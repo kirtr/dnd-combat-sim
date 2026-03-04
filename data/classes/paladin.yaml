@@ -13,9 +13,49 @@ features:
   3: [channel_divinity, sacred_weapon, vow_of_enmity]
   4: [ability_score_improvement]
   5: [extra_attack]
-  6: [aura_of_protection]
+  6: [aura_of_protection, aura_of_courage]
+subclasses:
+  vengeance:
+    features:
+      3:
+      - abjure_enemies
+      - vow_of_enmity
+      7:
+      - relentless_avenger
+      15:
+      - soul_of_vengeance
+      20:
+      - avenging_angel
+  devotion:
+    features:
+      3:
+      - sacred_weapon
+      - turn_unholy
+      7:
+      - aura_of_devotion
+      15:
+      - purity_of_spirit
+      20:
+      - holy_nimbus
 notes:
   ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
     only in this chunk).'
   extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
-  aura_of_protection_2024: 'Level 6: Add Charisma modifier to saving throws.'
+  aura_of_protection_2024: 'Level 6: while conscious, you and friendly creatures
+    within 10ft add your CHA modifier to saving throws.'
+  aura_of_courage_2024: 'Level 6 (all paladins): while you are conscious, you and
+    friendly creatures within 10ft can''t be frightened.'
+  sacred_weapon_2024: 'Devotion L3 (Channel Divinity): BA to imbue one weapon you
+    hold. For 1 minute: add CHA modifier to attack rolls with that weapon; weapon
+    deals radiant damage instead of its normal type; weapon emits bright light in a
+    20ft radius and dim light 20ft beyond that.'
+  turn_unholy_2024: 'Devotion L3 (Channel Divinity): present your holy symbol and
+    speak a prayer. Each fiend or undead that can see or hear you within 30ft must
+    make a WIS saving throw or be turned for 1 minute.'
+  aura_of_devotion_2024: 'Devotion L7: while you are conscious, you and friendly
+    creatures within 10ft can''t be charmed.'
+  purity_of_spirit_2024: 'Devotion L15: always under the effects of protection from
+    evil and good (not modeled in combat sim — passive).'
+  holy_nimbus_2024: 'Devotion L20: aura of sunlight 30ft radius; enemies starting
+    turn in it take 10 radiant damage; advantage on saves vs spells cast by fiends
+    and undead; once per long rest.'
