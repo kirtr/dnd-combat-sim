@@ -558,7 +558,7 @@ class Character:
         total = 0
         for amount, dtype in damage_components:
             # Scale this component by the Stone's Endurance reduction ratio
-            adjusted_amount = round(amount * ratio)
+            adjusted_amount = int(amount * ratio)  # floor, per RAW: always round down on fractions
             # Apply resistance (e.g., Rage halves B/S/P)
             resisted = any(dtype in e.damage_resistance for e in self.active_effects)
             if resisted:
