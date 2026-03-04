@@ -25,6 +25,41 @@ features:
   - ability_score_improvement
   5:
   - extra_attack
+subclasses:
+  battle_master:
+    features:
+      3:
+      - combat_superiority
+      - student_of_war
+      6:
+      - know_your_enemy
+      10:
+      - improved_combat_superiority
+      15:
+      - relentless
+  champion:
+    features:
+      3:
+      - improved_critical
+      6:
+      - remarkable_athlete
+      10:
+      - additional_fighting_style
+      15:
+      - superior_critical
+  eldritch_knight:
+    features:
+      3:
+      - weapon_bond
+      - spellcasting_ek
+      7:
+      - war_magic
+      10:
+      - eldritch_strike
+      15:
+      - arcane_charge
+      18:
+      - improved_war_magic
 phb_ref: pp. 90-91
 notes:
   second_wind_2024: 'Uses = 2 at levels 1-3 (from Fighter Features table p.91). Regain
@@ -38,3 +73,17 @@ notes:
   ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
     only in this chunk).'
   extra_attack_2024: 'Level 5: Attack action includes one extra attack.'
+  know_your_enemy_2024: 'Battle Master L6: spend 1 min studying OR use BA in combat
+    to learn 2 attributes of creature relative to yours (STR, DEX, CON, AC, current
+    HP, total class levels, fighter levels). Not modeled in combat sim.'
+  remarkable_athlete_2024: 'Champion L6: add half PB to STR/DEX/CON checks without
+    proficiency; running long jump distance increases by STR mod feet. Not modeled
+    in combat sim.'
+  weapon_bond_2024: 'Eldritch Knight L3: bond with up to 2 weapons via 1-hour ritual.
+    Can''t be disarmed of bonded weapons; can summon bonded weapon to hand as BA.'
+  spellcasting_ek_2024: 'Eldritch Knight L3: INT-based spellcasting. 2 cantrips from
+    Wizard list. Spell slots: L3=2(1st), L4=3(1st), L5=3(1st), L6=3(1st), L7=4(1st,2nd).'
+  war_magic_2024: 'Eldritch Knight L7: when you use action to cast a cantrip, make
+    one weapon attack as a bonus action.'
+  eldritch_strike_2024: 'Eldritch Knight L10: when you hit with a weapon attack, target
+    has disadvantage on next saving throw vs a spell you cast before end of your next turn.'

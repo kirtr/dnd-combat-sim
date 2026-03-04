@@ -17,8 +17,60 @@ features:
   3: [cleric_subclass_feature]
   4: [ability_score_improvement]
   5: [smite_undead]
+  6: [blessed_strikes]
+  7: [divine_intervention]
+subclasses:
+  war:
+    features:
+      3:
+      - guided_strike
+      - war_priest
+      6:
+      - war_gods_blessing
+      17:
+      - avatar_of_battle
+  life:
+    features:
+      3:
+      - disciple_of_life
+      - preserve_life
+      6:
+      - blessed_healer
+      17:
+      - supreme_healing
+  forge:
+    features:
+      3:
+      - blessing_of_the_forge
+      - artisans_blessing
+      6:
+      - soul_of_the_forge
+      11:
+      - saint_of_forge_and_fire
+      17:
+      - avatar_of_battle_forge
 notes:
   war_domain: "Guided Strike (channel divinity: +10 to hit), War Priest (bonus action weapon attack using WIS uses)"
   life_domain: "Disciple of Life (healing +2+spell level), Preserve Life (channel divinity heal)"
   ability_score_improvement_2024: "Level 4: ASI +2 WIS recommended (16→18)"
   spirit_guardians: "Level 3 spell: 3d8 radiant/necrotic to adjacent enemies at start of their turn (WIS save half). Concentration."
+  blessed_strikes_2024: 'Level 6 (all clerics): choose one — Divine Strike (once per
+    turn, when you hit with a weapon attack, deal +1d8 damage of your domain type;
+    increases to +2d8 at level 14) OR Potent Spellcasting (add your WIS modifier to
+    damage rolls from cleric cantrips).'
+  divine_intervention_2024: 'Level 7: as an action, implore your deity for aid. In
+    2024 rules it always works (DM determines the effect). For sim purposes: once per
+    long rest, when reduced to 0 HP, automatically heal to full HP as a reaction
+    (model as emergency_heal_full).'
+  war_gods_blessing_2024: 'War Cleric L6: reaction when an ally you can see makes
+    an attack roll — grant +10 to that attack roll. Uses = PB per long rest.'
+  blessing_of_the_forge_2024: 'Forge Cleric L3: at the end of a long rest, imbue
+    one nonmagical weapon or armor: if weapon, +1 to attack and damage rolls; if
+    armor, +1 AC. This benefit lasts until you use this feature again.'
+  artisans_blessing_2024: 'Forge Cleric L3: ritual (1 hour) to create one simple
+    metal object worth up to 100gp. Not modeled in combat sim.'
+  soul_of_the_forge_2024: 'Forge Cleric L6: +1 bonus to AC while wearing heavy armor;
+    resistance to fire damage.'
+  saint_of_forge_and_fire_2024: 'Forge Cleric L11: immunity to fire damage; while
+    wearing heavy armor, resistance to bludgeoning, piercing, and slashing damage
+    from nonmagical attacks.'

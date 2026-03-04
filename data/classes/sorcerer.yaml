@@ -17,8 +17,36 @@ features:
   3: [metamagic]
   4: [ability_score_improvement]
   5: [sorcerous_origin_feature]
+  # Level 7: no new base class feature
+subclasses:
+  draconic:
+    features:
+      1:
+      - draconic_resilience
+      - draconic_ancestry
+      6:
+      - elemental_affinity
+      14:
+      - dragon_wings
+      18:
+      - draconic_presence
+  wild_magic:
+    features:
+      1:
+      - wild_magic_surge
+      - tides_of_chaos
+      6:
+      - bend_luck
+      14:
+      - controlled_chaos
+      18:
+      - spell_bombardment
 notes:
   draconic_resilience: "Level 1: AC = 13 + DEX mod when unarmored. +1 HP per sorcerer level."
   font_of_magic: "Level 2: Sorcery Points = sorcerer level. Can convert to/from spell slots."
   metamagic: "Level 3: Choose 2 metamagic options (Twinned, Quickened, etc. — not modeled in sim)."
   ability_score_improvement_2024: "Level 4: ASI +2 CHA recommended (16→18)"
+  elemental_affinity_2024: 'Draconic Sorcerer L6: when you cast a spell that deals
+    damage of the type associated with your draconic ancestry, add your CHA modifier
+    to one damage roll of that spell. Additionally, you can spend 1 Sorcery Point
+    as a bonus action to gain resistance to that damage type for 1 hour.'

@@ -17,9 +17,43 @@ features:
   3: [druid_subclass_feature]
   4: [ability_score_improvement, wild_shape_improvement]
   5: [wild_shape_cr1]
+  6: [elemental_fury]
+  # Level 7: no new class feature
+subclasses:
+  moon:
+    features:
+      3:
+      - combat_wild_shape
+      - circle_forms_moon
+      6:
+      - improved_beast_forms
+      10:
+      - elemental_wild_shape
+      14:
+      - thousand_forms
+  land:
+    features:
+      3:
+      - natural_recovery
+      - circle_spells
+      6:
+      - lands_stride
+      10:
+      - natures_ward
+      14:
+      - natures_sanctuary
 notes:
   moon_druid: "Circle of the Moon: Wild Shape into CR 1 beasts at L3 (CR 2 at L5). Bonus action transform."
   land_druid: "Circle of the Land: extra spells, natural recovery (regain L1-L2 slots on short rest)."
   shillelagh: "Cantrip: bonus action to make quarterstaff use WIS for attacks, deals 1d8."
   wild_shape: "Not modeled in combat sim — deferred. Complex state machine."
   ability_score_improvement_2024: "Level 4: ASI +2 WIS recommended (16→18)"
+  elemental_fury_2024: 'Level 6: choose one of the following —
+    Primal Strike: your attacks in Wild Shape form count as magical for the purpose
+    of overcoming resistance and immunity to nonmagical attacks and damage.
+    Potent Spellcasting: add your WIS modifier to the damage you deal with any druid
+    cantrip.'
+  improved_beast_forms_2024: 'Moon Druid L6: while in Wild Shape, you can also transform
+    into beasts with a swimming or flying speed (previously only walking speed). At
+    level 9, you can transform into an Air Elemental, Earth Elemental, Fire Elemental,
+    or Water Elemental (not modeled in combat sim).'

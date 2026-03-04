@@ -13,8 +13,51 @@ features:
   3: [pact_boon]
   4: [ability_score_improvement]
   5: [eldritch_blast_upgrade]
+  # Level 7: invocations level — no new class feature
+subclasses:
+  fiend:
+    features:
+      1:
+      - dark_ones_blessing
+      6:
+      - dark_ones_own_luck
+      10:
+      - fiendish_resilience
+      14:
+      - hurl_through_hell
+  hexblade:
+    spellcasting_ability: charisma
+    armor_proficiencies_added: [medium, shield]
+    weapon_proficiencies_added: [martial]
+    features:
+      1:
+      - hexblade_curse
+      - hexblade_armor
+      6:
+      - accursed_specter
+      10:
+      - armor_of_hexes
+      14:
+      - master_of_hexes
 notes:
   ability_score_improvement_2024: 'Level 4: Ability Score Improvement or feat (declaration
     only in this chunk).'
   eldritch_blast_upgrade_2024: 'Level 5: Eldritch Blast gains a second beam (declaration
     only in this chunk).'
+  hexblade_curse_2024: 'Hexblade L1: BA to curse one creature you can see within 30ft.
+    Until your next short/long rest: +PB to damage rolls against it; score a critical
+    hit on a roll of 19 or 20 against it; regain HP = warlock level + CHA mod when
+    it dies. One curse at a time.'
+  hexblade_armor_2024: 'Hexblade L1: gain proficiency with medium armor, shields, and
+    martial weapons. Use CHA instead of STR/DEX for attack and damage rolls with melee
+    weapons.'
+  accursed_specter_2024: 'Hexblade L6: when you slay a humanoid, you can curse its
+    spirit to rise as a specter under your control (not modeled in combat sim).'
+  armor_of_hexes_2024: 'Hexblade L10: when your hexblade curse target hits you with
+    an attack roll, roll a d6. On a 4+, the attack instead misses (reaction, 50%
+    chance to negate hit).'
+  dark_ones_blessing_2024: 'Fiend L1: when you kill a creature, gain temp HP = CHA
+    mod + warlock level.'
+  dark_ones_own_luck_2024: 'Fiend L6: once per short/long rest, when you make an ability
+    check or saving throw, add 1d10 to the roll (after rolling, before DM says if
+    it succeeds).'

@@ -25,8 +25,44 @@ features:
   - ability_score_improvement
   5:
   - uncanny_dodge
+  6:
+  - expertise_2
   7:
   - evasion
+subclasses:
+  thief:
+    features:
+      3:
+      - fast_hands
+      - second_story_work
+      6:
+      - use_magic_device
+      11:
+      - use_objects_bonus
+      17:
+      - thiefs_reflexes
+  arcane_trickster:
+    features:
+      3:
+      - spellcasting_rogue
+      - mage_hand_legerdemain
+      6:
+      - magical_ambush
+      11:
+      - versatile_trickster
+      17:
+      - spell_thief
+  assassin:
+    features:
+      3:
+      - assassinate
+      - infiltration_expertise
+      9:
+      - death_strike
+      13:
+      - impostor
+      17:
+      - death_strike_upgrade
 phb_ref: pp. 128-129
 notes:
   sneak_attack_2024: 1d6 at levels 1-2. Once per turn. Requires finesse or ranged
@@ -39,4 +75,18 @@ notes:
     only in this chunk).'
   uncanny_dodge_2024: 'Level 5: reaction to halve damage from one attacker you can see
     (declaration only in this chunk).'
+  expertise_2_2024: 'Level 6: two more skill proficiencies of your choice become
+    expertise (double proficiency bonus).'
   evasion_2024: 'Level 7: on DEX saves for half damage, take 0 on success and half on failure.'
+  use_magic_device_2024: 'Thief L6: ignore class, race, and level requirements on
+    use of magic items.'
+  magical_ambush_2024: 'Arcane Trickster L6: if hidden from creature when you cast
+    a spell, that creature has disadvantage on saving throws against the spell this turn.'
+  assassinate_2024: 'Assassin L3: advantage on attack rolls against creatures that
+    have not yet taken a turn in combat. Attacks against surprised creatures auto-crit
+    (treated as rolling a 20).'
+  infiltration_expertise_2024: 'Assassin L3: you can unfailingly create false identities
+    (not modeled in combat sim).'
+  death_strike_2024: 'Assassin L9: when you auto-crit against a surprised target via
+    Assassinate, the target must make CON save (DC = 8 + PB + DEX mod) or take double
+    the damage from the attack.'
