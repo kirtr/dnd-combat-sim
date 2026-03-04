@@ -15,7 +15,7 @@ ability_scores:
 weapons:
   - greatsword
   - javelin
-armor: chain_mail
+armor: splint
 shield: false
 fighting_style: great_weapon_fighting
 tactic: aggressive

@@ -15,7 +15,7 @@ ability_scores:
 weapons:
   - longbow
   - shortsword
-armor: studded_leather
+armor: half_plate
 shield: false
 fighting_style: archery
 tactic: aggressive

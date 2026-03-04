@@ -16,7 +16,7 @@ ability_scores:
 weapons:
 - longsword
 - javelin
-armor: chain_mail
+armor: splint
 shield: true
 fighting_style: dueling
 tactic: aggressive

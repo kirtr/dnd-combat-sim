@@ -17,7 +17,7 @@ weapons:
 - scimitar
 - shortsword
 - javelin
-armor: chain_mail
+armor: splint
 shield: false
 fighting_style: two_weapon_fighting
 tactic: aggressive

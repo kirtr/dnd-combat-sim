@@ -14,7 +14,7 @@ ability_scores:
   cha: 18
 weapons:
   - rapier
-armor: leather
+armor: studded_leather
 shield: false
 fighting_style: dueling
 spellcasting_ability: charisma

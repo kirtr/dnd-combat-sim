@@ -15,7 +15,7 @@ ability_scores:
 weapons:
   - longsword
   - pact_weapon_longsword
-armor: chain_shirt   # medium armor via hexblade proficiency
+armor: half_plate   # medium armor via Hex Warrior proficiency
 shield: true
 spellcasting_ability: charisma
 pact_magic_slot_level: 4

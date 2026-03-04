@@ -159,6 +159,12 @@ def _adv_sources(attacker: Character, defender: Character) -> list[str]:
         sources.append("prone")
     if Condition.STUNNED in defender.conditions:
         sources.append("stunned")
+    # GREATER_INVISIBLE attacker
+    if Condition.GREATER_INVISIBLE in attacker.conditions:
+        sources.append("greater_invisible")
+    # PARALYZED / POLYMORPHED defender
+    if any(c in defender.conditions for c in [Condition.PARALYZED, Condition.POLYMORPHED]):
+        sources.append("target_incapacitated")
     if hasattr(attacker, '_use_heroic_inspiration') and attacker._use_heroic_inspiration:
         hi_res = attacker.resources.get("heroic_inspiration")
         if hi_res and hi_res.available:
@@ -181,6 +187,9 @@ def _disadv_sources(attacker: Character, defender: Character) -> list[str]:
         sources.append("frightened")
     if any(e.name == "Shadow Darkness" for e in defender.active_effects):
         sources.append("Darkness")
+    # GREATER_INVISIBLE defender: attackers have disadvantage
+    if Condition.GREATER_INVISIBLE in defender.conditions:
+        sources.append("target_greater_invisible")
     # Lucky defensive
     if not defender.reaction_used:
         luck_res = defender.resources.get("luck_points")
@@ -205,6 +214,12 @@ def _has_advantage(attacker: Character, defender: Character) -> bool:
     if Condition.PRONE in defender.conditions:
         return True
     if Condition.STUNNED in defender.conditions:
+        return True
+    # GREATER_INVISIBLE attacker has advantage
+    if Condition.GREATER_INVISIBLE in attacker.conditions:
+        return True
+    # PARALYZED / POLYMORPHED defender
+    if any(c in defender.conditions for c in [Condition.PARALYZED, Condition.POLYMORPHED]):
         return True
     if hasattr(attacker, '_use_heroic_inspiration') and attacker._use_heroic_inspiration:
         hi_res = attacker.resources.get("heroic_inspiration")
@@ -233,6 +248,9 @@ def _has_disadvantage(attacker: Character, defender: Character) -> bool:
     if Condition.FRIGHTENED in attacker.conditions:
         return True
     if any(e.name == "Shadow Darkness" for e in defender.active_effects):
+        return True
+    # GREATER_INVISIBLE defender: attackers have disadvantage
+    if Condition.GREATER_INVISIBLE in defender.conditions:
         return True
     if not defender.reaction_used:
         luck_res = defender.resources.get("luck_points")
@@ -521,6 +539,15 @@ def resolve_attack(
     else:
         attack_bonus = attacker.attack_modifier(weapon)
 
+    # Sacred Weapon (Devotion Paladin): +CHA mod to attack rolls
+    sacred_weapon_effect = next((e for e in attacker.active_effects if e.name == "SacredWeapon"), None)
+    if sacred_weapon_effect and weapon.is_melee:
+        attack_bonus += int(sacred_weapon_effect.extra.get("cha_mod", attacker.cha_mod))
+
+    # Blessing of the Forge (Forge Cleric): +1 attack with primary weapon
+    if "blessing_of_the_forge" in attacker.features and weapon.is_melee:
+        attack_bonus += 1
+
     # Shield spell reaction
     if (not defender.reaction_used
             and "shield_spell" in defender.features):
@@ -548,7 +575,24 @@ def resolve_attack(
         d20r = d20r2
         # We don't show the original nat 1 in the new format, just the reroll
 
-    is_crit = roll_result >= attacker.crit_threshold
+    # Hexblade Curse: crit on 19-20 against cursed target
+    effective_crit_threshold = attacker.crit_threshold
+    if (
+        "hexblade_curse" in attacker.features
+        and attacker.hexblade_curse_target == defender.name
+        and effective_crit_threshold > 19
+    ):
+        effective_crit_threshold = 19
+
+    # Assassinate: auto-crit pending (first attack after surprise)
+    _assassinate_crit = False
+    if getattr(attacker, "_assassinate_auto_crit_pending", False):
+        _assassinate_crit = True
+        attacker._assassinate_auto_crit_pending = False
+        is_crit = True
+    else:
+        is_crit = roll_result >= effective_crit_threshold
+
     total = roll_result + attack_bonus
     target_ac = defender.effective_ac
 
@@ -559,6 +603,14 @@ def resolve_attack(
     tags: list[str] = []
     if is_nick_attack:
         tags.append("Nick")
+    if _assassinate_crit:
+        tags.append("Assassinate!")
+
+    # PARALYZED / STUNNED defender at melee range → auto-crit
+    if not is_crit and any(c in defender.conditions for c in [Condition.PARALYZED, Condition.STUNNED]):
+        if state.distance <= 5:
+            is_crit = True
+            tags.append("auto-crit")
 
     label = _pad_label(attack_label)
 
@@ -699,6 +751,27 @@ def _resolve_hit(
         damage += cs_dmg
         attacker.colossus_slayer_used = True
 
+    # Hexblade's Curse: +PB damage against cursed target
+    hex_curse_dmg = 0
+    if (
+        "hexblade_curse" in attacker.features
+        and attacker.hexblade_curse_target == defender.name
+    ):
+        hex_curse_dmg = attacker.proficiency_bonus
+        damage += hex_curse_dmg
+
+    # Blessing of the Forge (Forge Cleric): +1 damage with primary weapon
+    if "blessing_of_the_forge" in attacker.features and weapon.is_melee:
+        damage += 1
+
+    # Blade Flourish (Swords Bard): add rolled die to damage (already tracked in combat.py)
+    blade_flourish_dmg = 0
+    bf_effect = next((e for e in attacker.active_effects if e.name == "BladeFlourish"), None)
+    if bf_effect and not getattr(attacker, "_blade_flourish_used_this_turn", False):
+        # The roll is stored in ac_bonus (same die for both)
+        blade_flourish_dmg = bf_effect.ac_bonus
+        damage += blade_flourish_dmg
+
     # Trip Attack
     trip_dmg, trip_seg = _try_trip_attack(attacker, defender, state)
     damage += trip_dmg
@@ -781,6 +854,10 @@ def _resolve_hit(
         line += f" +Hunter's Mark {_fmt_rolls(hm_rolls)}={hm_dmg}" if len(hm_rolls) > 1 else f" +Hunter's Mark [{hm_rolls[0]}]"
     if cs_dmg:
         line += f" +Colossus Slayer {_fmt_rolls(cs_rolls)}={cs_dmg}" if len(cs_rolls) > 1 else f" +Colossus Slayer [{cs_rolls[0]}]"
+    if hex_curse_dmg:
+        line += f" +HexCurse+{hex_curse_dmg}"
+    if blade_flourish_dmg:
+        line += f" +Flourish+{blade_flourish_dmg}"
     if smite_actual:
         line += f" +Smite {_fmt_rolls(smite_rolls)}={smite_actual} radiant"
     if fire_extra:
@@ -1020,6 +1097,16 @@ def resolve_spell_save(
     save_roll = _saving_throw_roll(target, save_ability)
     result = eval_dice(damage_dice)
     dmg = result.total
+
+    # Elemental Affinity (Sorcerer L6 Draconic): add CHA mod when damage matches ancestry
+    affinity_bonus = 0
+    if (
+        "elemental_affinity" in caster.features
+        and damage_type == getattr(caster, "breath_weapon_damage_type", None)
+    ):
+        affinity_bonus = caster.cha_mod
+        dmg += affinity_bonus
+
     actual_dmg, save_succeeds, has_evasion = resolve_save_damage(
         target,
         save_ability,
@@ -1028,6 +1115,19 @@ def resolve_spell_save(
         dmg,
         half_on_save=half_on_save,
     )
+
+    # Potent Cantrip (Evocation Wizard L6): target takes half damage on successful save vs cantrip
+    # This is applied when damage_dice comes from a cantrip (handled externally by checking spell.level==0)
+    # Here we receive a flag via the spell_name prefixed with "cantrip:" convention or via caller
+    # Simpler: check if caster has potent_cantrip and save_succeeds and actual_dmg == 0 and half_on_save==False
+    if (
+        "potent_cantrip" in caster.features
+        and save_succeeds
+        and actual_dmg == 0
+        and not half_on_save
+    ):
+        actual_dmg = dmg // 2
+
     actual = target.take_damage(actual_dmg, damage_type, state)
     label = _pad_label("ACTION")
     result_str = "saves" if save_succeeds else "fails"
@@ -1035,6 +1135,8 @@ def resolve_spell_save(
         f"{label}{spell_name}: {target.name} {result_str} ({save_roll}/DC {dc})"
         f" · {_fmt_rolls(result.rolls)}={actual} {damage_type.name.lower()} dmg"
     )
+    if affinity_bonus:
+        msg += f" +Affinity({affinity_bonus})"
     if has_evasion:
         msg += f" · Evasion → {actual_dmg} dmg"
     state.log(msg + f" [{target.current_hp}/{target.max_hp} HP]")

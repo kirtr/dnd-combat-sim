@@ -14,7 +14,7 @@ ability_scores:
   cha: 16
 weapons:
   - rapier
-armor: leather
+armor: studded_leather
 shield: false
 spellcasting_ability: charisma
 spell_slots:

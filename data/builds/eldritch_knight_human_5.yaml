@@ -14,7 +14,7 @@ ability_scores:
   cha: 8
 weapons:
   - longsword
-armor: chain_mail
+armor: splint
 shield: true
 fighting_style: dueling
 spellcasting_ability: intelligence

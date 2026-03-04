@@ -16,7 +16,7 @@ weapons:
 - scimitar
 - shortsword
 - javelin
-armor: half_plate
+armor: breastplate
 shield: false
 fighting_style: two_weapon_fighting
 tactic: aggressive

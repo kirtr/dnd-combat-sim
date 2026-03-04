@@ -31,6 +31,15 @@ class SpellData:
     bonus_action: bool = False
     grants_advantage: bool = False
     description: str = ""
+    # New fields (L4-L9 spell effects) — all default to safe values for backward compat
+    effect: str = ""                     # "paralyze", "stun", "banishment", "polymorph",
+                                         # "extra_turns", "stun_no_save", "disintegrate",
+                                         # "harm", "pain", "greater_invisibility", "wish"
+    instant_kill_threshold: int = 0      # Power Word Kill: kill if target HP <= this
+    hp_percentage_cap: float = 0.0       # Harm: reduce to this fraction of max HP on fail
+    polymorph_cr: int = -1               # Polymorph target CR (-1 = disabled)
+    replicate_slot: int = 0              # Wish: cast as slot of this level
+    instant_kill_on_zero: bool = False   # Disintegrate: no stabilize at 0
 
 
 def load_spell_registry(data_dir: Path) -> dict[str, SpellData]:
@@ -67,6 +76,13 @@ def load_spell_registry(data_dir: Path) -> dict[str, SpellData]:
             bonus_action=raw.get("bonus_action", False),
             grants_advantage=raw.get("grants_advantage", False),
             description=raw.get("description", ""),
+            # New effect fields
+            effect=raw.get("effect") or "",        # null → ""
+            instant_kill_threshold=raw.get("instant_kill_threshold", 0),
+            hp_percentage_cap=float(raw.get("hp_percentage_cap", 0.0)),
+            polymorph_cr=raw.get("polymorph_cr", -1),
+            replicate_slot=raw.get("replicate_slot", 0),
+            instant_kill_on_zero=raw.get("instant_kill_on_zero", False),
         )
         registry[spell.name] = spell
 

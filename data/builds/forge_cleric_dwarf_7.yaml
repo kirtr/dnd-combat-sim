@@ -14,7 +14,7 @@ ability_scores:
   cha: 10
 weapons:
   - warhammer
-armor: scale_mail   # heavy armor — upgrade to plate when available
+armor: plate   # heavy armor — forge cleric proficiency (L7 plate)
 shield: true
 spellcasting_ability: wisdom
 spell_slots:
