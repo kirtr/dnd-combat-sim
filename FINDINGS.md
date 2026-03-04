@@ -559,3 +559,64 @@ Rank  Build                                  Win%   HP   AC
 **Bard is last place by a mile (2.8%).** Vicious Mockery disadvantage and hypnotic_pattern CC are powerful in parties but near-useless 1v1 — Bard has no burst and loses the damage race every time.
 
 **Blade Pact Warlock (19%) ≈ EB Warlock (28%) — EB wins.** CHA melee + Hex is solid but Eldritch Blast has more reliable damage at range and doesn't need to close to melee.
+
+---
+
+# Phase 13: Full Level 5 Rankings — All 36 Builds
+
+**Sim Parameters:** n=1000 per matchup, all 36 level-5 builds, 630 total matchups.
+
+## 🏆 Full Tier List
+
+```
+Rank  Build                                  Win%   HP   AC
+------------------------------------------------------------
+  1.  Berserker Greatsword Fire Goliath       87.3%  55   15
+  2.  Berserker S&B Longsword Fire Goliath    86.6%  55   17
+  3.  Berserker Greatsword Orc                79.5%  55   15
+  4.  Berserker S&B Longsword Orc             79.1%  55   17
+  5.  Battle Master S&B Stone Goliath         78.2%  49   18
+  6.  Battle Master GWF Stone Goliath         78.0%  49   16
+  7.  Battle Master Dueling Orc               77.5%  49   18
+  8.  Battle Master S&B Fire Goliath          74.6%  49   18
+  9.  Battle Master S&B Orc                   72.2%  49   18
+ 10.  Battle Master GWF Orc                   71.7%  49   16
+ 11.  Battle Master GWF Fire Goliath          71.7%  49   16
+ 12.  Champion GWF Stone Goliath              64.5%  49   16
+ 13.  Champion S&B Stone Goliath              62.3%  49   18
+ 14.  Vengeance Paladin Orc                   60.0%  44   18
+ 15.  Battle Master TWF Orc                   58.9%  49   16
+ 16.  Open Hand Monk Orc                      58.8%  38   17
+ 17.  Shadow Monk Orc                         58.4%  38   17
+ 18.  Champion S&B Fire Goliath               58.1%  49   18
+ 19.  Champion GWF Fire Goliath               58.0%  49   16
+ 20.  Champion GWF Orc                        52.1%  49   16
+ 21.  Champion S&B Orc                        51.1%  49   18
+ 22.  Hunter Ranger GWF                       47.3%  49   16
+ 23.  Hunter Ranger TWF                       45.5%  49   16
+ 24.  Champion TWF Orc                        36.5%  49   16
+ 25.  Hunter Ranger Archery                   33.7%  44   16
+ 26.  Fiend Warlock Orc                       27.8%  48   14
+ 27.  War Cleric Human                        25.4%  48   18
+ 28.  Draconic Sorcerer Human                 22.7%  32   15
+ 29.  Evocation Wizard Human                  19.3%  32   12
+ 30.  Arcane Trickster Halfling               19.2%  38   15
+ 31.  Blade Pact Warlock Orc                  19.0%  48   14
+ 32.  Arcane Trickster Human                  18.8%  38   15
+ 33.  Moon Druid Human                        15.5%  48   15
+ 34.  Thief Halfling                          13.2%  38   15
+ 35.  Thief Human                             13.0%  38   15
+ 36.  Lore Bard Human                          2.8%  38   13
+```
+
+## Key Findings
+
+**Berserker Fire Goliath is unkillable at L5.** Greatsword at 87.3% beats the entire field. Fire damage on hit + Rage + Frenzy + 55 HP. Nothing in the martial tier touches it cleanly.
+
+**Martials completely dominate casters in 1v1.** Best caster (War Cleric) hits 25.4%. Fireball is devastating vs clusters — worthless vs one target in a toe-to-toe fight.
+
+**Monks overperform their CR.** Open Hand and Shadow Monk both crack top 20 despite 38 HP — Stunning Strike (CON save) and high AC from Unarmored Defense carry them.
+
+**Caster tier order (1v1):** Cleric > Sorcerer > Wizard ≈ Arcane Trickster > Druid > Warlock (both) > Bard. Cleric wins on raw HP+AC even though its DPS is lower. Bard is last — hypnotic_pattern concentration drops too easily.
+
+**Lore Bard dead last at 2.8%.** Vicious Mockery (1d4) is simply not enough damage output. Bard's strength is support — in 1v1 it has nothing.
