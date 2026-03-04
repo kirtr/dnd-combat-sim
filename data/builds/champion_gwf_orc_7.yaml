@@ -10,7 +10,7 @@ ability_scores:
   dex: 14    # Initiative matters vs Alert Bladesinger
   con: 16
   int: 8
-  wis: 12    # Helps vs Polymorph saves
+  wis: 14    # Better Polymorph saves (+2 vs their DC 16)
   cha: 8
 weapons:
   - greatsword   # Graze mastery: miss still deals STR mod (4) damage
@@ -36,9 +36,14 @@ tags:
   - melee
   - orc
 notes: |
-  Anti-Bladesinger build. Key advantages:
-  - Alert feat matches their initiative advantage
-  - Graze mastery forces concentration checks even on misses (4 damage)
-  - Relentless Endurance survives burst damage, allows counterattack
-  - Action Surge round 1: 4 attacks = high chance to break concentration
-  - Improved Critical (19-20) synergizes with many attacks
+  Anti-Bladesinger build. Optimized for the matchup but Polymorph hard-counters:
+  - Alert competes on initiative (+7 vs their +8)
+  - WIS 14 for best available Polymorph save (+2 vs DC 16 = 35% pass)
+  - Relentless Endurance triggers 100% of fights, extends combat 1 round
+  - Graze mastery forces concentration checks on misses (4 damage)
+  - Orc Adrenaline Rush for temp HP buffer
+  
+  Reality: Bladesinger L7 beats ALL L7 builds 100% in this sim due to
+  Polymorph + high concentration saves. The sim doesn't implement save
+  proficiency bonuses, making WIS saves even worse than they should be.
+  Best Champion build given constraints.
