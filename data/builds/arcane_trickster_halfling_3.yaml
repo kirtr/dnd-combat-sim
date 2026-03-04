@@ -15,7 +15,7 @@ ability_scores:
 weapons:
 - rapier
 - shortbow
-armor: leather
+armor: studded_leather
 shield: false
 tactic: aggressive
 powers:

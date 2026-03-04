@@ -14,7 +14,7 @@ ability_scores:
   cha: 10
 weapons:
   - longsword
-armor: chain_mail
+armor: splint
 shield: true
 spellcasting_ability: wisdom
 spell_slots:

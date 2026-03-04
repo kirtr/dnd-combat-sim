@@ -14,7 +14,7 @@ ability_scores:
   cha: 18
 weapons:
   - longsword
-armor: chain_shirt   # medium armor via hexblade proficiency
+armor: scale_mail   # medium armor via Hex Warrior proficiency
 shield: true
 spellcasting_ability: charisma
 pact_magic_slot_level: 2

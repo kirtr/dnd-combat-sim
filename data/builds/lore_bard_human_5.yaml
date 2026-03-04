@@ -14,7 +14,7 @@ ability_scores:
   cha: 18    # ASI at level 4: +2 CHA
 weapons:
   - rapier
-armor: leather
+armor: studded_leather
 shield: false
 spellcasting_ability: charisma
 spell_slots:

@@ -14,7 +14,7 @@ ability_scores:
   cha: 10
 weapons:
   - rapier
-armor: leather   # light armor via bladesinger proficiency
+armor: studded_leather   # light armor required for Bladesong
 shield: false
 spellcasting_ability: intelligence
 spell_slots:
