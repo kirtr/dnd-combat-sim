@@ -263,6 +263,9 @@ class Character:
     def __post_init__(self):
         if self.current_hp == 0:
             self.current_hp = self.max_hp
+        # Per-combat dynamic attributes not in dataclass fields
+        self._assassinate_auto_crit_pending: bool = False
+        self.nick_used_this_turn: bool = False
 
     # --- Convenience properties ---
 
@@ -275,6 +278,12 @@ class Character:
         bonus = sum(e.ac_bonus for e in self.active_effects)
         if Condition.PRONE in self.conditions:
             pass  # Handled via advantage/disadvantage on attacks
+        # Bladesong: +INT mod to AC (no heavy/medium armor — assumed from build config)
+        if self.bladesong_active:
+            bonus += self.int_mod
+        # Soul of the Forge (Forge Cleric L6): +1 AC while in heavy armor
+        if "soul_of_the_forge" in self.features:
+            bonus += 1
         return self.ac + bonus
 
     @property
@@ -579,6 +588,9 @@ class Character:
             adjusted_amount = int(amount * ratio)  # floor, per RAW: always round down on fractions
             # Apply resistance (e.g., Rage halves B/S/P)
             resisted = any(dtype in e.damage_resistance for e in self.active_effects)
+            # Soul of the Forge: fire resistance
+            if dtype == DamageType.FIRE and "soul_of_the_forge" in self.features:
+                resisted = True
             if resisted:
                 adjusted_amount = adjusted_amount // 2
             # Step 3: Vulnerability would double here (not yet implemented)
@@ -648,6 +660,16 @@ class Character:
     def take_damage(self, amount: int, damage_type: DamageType, state: Any = None) -> int:
         """Single-type damage. Delegates to take_attack_damage, then checks concentration."""
         actual_damage = self.take_attack_damage([(amount, damage_type)], state, is_attack=False)
+        # Divine Intervention (Cleric L7): prevent death once per combat
+        if (self.current_hp == 0
+                and "divine_intervention" in self.features
+                and "divine_intervention" in self.resources):
+            res = self.resources["divine_intervention"]
+            if res.available:
+                res.spend()
+                self.current_hp = self.max_hp
+                if state:
+                    state.log(f"  DIVINE INTERVENTION — {self.name} saved from death! Restored to {self.max_hp} HP!")
         # Concentration check if concentrating
         if self.concentration_effect is not None and state is not None and actual_damage > 0:
             spell_name = self.concentration_effect
