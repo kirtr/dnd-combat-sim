@@ -1,0 +1,20 @@
+name: cone_of_cold
+level: 5
+school: evocation
+damage_dice: "8d8"
+damage_type: cold
+attack_type: save
+save_ability: constitution
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: null
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "CON save, 8d8 cold damage (half on save). 60ft cone area of effect.
+  In 1v1 sim, treat as single-target: full cone hits the one opponent. Creatures
+  killed by this spell become frozen statues (not modeled in sim beyond death)."
+upcast_dice: "1d8"   # +1d8 per slot level above 5th

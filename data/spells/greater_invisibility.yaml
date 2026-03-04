@@ -1,0 +1,20 @@
+name: greater_invisibility
+level: 4
+school: illusion
+damage_dice: ""
+damage_type: ""
+attack_type: none
+save_ability: ""
+half_on_save: false
+concentration: true
+cantrip_scaling: false
+extra_attacks: 1
+effect: "greater_invisibility"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "No attack roll or save. Concentration up to 1 minute. The target (self
+  or a creature you touch) becomes invisible. Unlike regular invisibility, this doesn't
+  end when the target attacks or casts spells. While invisible: the target has advantage
+  on all attack rolls; attackers have disadvantage on attacks against the target."

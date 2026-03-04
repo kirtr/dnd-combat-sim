@@ -1,0 +1,22 @@
+name: harm
+level: 6
+school: necromancy
+damage_dice: "14d6"
+damage_type: necrotic
+attack_type: save
+save_ability: constitution
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: "harm"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.33
+polymorph_cr: 0
+replicate_slot: 0
+description: "CON save. On fail: target's hit point maximum is reduced to 1/3 of
+  its maximum (hp_percentage_cap: 0.33); the target's current HP is reduced to match
+  the new maximum if it was above that value. The target can't regain HP above this
+  new maximum until it finishes a long rest. On success: 14d6 necrotic damage (half).
+  In sim: on failed save, set target HP to floor(max_hp * 0.33), minimum 1. Immune
+  creatures auto-succeed."

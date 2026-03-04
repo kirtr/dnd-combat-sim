@@ -1,0 +1,22 @@
+name: sunbeam
+level: 6
+school: evocation
+damage_dice: "6d8"
+damage_type: radiant
+attack_type: save
+save_ability: constitution
+half_on_save: true
+concentration: true
+cantrip_scaling: false
+extra_attacks: 1
+effect: "blinded_on_fail"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "CON save each time beam is used (action to fire), 6d8 radiant (half
+  on save). Concentration, up to 1 minute. On a failed save, the target is also
+  blinded until the start of your next turn. Vampires and other sunlight-sensitive
+  creatures have disadvantage on the save. Undead and oozes have disadvantage. The
+  beam can be fired once per round as your action; on subsequent rounds you can move
+  it to a new target."

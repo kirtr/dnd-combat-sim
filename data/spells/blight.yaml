@@ -1,0 +1,20 @@
+name: blight
+level: 4
+school: necromancy
+damage_dice: "8d6"
+damage_type: necrotic
+attack_type: save
+save_ability: constitution
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: null
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "CON save, 8d6 necrotic (half on save). Plants and undead have disadvantage
+  on the saving throw. Plant creatures have disadvantage and take maximum damage on
+  a failed save (no half). Withers and drains moisture."
+upcast_dice: "1d6"   # +1d6 per slot level above 4th

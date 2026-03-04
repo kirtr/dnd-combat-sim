@@ -1,0 +1,21 @@
+name: polymorph
+level: 4
+school: transmutation
+damage_dice: ""
+damage_type: ""
+attack_type: save
+save_ability: wisdom
+half_on_save: false
+concentration: true
+cantrip_scaling: false
+extra_attacks: 1
+effect: "polymorph"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "WIS save, concentration up to 1 hour. On fail: target is transformed
+  into a CR 0 beast (sim uses rabbit stats: AC 13, HP 3, speed 40ft, no attacks,
+  no spellcasting). The target retains its personality but loses all class features
+  and spells. Transformation ends when the beast form drops to 0 HP (target reverts
+  with original HP minus excess damage) or concentration ends. On success: no effect."

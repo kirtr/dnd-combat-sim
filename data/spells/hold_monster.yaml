@@ -1,0 +1,23 @@
+name: hold_monster
+level: 5
+school: enchantment
+damage_dice: ""
+damage_type: ""
+attack_type: save
+save_ability: wisdom
+half_on_save: false
+concentration: true
+cantrip_scaling: false
+extra_attacks: 1
+effect: "paralyze"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "WIS save, concentration up to 1 minute. On fail: target is paralyzed.
+  At the end of each of its turns, the target can make another WIS save to end the
+  effect. While paralyzed: target is incapacitated and can't move or speak; fails
+  STR and DEX saves; attacks against it have advantage; any attack that hits it is
+  a critical hit if the attacker is within 5ft. Unlike Hold Person, works on any
+  creature type (not just humanoids). On success: no effect."
+upcast_note: "Upcast to L6+: affect one additional creature per slot level above 5th."

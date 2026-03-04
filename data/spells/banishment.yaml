@@ -1,0 +1,21 @@
+name: banishment
+level: 4
+school: abjuration
+damage_dice: ""
+damage_type: ""
+attack_type: save
+save_ability: charisma
+half_on_save: false
+concentration: true
+cantrip_scaling: false
+extra_attacks: 1
+effect: "banishment"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "CHA save. On fail: target is transported to a harmless demiplane and
+  loses turns for the duration (concentration, up to 1 minute). If concentration
+  is maintained for the full minute, the banishment becomes permanent. On success:
+  no effect. In sim: banishment = target removed from combat, losing turns for duration."
+upcast_note: "Upcast to L5+: affect one additional creature per slot level above 4th."

@@ -1,0 +1,20 @@
+name: finger_of_death
+level: 7
+school: necromancy
+damage_dice: "7d8+30"
+damage_type: necrotic
+attack_type: save
+save_ability: constitution
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: "finger_of_death"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "CON save. On fail: 7d8+30 necrotic damage; if this kills a humanoid
+  target, it rises as a zombie under your control at the start of your next turn
+  (not modeled in sim beyond the kill). On success: half damage (7d8+30)/2. In sim:
+  deal full damage on fail, half on save."

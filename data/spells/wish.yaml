@@ -1,0 +1,22 @@
+name: wish
+level: 9
+school: conjuration
+damage_dice: ""
+damage_type: ""
+attack_type: none
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: "wish"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 8
+description: "The most powerful spell in the game. Most common use: replicate any
+  spell of 8th level or lower without material components. In sim: modeled as a
+  free 8th-level spell (replicate_slot: 8). Other uses (reshape reality, undo events,
+  grant wishes) are too open-ended to model. After using wish to do anything other
+  than replicate a spell, the caster has a 33% chance of never being able to cast
+  wish again."

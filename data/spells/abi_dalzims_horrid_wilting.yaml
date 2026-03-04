@@ -1,0 +1,20 @@
+name: abi_dalzims_horrid_wilting
+level: 8
+school: necromancy
+damage_dice: "12d8"
+damage_type: necrotic
+attack_type: save
+save_ability: constitution
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: null
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "CON save, 12d8 necrotic (half on save). 150ft range, 30ft radius.
+  Plant creatures and water elementals have disadvantage on the save and fail
+  automatically (take full damage, no save). In 1v1 sim: single target, 12d8
+  necrotic, CON save for half."
