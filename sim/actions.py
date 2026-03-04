@@ -581,11 +581,11 @@ def resolve_attack(
         effective_crit_threshold = 19
 
     # Assassinate: auto-crit pending (first attack after surprise)
+    _assassinate_crit = False
     if getattr(attacker, "_assassinate_auto_crit_pending", False):
-        is_crit = True
+        _assassinate_crit = True
         attacker._assassinate_auto_crit_pending = False
-        if "Assassinate!" not in tags:
-            tags.append("Assassinate!")
+        is_crit = True
     else:
         is_crit = roll_result >= effective_crit_threshold
 
@@ -606,6 +606,8 @@ def resolve_attack(
     tags: list[str] = []
     if is_nick_attack:
         tags.append("Nick")
+    if _assassinate_crit:
+        tags.append("Assassinate!")
 
     label = _pad_label(attack_label)
 

@@ -343,3 +343,13 @@ longbow:
   category: martial
   range: 150
   long_range: 600
+
+pact_weapon_longsword:
+  name: Pact Weapon (Longsword)
+  damage: "1d8"
+  damage_type: slashing
+  properties: [versatile, finesse]
+  versatile_damage: "1d10"
+  mastery: sap
+  category: martial
+  range: 5
