@@ -16,7 +16,7 @@ from sim.actions import (
     resolve_save_damage,
 )
 from sim.effects import apply_rage, apply_bear_totem_rage, apply_reckless_attack
-from sim.spells import cantrip_die_count, get_spell
+from sim.spells import cantrip_die_count, get_spell, SpellData
 from sim.tactics import TacticsEngine, TurnAction
 
 
@@ -30,7 +30,12 @@ def _find_effect(char: Character, name: str) -> ActiveEffect | None:
 
 def roll_initiative(char: Character) -> int:
     """Roll initiative for a character."""
-    return d20() + char.dex_mod + char.initiative_bonus
+    roll1 = d20()
+    # Feral Instinct (Barbarian L7): roll with advantage
+    if "feral_instinct" in char.features:
+        roll2 = d20()
+        roll1 = max(roll1, roll2)
+    return roll1 + char.dex_mod + char.initiative_bonus
 
 
 def run_combat(
@@ -94,6 +99,17 @@ def run_combat(
                 state.log(f"\n{opponent.name} has fallen! {char.name} wins!")
                 break
 
+            # Extra turns (Time Stop): take additional turns if granted
+            extra_turn_limit = 10  # safety cap
+            while char.extra_turns_remaining > 0 and extra_turn_limit > 0 and char.is_alive and opponent.is_alive:
+                char.extra_turns_remaining -= 1
+                extra_turn_limit -= 1
+                state.log(f"\n=== {char.name} EXTRA TURN (Time Stop) ===")
+                _execute_turn(char, opponent, tactics, state)
+                if not opponent.is_alive:
+                    state.log(f"\n{opponent.name} has fallen! {char.name} wins!")
+                    break
+
         # Transition from ranged phase to melee at end of round 1
         if state.phase == CombatPhase.RANGED:
             state.phase = CombatPhase.MELEE
@@ -116,12 +132,81 @@ def _execute_turn(
     char.start_turn()
     state.log(f"\n--- {char.name}'s turn (HP: {char.current_hp}/{char.max_hp}) ---")
 
-    if Condition.STUNNED in char.conditions:
-        state.log(f"STATUS   {char.name}: stunned — skips turn")
+    # --- Assassinate: set auto-crit pending on first turn if going first ---
+    if (
+        "assassinate" in char.features
+        and state.round_number == 1
+        and not char.assassin_surprised_this_combat
+        and not getattr(char, "_assassinate_auto_crit_pending", False)
+    ):
+        # Going first means we're acting before the opponent this round
+        # The turn_order list: if char is index 0, they go first
+        if state.turn_order and state.turn_order[0] is char:
+            char.assassin_surprised_this_combat = True
+            char._assassinate_auto_crit_pending = True
+            state.log(f"  {char.name} ASSASSINATE — first attack this turn is an automatic critical hit!")
+
+    # --- Condition checks at turn start ---
+
+    # BANISHED: skip turn entirely (caster concentration handled — if concentration breaks, condition ends)
+    if Condition.BANISHED in char.conditions:
+        # Check if the caster's concentration is still up (simplified: always hold unless a check fires)
+        state.log(f"  {char.name} is banished — skips turn")
         char.end_turn()
         _tick_stunning_strike_expiry(char, state)
         return
 
+    # PARALYZED: WIS save to end condition
+    if Condition.PARALYZED in char.conditions:
+        paralysis_effect = next((e for e in char.active_effects if e.name == "Paralyzed"), None)
+        dc = paralysis_effect.extra.get("dc", 15) if paralysis_effect else 15
+        save = d20() + char.saving_throw_total("wis")
+        if save >= dc:
+            char.conditions.discard(Condition.PARALYZED)
+            if paralysis_effect:
+                char.active_effects.remove(paralysis_effect)
+            state.log(f"  {char.name} breaks free of paralysis (WIS save {save} vs DC {dc})")
+        else:
+            state.log(f"  {char.name} is paralyzed — skips turn (WIS save {save} vs DC {dc})")
+            char.end_turn()
+            _tick_stunning_strike_expiry(char, state)
+            return
+
+    # POLYMORPHED: can only make one weak bite attack
+    if Condition.POLYMORPHED in char.conditions:
+        _do_polymorph_attack(char, opponent, state)
+        char.end_turn()
+        _tick_stunning_strike_expiry(char, state)
+        return
+
+    # PAIN: CON save DC 12 to take actions this turn
+    if Condition.PAIN in char.conditions:
+        save = d20() + char.saving_throw_total("con")
+        if save >= 12:
+            char.conditions.discard(Condition.PAIN)
+            state.log(f"  {char.name} shakes off Power Word Pain")
+        else:
+            char._pain_blocked_actions = True
+            char.action_used = True  # block actions (movement still OK)
+            state.log(f"  {char.name} wracked with pain — no actions this turn")
+
+    # STUNNED: CON save to end; auto-skip if still stunned
+    if Condition.STUNNED in char.conditions:
+        stun_effect = next((e for e in char.active_effects if e.name == "Stunned"), None)
+        dc = stun_effect.extra.get("dc", 15) if stun_effect else 15
+        save = d20() + char.saving_throw_total("con")
+        if save >= dc:
+            char.conditions.discard(Condition.STUNNED)
+            if stun_effect:
+                char.active_effects.remove(stun_effect)
+            state.log(f"  {char.name} recovers from stun (CON save {save} vs DC {dc})")
+        else:
+            state.log(f"  {char.name} is stunned — skips turn")
+            char.end_turn()
+            _tick_stunning_strike_expiry(char, state)
+            return
+
+    # INCAPACITATED (e.g. Hypnotic Pattern): skip turn
     if Condition.INCAPACITATED in char.conditions:
         state.log(f"STATUS   {char.name}: incapacitated — skips turn")
         char.end_turn()
@@ -223,6 +308,20 @@ def _execute_turn(
         elif action.kind == "booming_blade":
             if not char.action_used:
                 _do_booming_blade(char, opponent, state)
+        elif action.kind == "bladesong":
+            _do_bladesong(char, state)
+        elif action.kind == "hexblade_curse":
+            _do_hexblade_curse(char, opponent, state)
+        elif action.kind == "sacred_weapon":
+            _do_sacred_weapon(char, state)
+        elif action.kind == "blade_flourish":
+            _do_blade_flourish(char, opponent, state)
+        elif action.kind == "war_magic_attack":
+            _do_war_magic_attack(char, opponent, state)
+        elif action.kind == "shadow_step":
+            _do_shadow_step(char, state)
+        elif action.kind == "wholeness_of_body":
+            _do_wholeness_of_body(char, state)
 
     char.end_turn()
     _tick_stunning_strike_expiry(char, state)
@@ -385,6 +484,217 @@ def _resolve_call_lightning_bolt(
     return actual
 
 
+def _spell_dc(caster: Character) -> int:
+    """8 + proficiency + spellcasting mod."""
+    return 8 + caster.proficiency_bonus + caster.spellcasting_mod
+
+
+def _apply_polymorph(caster: Character, target: Character, spell: SpellData, spell_dc: int, state: CombatState) -> None:
+    """Replace target stats with CR 0 beast (rabbit)."""
+    # Save original stats
+    target.polymorph_original_stats = {
+        "max_hp": target.max_hp,
+        "current_hp": target.current_hp,
+        "ac": target.ac,
+        "str": target.ability_scores.strength,
+        "dex": target.ability_scores.dexterity,
+        "con": target.ability_scores.constitution,
+    }
+    # Apply CR 0 beast stats (rabbit)
+    target.max_hp = 3
+    target.current_hp = 3
+    target.ac = 13
+    target.ability_scores.strength = 2
+    target.ability_scores.dexterity = 15
+    target.ability_scores.constitution = 8
+    target.conditions.add(Condition.POLYMORPHED)
+    target.active_effects.append(ActiveEffect(
+        name="Polymorphed",
+        source=spell.name,
+        extra={"dc": spell_dc, "original_hp": target.polymorph_original_stats["current_hp"]},
+        duration=100,
+    ))
+    state.log(f"  {target.name} is POLYMORPHED into a CR 0 beast (HP 3, AC 13)")
+
+
+def _do_polymorph_attack(char: Character, opponent: Character, state: CombatState) -> None:
+    """Polymorphed creature can only make one weak bite (1d3)."""
+    atk_roll = d20() + 0  # no attack bonus as a bunny
+    state.log(f"  {char.name} (polymorphed) bite attack: {atk_roll} vs AC {opponent.effective_ac}")
+    if atk_roll >= opponent.effective_ac:
+        dmg = eval_dice("1d3").total
+        actual = opponent.take_damage(dmg, DamageType.PIERCING, state)
+        state.log(f"  {char.name} (polymorphed) bites for {actual} damage [{opponent.current_hp}/{opponent.max_hp} HP]")
+    else:
+        state.log(f"  {char.name} (polymorphed) bite misses")
+
+
+def _apply_wish(caster: Character, target: Character, spell: SpellData, state: CombatState) -> None:
+    """Wish: replicate the best available spell up to replicate_slot level."""
+    best_spell = None
+    best_avg = 0
+    for spell_name in caster.spells_known:
+        s = get_spell(spell_name)
+        if s and s.level <= spell.replicate_slot and s.damage_dice and s.level > 0:
+            try:
+                avg = eval_dice(s.damage_dice).total
+                if avg > best_avg:
+                    best_avg = avg
+                    best_spell = s
+            except Exception:
+                pass
+    if best_spell:
+        state.log(f"  WISH — {caster.name} replicates {best_spell.name} (free, slot {spell.replicate_slot})")
+        _cast_spell_on_target(caster, target, best_spell, spell.replicate_slot, state)
+    else:
+        state.log(f"  WISH — {caster.name}: no suitable spell found to replicate")
+
+
+def _cast_spell_on_target(
+    caster: Character, target: Character, spell: SpellData, slot_level: int, state: CombatState,
+    *, free: bool = False,
+) -> None:
+    """Cast a spell directly (used by Wish — no slot consumption if free=True)."""
+    if not free and slot_level > 0:
+        caster.spend_spell_slot(slot_level)
+
+    dice_str = spell.damage_dice
+    if not dice_str:
+        return
+
+    if slot_level > spell.level and spell.upcast_dice:
+        dice_str = _add_upcast_dice(dice_str, spell.upcast_dice, slot_level - spell.level)
+
+    if spell.attack_type == "spell_attack":
+        from sim.actions import resolve_spell_attack
+        resolve_spell_attack(
+            caster, target, dice_str,
+            spell.damage_type or DamageType.FORCE,
+            spell.name, state,
+        )
+    elif spell.attack_type in ("save", "none"):
+        if spell.attack_type == "save":
+            from sim.actions import resolve_spell_save
+            result = resolve_spell_save(
+                caster, target, dice_str,
+                spell.damage_type or DamageType.FORCE,
+                spell.name,
+                _normalize_save_ability(spell.save_ability),
+                state, spell.half_on_save,
+                return_details=True,
+            )
+            actual, save_succeeded, _, _ = result
+            _apply_spell_effect(caster, target, spell, save_succeeded, state)
+        else:
+            result = eval_dice(dice_str)
+            actual = target.take_damage(result.total, spell.damage_type or DamageType.FORCE, state)
+            _apply_spell_effect(caster, target, spell, False, state)
+
+
+def _apply_spell_effect(
+    caster: Character, target: Character, spell: SpellData,
+    save_succeeded: bool, state: CombatState,
+) -> None:
+    """Apply special spell effects beyond damage."""
+    if not spell.effect and not spell.instant_kill_threshold:
+        return
+
+    spell_dc = _spell_dc(caster)
+
+    # Instant kill threshold (Power Word Kill — no effect field needed)
+    if spell.instant_kill_threshold > 0:
+        if target.current_hp <= spell.instant_kill_threshold:
+            state.log(f"  POWER WORD KILL — {target.name} has {target.current_hp} HP ≤ {spell.instant_kill_threshold} → INSTANT DEATH")
+            target.current_hp = 0
+        else:
+            state.log(f"  Power Word Kill — {target.name} has {target.current_hp} HP > {spell.instant_kill_threshold} — no effect")
+        return
+
+    if not spell.effect:
+        return
+
+    # Harm — reduce to fraction of max HP on failed save
+    if spell.effect == "harm" and spell.hp_percentage_cap > 0:
+        if not save_succeeded:
+            new_hp = max(1, int(target.max_hp * spell.hp_percentage_cap))
+            if target.current_hp > new_hp:
+                target.current_hp = new_hp
+                state.log(f"  Harm — {target.name} reduced to {new_hp} HP ({int(spell.hp_percentage_cap*100)}% of {target.max_hp})")
+        return  # damage already handled by normal save path
+
+    # Paralyzed (Hold Monster)
+    if spell.effect == "paralyze" and not save_succeeded:
+        target.conditions.add(Condition.PARALYZED)
+        target.active_effects.append(ActiveEffect(
+            name="Paralyzed",
+            source=spell.name,
+            extra={"dc": spell_dc},
+            duration=None,
+        ))
+        state.log(f"  {target.name} is PARALYZED (Hold Monster)")
+
+    # Banishment / Forcecage
+    elif spell.effect == "banishment" and not save_succeeded:
+        target.conditions.add(Condition.BANISHED)
+        target.active_effects.append(ActiveEffect(
+            name="Banished",
+            source=spell.name,
+            extra={"dc": spell_dc, "caster": caster.name},
+            duration=10,
+        ))
+        state.log(f"  {target.name} is BANISHED")
+
+    # Polymorph / True Polymorph
+    elif spell.effect == "polymorph" and not save_succeeded:
+        _apply_polymorph(caster, target, spell, spell_dc, state)
+
+    # Power Word Stun (no initial save)
+    elif spell.effect == "stun_no_save":
+        target.conditions.add(Condition.STUNNED)
+        target.active_effects.append(ActiveEffect(
+            name="Stunned",
+            source=spell.name,
+            extra={"dc": spell_dc},
+            duration=None,
+        ))
+        state.log(f"  {target.name} is STUNNED (Power Word Stun) — CON save DC {spell_dc} each turn to end")
+
+    # Power Word Pain
+    elif spell.effect == "pain":
+        if target.current_hp <= 100:
+            if not save_succeeded:
+                target.conditions.add(Condition.PAIN)
+                state.log(f"  {target.name} is wracked with PAIN (Power Word Pain)")
+        else:
+            state.log(f"  Power Word Pain — {target.name} has {target.current_hp} HP > 100 — no effect")
+
+    # Greater Invisibility (self)
+    elif spell.effect == "greater_invisibility":
+        caster.conditions.add(Condition.GREATER_INVISIBLE)
+        caster.active_effects.append(ActiveEffect(
+            name="GreaterInvisible",
+            source=spell.name,
+            extra={},
+            duration=10,
+        ))
+        state.log(f"  {caster.name} is GREATER INVISIBLE — advantage on attacks, disadvantage against")
+
+    # Time Stop — extra turns
+    elif spell.effect == "extra_turns":
+        n = eval_dice("1d4").total + 1
+        caster.extra_turns_remaining += n
+        state.log(f"  TIME STOP — {caster.name} gains {n} extra turns")
+
+    # Wish — replicate best available spell
+    elif spell.effect == "wish" and spell.replicate_slot > 0:
+        _apply_wish(caster, target, spell, state)
+
+    # Disintegrate — no stabilize if reduced to 0
+    elif spell.effect == "disintegrate":
+        if target.current_hp <= 0:
+            state.log(f"  {target.name} is DISINTEGRATED — destroyed utterly")
+
+
 def _do_cast_spell(
     char: Character,
     opponent: Character,
@@ -497,11 +807,17 @@ def _do_cast_spell(
 
     dice_str = spell.damage_dice
     if not dice_str:
-        state.log(f"{label}{spell_name} (no damage)")
+        slot_str = f" (slot {slot_level})" if slot_level > 0 else ""
+        state.log(f"{label}{spell_name}{slot_str} (no damage)")
+        # Still apply spell effects (e.g. greater_invisibility, time_stop, power word effects)
+        _apply_spell_effect(char, opponent, spell, False, state)
         return
 
     if spell.cantrip_scaling and spell.level == 0:
         dice_str = _scale_dice_count(dice_str, cantrip_die_count(spell, char.level))
+        # War Magic (Eldritch Knight L7): after casting a cantrip, allow bonus weapon attack
+        if "war_magic" in char.features and char.level >= 7:
+            char._war_magic_available = True
 
     if slot_level > spell.level and spell.upcast_dice:
         dice_str = _add_upcast_dice(dice_str, spell.upcast_dice, slot_level - spell.level)
@@ -564,6 +880,9 @@ def _do_cast_spell(
                 end_trigger="on_attack",
             ))
             state.log(f"  [{char.name}] Vicious Mockery — {opponent.name} has disadvantage on next attack")
+        # Apply special spell effects (paralyze, banishment, polymorph, harm, etc.)
+        if opponent.is_alive or spell.effect == "disintegrate":
+            _apply_spell_effect(char, opponent, spell, save_succeeds, state)
         return
 
     if spell.attack_type == "none":
@@ -578,9 +897,12 @@ def _do_cast_spell(
             parts.append(str(actual))
             if not opponent.is_alive:
                 break
-        slot_str = f" (slot {slot_level})" if slot_level > 0 else " (cantrip)"
-        detail = " · ".join(parts)
-        state.log(f"{label}{spell_name}{slot_str} → {detail} = {total_damage} {damage_type.name.lower()}")
+        # Apply no-damage effects (greater_invisibility, time_stop, wish) even if dice_str is empty
+        _apply_spell_effect(char, opponent, spell, False, state)
+        if total_damage > 0:
+            slot_str = f" (slot {slot_level})" if slot_level > 0 else " (cantrip)"
+            detail = " · ".join(parts)
+            state.log(f"{label}{spell_name}{slot_str} → {detail} = {total_damage} {damage_type.name.lower()}")
 
 
 def _do_ranged_attack(
@@ -638,12 +960,29 @@ def _do_melee_attack(
     char.action_used = True
     num_attacks = 1 + char.extra_attacks
 
+    # Dread Ambusher (Gloom Stalker): extra attack on first turn of combat
+    dread_ambusher_active = (
+        "dread_ambusher" in char.features
+        and not char.gloom_stalker_ambush_used
+        and state.round_number == 1
+    )
+    if dread_ambusher_active:
+        num_attacks += 1
+        char.gloom_stalker_ambush_used = True
+        state.log(f"  [{char.name}] Dread Ambusher — +1 attack this turn!")
+
     for i in range(num_attacks):
         if not opponent.is_alive:
             break
         result = resolve_attack(char, opponent, weapon, state, attack_label="ACTION")
         if result.hit and char.is_concentrating("Hex"):
             _apply_hex(char, opponent, state)
+        # Dread Ambusher: +1d8 on first attack hit
+        if dread_ambusher_active and i == 0 and result.hit:
+            bonus_dmg = eval_dice("1d8").total
+            actual_bonus = opponent.take_damage(bonus_dmg, weapon.damage_type, state)
+            state.log(f"  [{char.name}] Dread Ambusher +1d8 = {actual_bonus} bonus damage")
+            dread_ambusher_active = False  # only first hit
 
     if opponent.is_alive:
         _try_nick_extra_attack(char, opponent, weapon, state)
@@ -952,6 +1291,145 @@ def _do_booming_blade(char: Character, opponent: Character, state: CombatState) 
             actual = opponent.take_damage(boom_result.total, DamageType.THUNDER, state)
             label = _pad_label("FREE")
             state.log(f"{label}Booming Blade detonates · [{boom_result.rolls[0]}]={actual} thunder [{opponent.current_hp}/{opponent.max_hp} HP]")
+
+
+# ---------------------------------------------------------------------------
+# New subclass action handlers
+# ---------------------------------------------------------------------------
+
+def _do_bladesong(char: Character, state: CombatState) -> None:
+    """Activate Bladesong as a bonus action (Bladesinger Wizard)."""
+    if char.bonus_action_used:
+        return
+    if any(e.name == "Bladesong" for e in char.active_effects):
+        return
+    res = char.resources.get("bladesong")
+    if not res or not res.available:
+        return
+    res.spend()
+    char.bonus_action_used = True
+    char.active_effects.append(ActiveEffect(
+        name="Bladesong",
+        source="bladesong",
+        duration=10,
+    ))
+    char.bladesong_active = True
+    label = _pad_label("BONUS")
+    state.log(f"{label}Bladesong → active (+{char.int_mod} AC, concentration protection)")
+
+
+def _do_hexblade_curse(char: Character, opponent: Character, state: CombatState) -> None:
+    """Apply Hexblade's Curse as a bonus action."""
+    if char.bonus_action_used:
+        return
+    if char.hexblade_curse_target is not None:
+        return
+    char.bonus_action_used = True
+    char.hexblade_curse_target = opponent.name
+    label = _pad_label("BONUS")
+    state.log(f"{label}Hexblade's Curse → {opponent.name} cursed (crit 19-20, +PB dmg, heal on kill)")
+
+
+def _do_sacred_weapon(char: Character, state: CombatState) -> None:
+    """Activate Sacred Weapon as a bonus action (Devotion Paladin)."""
+    if char.bonus_action_used:
+        return
+    if any(e.name == "SacredWeapon" for e in char.active_effects):
+        return
+    res = char.resources.get("channel_divinity")
+    if not res or not res.available:
+        return
+    res.spend()
+    char.bonus_action_used = True
+    char.active_effects.append(ActiveEffect(
+        name="SacredWeapon",
+        source="sacred_weapon",
+        duration=10,
+        extra={"cha_mod": char.cha_mod},
+    ))
+    label = _pad_label("BONUS")
+    state.log(f"{label}Sacred Weapon → active (+{char.cha_mod} to attack rolls)")
+
+
+def _do_blade_flourish(char: Character, opponent: Character, state: CombatState) -> None:
+    """Blade Flourish (Swords Bard): add bardic inspiration die to damage and AC."""
+    if char._blade_flourish_used_this_turn:
+        return
+    res = char.resources.get("bardic_inspiration")
+    if not res or not res.available:
+        return
+    # Determine die size by level
+    if char.level >= 15:
+        die = "1d12"
+    elif char.level >= 10:
+        die = "1d10"
+    elif char.level >= 5:
+        die = "1d8"
+    else:
+        die = "1d6"
+    res.spend()
+    char._blade_flourish_used_this_turn = True
+    roll_result = eval_dice(die).total
+    # Defensive Flourish: add to AC until next turn
+    char.active_effects.append(ActiveEffect(
+        name="BladeFlourish",
+        source="blade_flourish",
+        ac_bonus=roll_result,
+        end_trigger="start_of_turn",
+    ))
+    label = _pad_label("FREE")
+    state.log(f"{label}Blade Flourish ({die}={roll_result}) → +{roll_result} dmg on next hit, +{roll_result} AC until next turn")
+
+
+def _do_war_magic_attack(char: Character, opponent: Character, state: CombatState) -> None:
+    """War Magic: weapon attack as bonus action after casting a cantrip (EK L7+)."""
+    if char.bonus_action_used:
+        return
+    if not char._war_magic_available:
+        return
+    if "war_magic" not in char.features:
+        return
+    if state.distance > 5:
+        return
+    char.bonus_action_used = True
+    char._war_magic_available = False
+    mw = char.best_melee_weapon()
+    if not mw:
+        return
+    label = _pad_label("BONUS")
+    state.log(f"{label}War Magic → bonus weapon attack")
+    resolve_attack(char, opponent, mw, state, attack_label="BONUS")
+
+
+def _do_shadow_step(char: Character, state: CombatState) -> None:
+    """Shadow Step (Shadow Monk L6): teleport and gain advantage on next attack."""
+    if char._shadow_step_used or char.bonus_action_used:
+        return
+    char.bonus_action_used = True
+    char._shadow_step_used = True
+    char.active_effects.append(ActiveEffect(
+        name="ShadowStep",
+        source="shadow_step",
+        advantage_on_attacks=True,
+        end_trigger="on_attack",
+    ))
+    label = _pad_label("BONUS")
+    state.log(f"{label}Shadow Step → advantage on next attack this turn")
+
+
+def _do_wholeness_of_body(char: Character, state: CombatState) -> None:
+    """Wholeness of Body (Open Hand Monk L6): heal 3 × monk level as bonus action."""
+    if char.bonus_action_used:
+        return
+    res = char.resources.get("wholeness_of_body")
+    if not res or not res.available:
+        return
+    res.spend()
+    char.bonus_action_used = True
+    heal_amount = 3 * char.level
+    actual = char.heal(heal_amount)
+    label = _pad_label("BONUS")
+    state.log(f"{label}Wholeness of Body → healed {actual} HP [{char.current_hp}/{char.max_hp}]")
 
 
 # ---------------------------------------------------------------------------
