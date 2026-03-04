@@ -620,3 +620,46 @@ Rank  Build                                  Win%   HP   AC
 **Caster tier order (1v1):** Cleric > Sorcerer > Wizard ≈ Arcane Trickster > Druid > Warlock (both) > Bard. Cleric wins on raw HP+AC even though its DPS is lower. Bard is last — hypnotic_pattern concentration drops too easily.
 
 **Lore Bard dead last at 2.8%.** Vicious Mockery (1d4) is simply not enough damage output. Bard's strength is support — in 1v1 it has nothing.
+
+---
+
+# Phase 14: Full Level 7 Rankings
+
+**Sim Parameters:** n=1000 per matchup, all level-7 builds, 55 total matchups.
+
+## 🏆 Full L7 Tier List
+
+| Rank | Build                          | Avg Win% | HP  | AC |
+|------|--------------------------------|----------|-----|----|
+|  1   | Bladesinger Wizard Elf L7      | 100.0%   | 44  | 15 |
+|  2   | Devotion Paladin Human L7      |  83.5%   | 74  | 20 |
+|  3   | Champion GWF Orc L7            |  77.6%   | 67  | 18 |
+|  4   | Forge Cleric Dwarf L7          |  66.0%   | 73  | 20 |
+|  5   | Eldritch Knight Human L7       |  41.2%   | 81  | 20 |
+|  6   | Thief Human L7                 |  41.1%   | 52  | 17 |
+|  7   | Assassin Rogue Halfling L7     |  38.6%   | 52  | 17 |
+|  8   | Hexblade Warlock Orc L7        |  36.6%   | 73  | 19 |
+|  9   | Gloom Stalker Ranger Human L7  |  35.1%   | 60  | 17 |
+| 10   | Thief Halfling L7              |  29.6%   | 52  | 16 |
+| 11   | Swords Bard Human L7           |   0.7%   | 52  | 15 |
+
+## Cross-Level Check: L5 Berserker Fire Goliath vs Top L7 Builds
+
+| Matchup                                        | L7 Win% | L5 Win% | Avg Rounds |
+|------------------------------------------------|---------|---------|------------|
+| Bladesinger Wizard Elf L7 vs L5 Berserker      | 100.0%  |   0.0%  |    2.0     |
+| Devotion Paladin Human L7 vs L5 Berserker      |  53.2%  |  46.8%  |    2.9     |
+
+## Key Findings
+
+- **Bladesinger Wizard L7 is a god-tier outlier at 100.0% win rate.** The Polymorph + Fireball combo is a fight-ender: drop a polymorphed enemy from 3 HP with a Fireball (DC 16, averaging 27 damage) before they can do anything meaningful. Combined with Alert for near-guaranteed initiative and Bladesong for defensive spacing, the Bladesinger wins every matchup in the field. This is the clearest case yet of a single spell combination warping the entire 1v1 meta.
+
+- **Casters leap over martials at L7 — a major reversal from L5.** The Bladesinger tops everything; the next caster (Forge Cleric) holds #4 with 66%. At L5, the top caster (Land Druid) sat mid-table. Level 7 spell slots (4th-level: Polymorph; 3rd-level: Fireball) give casters decisive fight-ending tools that outscale raw HP and AC advantages.
+
+- **Devotion Paladin and Champion GWF anchor the martial top.** Paladin's Sacred Weapon (+3 to hit), Divine Smite burst on extra attack, and Sap mastery chip away even at high-AC opponents. The Orc Champion (+1 crit range = 9–20 on GWF) punches through armor. Both survive in the top 3 on durability and sustained output — but neither can deal with Polymorph.
+
+- **Hexblade Warlock is a disappointment at #8 (36.6%).** Despite Eldritch Blast + EB invocations and melee Hexblade Curse, it lands below both Thief builds and the Assassin. The short-rest recharge Warlock model (2 slots at L7) burns through resources quickly in the attrition fight the sim models; it rarely gets the big opening turn needed to spike down durability builds.
+
+- **Swords Bard is dead last at 0.7%** — essentially zero wins. Flourishes aren't enough damage to compensate for 52 HP and AC 15 against a field that now runs AC 17–20 and 73–81 HP. Bard remains a support class with no path in pure 1v1.
+
+- **L5 Berserker Fire Goliath is firmly outclassed by L7 builds, but still competitive against weaker ones.** The Bladesinger goes 500-0 against it (Polymorph is a hard counter); the Devotion Paladin only edges it 53–47 — a near-coinflip. The Berserker's raw damage output (avg 21.7 DPR) exceeds the Paladin's (15.4 DPR), but the Paladin's AC 20 + burst Smite turns the tide. The Berserker would beat builds ranked #5 through #11 comfortably based on the L7 DPR/HP numbers.
