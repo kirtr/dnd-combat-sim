@@ -1,0 +1,44 @@
+name: Champion GWF Orc L7
+class: fighter
+subclass: champion
+level: 7
+species: orc
+background: soldier
+origin_feat: alert
+ability_scores:
+  str: 18    # 16 base + 2 from L4 ASI
+  dex: 14    # Initiative matters vs Alert Bladesinger
+  con: 16
+  int: 8
+  wis: 12    # Helps vs Polymorph saves
+  cha: 8
+weapons:
+  - greatsword   # Graze mastery: miss still deals STR mod (4) damage
+  - javelin
+armor: plate    # AC 18 per L7 progression
+shield: false
+fighting_style: great_weapon_fighting
+weapon_mastery:
+  - graze        # Key vs high AC Bladesinger
+tactic: aggressive
+powers:
+  - second_wind
+  - action_surge
+  - improved_critical    # Crits on 19-20
+  - remarkable_athlete   # L6 Champion feature
+  - relentless_endurance # Orc: drop to 1 HP instead of 0, 1/long rest
+  - adrenaline_rush      # Orc: BA dash + temp HP
+tags:
+  - champion
+  - fighter
+  - gwf
+  - level7
+  - melee
+  - orc
+notes: |
+  Anti-Bladesinger build. Key advantages:
+  - Alert feat matches their initiative advantage
+  - Graze mastery forces concentration checks even on misses (4 damage)
+  - Relentless Endurance survives burst damage, allows counterattack
+  - Action Surge round 1: 4 attacks = high chance to break concentration
+  - Improved Critical (19-20) synergizes with many attacks
