@@ -1,0 +1,44 @@
+name: Swords Bard Human L7
+class: bard
+subclass: college_of_swords
+level: 7
+species: human
+background: entertainer
+origin_feat: savage_attacker
+ability_scores:
+  str: 10
+  dex: 16
+  con: 14
+  int: 10
+  wis: 10
+  cha: 20   # ASI at level 4: CHA 18→20
+weapons:
+  - rapier
+armor: leather
+shield: false
+fighting_style: dueling
+spellcasting_ability: charisma
+spell_slots:
+  1: 4
+  2: 3
+  3: 3
+  4: 1
+spells_known:
+  - vicious_mockery
+  - dissonant_whispers
+  - chromatic_orb
+  - healing_word
+  - hypnotic_pattern
+  - greater_invisibility
+tactic: aggressive
+powers:
+  - bardic_inspiration
+  - blade_flourish
+  - extra_attack
+  - font_of_bardic_inspiration
+tags:
+  - bard
+  - swords_bard
+  - level7
+  - melee
+  - human

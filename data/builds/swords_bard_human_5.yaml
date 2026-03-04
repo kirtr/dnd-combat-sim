@@ -1,0 +1,40 @@
+name: Swords Bard Human L5
+class: bard
+subclass: college_of_swords
+level: 5
+species: human
+background: entertainer
+origin_feat: savage_attacker
+ability_scores:
+  str: 10
+  dex: 16
+  con: 14
+  int: 10
+  wis: 10
+  cha: 18
+weapons:
+  - rapier
+armor: leather
+shield: false
+fighting_style: dueling
+spellcasting_ability: charisma
+spell_slots:
+  1: 4
+  2: 3
+  3: 2
+spells_known:
+  - vicious_mockery
+  - dissonant_whispers
+  - chromatic_orb
+  - healing_word
+  - hypnotic_pattern
+tactic: aggressive
+powers:
+  - bardic_inspiration
+  - blade_flourish
+tags:
+  - bard
+  - swords_bard
+  - level5
+  - melee
+  - human

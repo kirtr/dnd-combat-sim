@@ -1,0 +1,42 @@
+name: Bladesinger Wizard Elf L7
+class: wizard
+subclass: bladesinger
+level: 7
+species: elf
+background: sage
+origin_feat: alert
+ability_scores:
+  str: 10
+  dex: 16
+  con: 14
+  int: 20   # ASI at level 4: INT 18→20
+  wis: 10
+  cha: 10
+weapons:
+  - rapier
+armor: leather   # light armor via bladesinger proficiency
+shield: false
+spellcasting_ability: intelligence
+spell_slots:
+  1: 4
+  2: 3
+  3: 3
+  4: 1
+spells_known:
+  - fire_bolt
+  - mirror_image
+  - misty_step
+  - fireball
+  - greater_invisibility
+  - polymorph
+tactic: aggressive
+powers:
+  - bladesong
+  - training_in_war_and_song
+  - extra_attack_bladesinger
+tags:
+  - wizard
+  - bladesinger
+  - level7
+  - melee
+  - elf

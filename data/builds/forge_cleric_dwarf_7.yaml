@@ -1,0 +1,44 @@
+name: Forge Cleric Dwarf L7
+class: cleric
+subclass: forge
+level: 7
+species: dwarf
+background: acolyte
+origin_feat: tough
+ability_scores:
+  str: 14
+  dex: 8
+  con: 16
+  int: 10
+  wis: 20   # ASI at level 4: WIS 18→20
+  cha: 10
+weapons:
+  - warhammer
+armor: scale_mail   # heavy armor — upgrade to plate when available
+shield: true
+spellcasting_ability: wisdom
+spell_slots:
+  1: 4
+  2: 3
+  3: 3
+  4: 1
+spells_known:
+  - sacred_flame
+  - toll_the_dead
+  - guiding_bolt
+  - spiritual_weapon
+  - spirit_guardians
+  - banishment
+tactic: aggressive
+powers:
+  - blessing_of_the_forge
+  - channel_divinity
+  - soul_of_the_forge
+  - blessed_strikes
+  - divine_intervention
+tags:
+  - cleric
+  - forge
+  - level7
+  - melee
+  - dwarf

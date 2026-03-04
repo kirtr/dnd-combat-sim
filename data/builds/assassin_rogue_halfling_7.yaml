@@ -1,0 +1,33 @@
+name: Assassin Rogue Halfling L7
+class: rogue
+subclass: assassin
+level: 7
+species: halfling
+background: criminal
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 20   # ASI at level 4: DEX 18→20
+  con: 14
+  int: 12
+  wis: 10
+  cha: 10
+weapons:
+  - rapier
+  - hand_crossbow
+armor: leather
+shield: false
+tactic: aggressive
+powers:
+  - sneak_attack
+  - assassinate
+  - cunning_action
+  - uncanny_dodge
+  - evasion
+  - expertise_2
+tags:
+  - rogue
+  - assassin
+  - level7
+  - melee
+  - halfling

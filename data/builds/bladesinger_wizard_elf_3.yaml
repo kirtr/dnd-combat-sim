@@ -1,0 +1,36 @@
+name: Bladesinger Wizard Elf L3
+class: wizard
+subclass: bladesinger
+level: 3
+species: elf
+background: sage
+origin_feat: alert
+ability_scores:
+  str: 10
+  dex: 16
+  con: 14
+  int: 18
+  wis: 10
+  cha: 10
+weapons:
+  - rapier
+armor: leather   # light armor via bladesinger proficiency
+shield: false
+spellcasting_ability: intelligence
+spell_slots:
+  1: 4
+  2: 2
+spells_known:
+  - fire_bolt
+  - mirror_image
+  - misty_step
+tactic: aggressive
+powers:
+  - bladesong
+  - training_in_war_and_song
+tags:
+  - wizard
+  - bladesinger
+  - level3
+  - melee
+  - elf

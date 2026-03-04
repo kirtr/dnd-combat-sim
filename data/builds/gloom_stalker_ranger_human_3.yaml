@@ -1,0 +1,30 @@
+name: Gloom Stalker Ranger Human L3
+class: ranger
+subclass: gloom_stalker
+level: 3
+species: human
+background: soldier
+origin_feat: alert
+ability_scores:
+  str: 8
+  dex: 18
+  con: 14
+  int: 10
+  wis: 14
+  cha: 8
+weapons:
+  - longbow
+  - shortsword
+armor: leather
+shield: false
+fighting_style: archery
+tactic: aggressive
+powers:
+  - dread_ambusher
+  - hunters_mark
+tags:
+  - ranger
+  - gloom_stalker
+  - level3
+  - ranged
+  - human

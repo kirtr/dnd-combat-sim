@@ -1,0 +1,41 @@
+name: Devotion Paladin Human L5
+class: paladin
+subclass: devotion
+level: 5
+species: human
+background: soldier
+origin_feat: tough
+ability_scores:
+  str: 18
+  dex: 8
+  con: 14
+  int: 10
+  wis: 10
+  cha: 16
+weapons:
+  - longsword
+armor: chain_mail
+shield: true
+fighting_style: dueling
+spellcasting_ability: charisma
+spell_slots:
+  1: 4
+  2: 2
+spells_known:
+  - sacred_flame
+  - guiding_bolt
+  - healing_word
+  - spiritual_weapon
+tactic: aggressive
+powers:
+  - divine_smite
+  - sacred_weapon
+  - lay_on_hands
+  - channel_divinity
+  - extra_attack
+tags:
+  - paladin
+  - devotion
+  - level5
+  - melee
+  - human

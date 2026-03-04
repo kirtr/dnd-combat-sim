@@ -1,0 +1,45 @@
+name: Devotion Paladin Human L7
+class: paladin
+subclass: devotion
+level: 7
+species: human
+background: soldier
+origin_feat: tough
+ability_scores:
+  str: 20   # ASI at level 4: STR 18→20
+  dex: 8
+  con: 14
+  int: 10
+  wis: 10
+  cha: 16
+weapons:
+  - longsword
+armor: chain_mail
+shield: true
+fighting_style: dueling
+spellcasting_ability: charisma
+spell_slots:
+  1: 4
+  2: 3
+spells_known:
+  - sacred_flame
+  - guiding_bolt
+  - healing_word
+  - spiritual_weapon
+  - bless
+tactic: aggressive
+powers:
+  - divine_smite
+  - sacred_weapon
+  - lay_on_hands
+  - channel_divinity
+  - extra_attack
+  - aura_of_devotion
+  - aura_of_protection
+  - aura_of_courage
+tags:
+  - paladin
+  - devotion
+  - level7
+  - melee
+  - human
