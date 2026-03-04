@@ -498,3 +498,64 @@ Human (+1 AC via Evasion interaction with AC base) edges Halfling. L7 Evasion is
 ## Blade Pact Warlock (new, L3+L5)
 
 CHA-based longsword + Hex loop. 45 tests passing. Full cross-ranking pending C13 merge.
+
+---
+
+# Phase 13: Grand L5 Rankings — All 36 Builds (n=1000 per matchup)
+
+**The definitive level 5 tier list across all implemented classes.**
+
+## Full Rankings
+
+```
+Rank  Build                                  Win%   HP   AC
+------------------------------------------------------------
+  1.  Berserker Greatsword Fire Goliath L5   87.1%   55   15
+  2.  Berserker S&B Longsword Fire Goliath   86.7%   55   17
+  3.  Berserker Greatsword Orc L5            79.5%   55   15
+  4.  Berserker S&B Longsword Orc L5         79.1%   55   17
+  5.  Battle Master S&B Stone Goliath L5     78.2%   49   18
+  6.  Battle Master GWF Stone Goliath L5     78.0%   49   16
+  7.  Battle Master Dueling Orc L5           77.5%   49   18
+  8.  Battle Master S&B Fire Goliath L5      74.6%   49   18
+  9.  Battle Master S&B Orc L5              72.2%   49   18
+ 10.  Battle Master GWF Orc L5              71.7%   49   16
+ 11.  Battle Master GWF Fire Goliath L5     71.7%   49   16
+ 12.  Champion GWF Stone Goliath L5         64.5%   49   16
+ 13.  Champion S&B Stone Goliath L5         62.3%   49   18
+ 14.  Vengeance Paladin Orc L5              60.0%   44   18
+ 15.  Battle Master TWF Orc L5              58.9%   49   16
+ 16.  Open Hand Monk Orc L5                 58.8%   38   17
+ 17.  Shadow Monk Orc L5                    58.4%   38   17
+ 18.  Champion S&B Fire Goliath L5          58.1%   49   18
+ 19.  Champion GWF Fire Goliath L5          58.0%   49   16
+ 20.  Champion GWF Orc L5                   52.1%   49   16
+ 21.  Champion S&B Orc L5                   51.1%   49   18
+ 22.  Hunter Ranger GWF L5                  47.3%   49   16
+ 23.  Hunter Ranger TWF L5                  45.5%   49   16
+ 24.  Champion TWF Orc L5                   36.5%   49   16
+ 25.  Hunter Ranger Archery L5              33.7%   44   16
+ 26.  Fiend Warlock Orc L5                  27.8%   48   14
+ 27.  War Cleric Human 5                    25.4%   48   18
+ 28.  Draconic Sorcerer Human 5             22.7%   32   15
+ 29.  Evocation Wizard Human 5              19.3%   32   12
+ 30.  Arcane Trickster Halfling L5          19.2%   38   15
+ 31.  Blade Pact Warlock Orc 5              19.0%   48   14
+ 32.  Arcane Trickster Human L5             18.8%   38   15
+ 33.  Moon Druid Human 5                    15.5%   48   15
+ 34.  Thief Halfling L5                     13.2%   38   15
+ 35.  Thief Human L5                        13.0%   38   15
+ 36.  Lore Bard Human 5                      2.8%   38   13
+```
+
+## Key Findings
+
+**Berserker Fire Goliath is uncontested king.** 87% win rate — Frenzy extra attack + Large Form + fire ancestry damage adds up to the highest raw DPS in the game. S&B variant close behind at 87% (more survivability, near-equal offense).
+
+**Martials dominate casters 1v1.** Casters cluster at ranks 27-36. Even the best caster (War Cleric at 25%) loses to virtually every martial. Fireball in a 1v1 is a coin flip; Berserker doesn't flip coins.
+
+**Monk overperforms.** Open Hand and Shadow both hit ~58%, beating Rangers and matching Champion. Stunning Strike is doing real work — paralyzed target = auto-hit follow-ups.
+
+**Bard is last place by a mile (2.8%).** Vicious Mockery disadvantage and hypnotic_pattern CC are powerful in parties but near-useless 1v1 — Bard has no burst and loses the damage race every time.
+
+**Blade Pact Warlock (19%) ≈ EB Warlock (28%) — EB wins.** CHA melee + Hex is solid but Eldritch Blast has more reliable damage at range and doesn't need to close to melee.
