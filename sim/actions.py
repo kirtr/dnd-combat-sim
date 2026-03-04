@@ -287,7 +287,11 @@ def _calc_damage_info(
     crit_rolls = None
     crit_total = 0
     if crit:
-        crit_result = eval_dice(dice_expr, minimum=gwf_min)
+        if is_savage:
+            # Savage Attacker applies to crit dice too — roll twice, take best
+            crit_result = eval_dice_twice_take_best(dice_expr, minimum=gwf_min)
+        else:
+            crit_result = eval_dice(dice_expr, minimum=gwf_min)
         crit_rolls = crit_result.rolls
         crit_total = crit_result.total
 
