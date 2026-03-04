@@ -90,7 +90,7 @@ def cmd_show(args):
     print(f"  AC:        {char.ac}")
     print(f"  Speed:     {char.speed} ft")
     print(f"  Attacks:   {1 + char.extra_attacks} (extra_attacks={char.extra_attacks})")
-    print(f"  STR:{char.str_mod:+d}  DEX:{char.dex_mod:+d}  CON:{char.con_mod:+d}")
+    print(f"  STR:{char.str_mod:+d}  DEX:{char.dex_mod:+d}  CON:{char.con_mod:+d}  INT:{char.int_mod:+d}  WIS:{char.wis_mod:+d}  CHA:{char.cha_mod:+d}")
     print(f"  Style:     {char.fighting_style or 'N/A'}")
     print(f"  Weapons:   {', '.join(w.name for w in char.weapons)}")
     print(f"  Features:  {', '.join(char.features)}")
