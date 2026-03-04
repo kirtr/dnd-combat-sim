@@ -1,0 +1,22 @@
+name: synaptic_static
+level: 5
+school: enchantment
+damage_dice: "8d6"
+damage_type: psychic
+attack_type: save
+save_ability: intelligence
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: "synaptic_static"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "INT save, 8d6 psychic damage (half on save). On a failed save, the
+  target is also afflicted with psychic interference: for the next minute, it must
+  subtract 1d6 from all attack rolls and ability checks (and concentration saves).
+  At the end of each of its turns it can make another INT save to end this secondary
+  effect. In sim: model secondary effect as -1d6 to attack rolls for 1 minute on
+  failed save."

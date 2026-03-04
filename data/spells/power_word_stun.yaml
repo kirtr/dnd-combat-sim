@@ -1,0 +1,22 @@
+name: power_word_stun
+level: 8
+school: enchantment
+damage_dice: ""
+damage_type: ""
+attack_type: instant
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: "stun_no_save"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "No attack roll or initial save. Automatically stuns one creature you
+  can see within 60ft. While stunned: incapacitated, can't move, can only speak
+  falteringly; automatically fails STR and DEX saves; attacks against it have
+  advantage; any attack that hits is a critical hit (within 5ft). At the end of
+  each of its turns, the target makes a CON save to end the stun. In sim:
+  effect 'stun_no_save' — immediately stunned; CON save at end of each turn to end."

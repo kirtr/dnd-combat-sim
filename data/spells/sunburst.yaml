@@ -1,0 +1,21 @@
+name: sunburst
+level: 8
+school: evocation
+damage_dice: "12d6"
+damage_type: radiant
+attack_type: save
+save_ability: constitution
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: "blinded_on_fail"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "CON save, 12d6 radiant (half on save). 60ft radius burst. On a failed
+  save, the target is also blinded. This blindness is permanent until removed by
+  Lesser Restoration, Heal, or similar magic (unlike Sunbeam's temporary blindness).
+  Undead and oozes have disadvantage on the save. In 1v1 sim: single target, full
+  12d6 radiant damage, blinded on failed save."

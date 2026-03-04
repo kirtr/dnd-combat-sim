@@ -1,0 +1,22 @@
+name: chain_lightning
+level: 6
+school: evocation
+damage_dice: "10d8"
+damage_type: lightning
+attack_type: save
+save_ability: dexterity
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: null
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "DEX save, 10d8 lightning (half on save). Primary target plus up to 3
+  secondary targets within 30ft of the primary (each gets their own save). In 1v1
+  sim: single target, full 10d8 lightning damage (secondary targets aren't available
+  when there's only one enemy). The lightning bounces between targets; each target
+  other than the primary must also make a DEX save."
+upcast_note: "Upcast to L7+: one additional secondary target per slot level above 6th."

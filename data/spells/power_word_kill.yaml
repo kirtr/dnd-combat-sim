@@ -1,0 +1,20 @@
+name: power_word_kill
+level: 9
+school: enchantment
+damage_dice: ""
+damage_type: ""
+attack_type: instant
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: null
+instant_kill_threshold: 100
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "No attack roll or saving throw. One word of power kills a creature
+  you can see within 60ft if it has 100 HP or fewer. If the creature has more than
+  100 HP, the spell has no effect. In sim: instant_kill_threshold: 100 — if target
+  current HP ≤ 100, it dies immediately with no save or death throws."

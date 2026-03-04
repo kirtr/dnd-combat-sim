@@ -1,0 +1,24 @@
+name: meteor_swarm
+level: 9
+school: evocation
+damage_dice: "40d6"
+damage_type: fire   # 20d6 fire + 20d6 bludgeoning; in sim use total 40d6
+attack_type: save
+save_ability: dexterity
+half_on_save: true
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: null
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "DEX save. 20d6 fire + 20d6 bludgeoning damage (40d6 total in sim),
+  half on save. Blazing orbs of fire plummet from the sky; each creates a 40ft
+  radius sphere of destruction. Huge area — creatures, structures, and terrain are
+  devastated. In 1v1 sim: model as single target 40d6 mixed fire/bludgeoning,
+  DEX save for half. One of the most devastating spells in existence."
+damage_dice_breakdown:
+  fire: "20d6"
+  bludgeoning: "20d6"

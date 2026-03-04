@@ -1,0 +1,23 @@
+name: time_stop
+level: 9
+school: transmutation
+damage_dice: ""
+damage_type: ""
+attack_type: none
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: "extra_turns"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "No attack roll or save. You briefly stop the flow of time for everyone
+  but yourself. You take 1d4+1 turns in a row (rolled on cast). Other creatures
+  don't move or act during this time. Effective time stop ends early if you affect
+  another creature (damage, spell, etc. that targets another creature directly).
+  In sim: effect 'extra_turns' — caster immediately takes 1d4+1 additional turns,
+  during which they can cast spells (area spells are fine; targeted spells end the
+  time stop immediately)."

@@ -1,0 +1,23 @@
+name: disintegrate
+level: 6
+school: transmutation
+damage_dice: "10d6+40"
+damage_type: force
+attack_type: save
+save_ability: dexterity
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: "disintegrate"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "DEX save. On fail: 10d6+40 force damage. If this damage reduces the
+  target to 0 HP, it is disintegrated — turned to dust, destroyed utterly, no
+  stabilization possible (effect: disintegrate). On success: 5d6+20 force damage
+  (half). In sim: on fail, deal full damage; if reduced to 0 HP, target is destroyed
+  (no death saves, no stabilization)."
+upcast_dice: "3d6"   # +3d6 per slot level above 6th
+upcast_flat: 10      # +10 flat per slot level above 6th

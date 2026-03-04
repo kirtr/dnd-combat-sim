@@ -1,0 +1,24 @@
+name: power_word_pain
+level: 7
+school: enchantment
+damage_dice: ""
+damage_type: ""
+attack_type: save
+save_ability: constitution
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: "pain"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "CON save. Creatures with 100 or more HP automatically succeed (no
+  effect). On fail: the target is wracked with intense pain. For the duration
+  (until they make their save): can't take reactions; movement speed halved; at
+  the start of each of its turns, the target makes another CON save — on failure,
+  it can't take an action that turn. At the end of each turn, the target makes a
+  CON save to end the effect on itself. In sim: effect 'pain' — target must make
+  CON save each turn to take actions. Automatically fails if current HP ≥ 100."
+auto_fail_hp_threshold: 100   # creatures with >= this HP auto-succeed (no effect)

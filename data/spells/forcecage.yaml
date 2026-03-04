@@ -1,0 +1,24 @@
+name: forcecage
+level: 7
+school: evocation
+damage_dice: ""
+damage_type: ""
+attack_type: none
+save_ability: ""
+half_on_save: false
+concentration: true
+cantrip_scaling: false
+extra_attacks: 1
+effect: "banishment"
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "No attack roll or save to apply. An immovable cage of force springs
+  into existence around any creature in the area (10ft cube or 20ft cage with bars).
+  The creature is trapped automatically — no initial save. It can't leave by any
+  means (no teleportation, no passing through walls). At the start of each of its
+  turns, the creature makes a CHA save (DC = spell save DC) or wastes its action.
+  Concentration up to 1 hour. In sim: effect 'banishment' — target loses its turn/
+  attacks for the duration. Cannot be dispelled by counterspell (not a spell on
+  target); can be dispelled by disintegrate or antimagic field."

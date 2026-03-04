@@ -1,0 +1,21 @@
+name: steel_wind_strike
+level: 5
+school: conjuration
+damage_dice: "6d10"
+damage_type: force
+attack_type: attack_roll
+save_ability: ""
+half_on_save: false
+concentration: false
+cantrip_scaling: false
+extra_attacks: 1
+effect: null
+instant_kill_threshold: 0
+hp_percentage_cap: 0.0
+polymorph_cr: 0
+replicate_slot: 0
+description: "Melee spell attack (uses spellcasting ability modifier). No save. 6d10
+  force damage. Can target up to 5 creatures within 30ft (melee spell attack against
+  each). In 1v1 sim: makes one melee spell attack against the target for 6d10 force
+  damage. After the attacks, you can teleport to an unoccupied space any struck
+  creature was in. Does not require material components beyond the focus."
