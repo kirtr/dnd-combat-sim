@@ -66,6 +66,11 @@ class Condition(Enum):
     FRIGHTENED = "frightened"
     POISONED = "poisoned"
     STUNNED = "stunned"
+    PARALYZED = "paralyzed"
+    BANISHED = "banished"
+    POLYMORPHED = "polymorphed"
+    PAIN = "pain"
+    GREATER_INVISIBLE = "greater_invisible"
     INCAPACITATED = "incapacitated"
     RAGING = "raging"
     DODGING = "dodging"
@@ -237,6 +242,12 @@ class Character:
     invocations: list[str] = field(default_factory=list)    # Eldritch Invocations (Warlock)
     aoa_cold_damage: int = 0                  # Armor of Agathys: cold retaliation on melee hit
     aura_of_protection: bool = False
+    polymorph_original_stats: dict | None = None
+    extra_turns_remaining: int = 0
+    hexblade_curse_target: str | None = None
+    bladesong_active: bool = False
+    gloom_stalker_ambush_used: bool = False
+    assassin_surprised_this_combat: bool = False
 
     # --- Per-combat state ---
     current_hp: int = 0
@@ -422,6 +433,8 @@ class Character:
         return bonus
 
     def _attack_ability_mod(self, weapon: Weapon) -> int:
+        if "hexblade_armor" in self.features and weapon.is_melee:
+            return self.cha_mod
         if "pact_of_the_blade" in self.features and weapon.is_melee:
             return self.cha_mod
         if weapon.is_finesse:
@@ -475,6 +488,11 @@ class Character:
         self.movement_remaining = self.speed
         self.sneak_attack_used = False
         self.colossus_slayer_used = False
+        self.bladesong_active = any(e.name == "Bladesong" for e in self.active_effects)
+        self._blade_flourish_used_this_turn = False
+        self._war_magic_available = False
+        self._pain_blocked_actions = False
+        self._shadow_step_used = False
         # Tick down effects
         expired = []
         for e in self.active_effects:
@@ -682,6 +700,13 @@ class Character:
         self.vex_target = None
         self.vow_of_enmity_active = False
         self.concentration_effect = None
+        self.polymorph_original_stats = None
+        self.extra_turns_remaining = 0
+        self.hexblade_curse_target = None
+        self.bladesong_active = False
+        self.gloom_stalker_ambush_used = False
+        self.assassin_surprised_this_combat = False
+        self._assassinate_auto_crit_pending = False
         for r in self.resources.values():
             r.restore()
 
