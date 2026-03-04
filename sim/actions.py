@@ -593,13 +593,6 @@ def resolve_attack(
     else:
         is_crit = roll_result >= effective_crit_threshold
 
-    # PARALYZED / STUNNED defender at melee range → auto-crit
-    if not is_crit and any(c in defender.conditions for c in [Condition.PARALYZED, Condition.STUNNED]):
-        if state.distance <= 5:
-            is_crit = True
-            if "auto-crit" not in tags:
-                tags.append("auto-crit")
-
     total = roll_result + attack_bonus
     target_ac = defender.effective_ac
 
@@ -612,6 +605,12 @@ def resolve_attack(
         tags.append("Nick")
     if _assassinate_crit:
         tags.append("Assassinate!")
+
+    # PARALYZED / STUNNED defender at melee range → auto-crit
+    if not is_crit and any(c in defender.conditions for c in [Condition.PARALYZED, Condition.STUNNED]):
+        if state.distance <= 5:
+            is_crit = True
+            tags.append("auto-crit")
 
     label = _pad_label(attack_label)
 
