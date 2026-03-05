@@ -1,4 +1,4 @@
-# D&D 2024 Combat Simulator
+# D&D 5E 2024 Combat Simulator
 
 A Monte Carlo 1v1 combat simulator for **D&D 2024 PHB** (5.5e). Define characters in YAML, run thousands of fights, get hard numbers on win rates, damage per round, and HP remaining. No more bar arguments about whether Berserker or Battle Master wins in the arena — let the dice decide.
 
